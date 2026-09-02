@@ -462,6 +462,71 @@ def add_owner_analytics_billing_fields_postgres(_args: argparse.Namespace) -> No
     finally:
         pg_conn.close()
 
+def add_vehicle_archive_field_sqlite(_args: argparse.Namespace) -> None:
+    if db.using_postgres():
+        raise SystemExit(
+            "Refusing SQLite vehicle archive migration because the app is configured for PostgreSQL."
+        )
+    if (os.getenv("DATABASE_URL") or "").strip():
+        raise SystemExit(
+            "Refusing SQLite vehicle archive migration because DATABASE_URL is set."
+        )
+
+    sqlite_path = Path(db.active_app_db_path()).resolve()
+    print(f"Applying vehicle archive migration to SQLite database: {sqlite_path}")
+
+    conn = sqlite_connect(sqlite_path)
+    try:
+        columns = sqlite_column_names(conn, "customer_vehicles")
+
+        if "archived_at" not in columns:
+            conn.execute(
+                "ALTER TABLE customer_vehicles ADD COLUMN archived_at TEXT"
+            )
+
+        conn.commit()
+        print("vehicle archive migration applied successfully for SQLite database")
+
+    except Exception as exc:
+        conn.rollback()
+        raise SystemExit(
+            f"Failed to apply SQLite vehicle archive migration: {exc}"
+        ) from exc
+
+    finally:
+        conn.close()
+
+
+def add_vehicle_archive_field_postgres(_args: argparse.Namespace) -> None:
+    if not db.using_postgres():
+        raise SystemExit(
+            "DATABASE_URL must be an explicit PostgreSQL URL for PostgreSQL migration commands."
+        )
+
+    pg_conn = pg_connect()
+
+    try:
+        with pg_conn:
+            with pg_conn.cursor() as cur:
+                cur.execute(
+                    """
+                    ALTER TABLE customer_vehicles
+                    ADD COLUMN IF NOT EXISTS archived_at TEXT
+                    """
+                )
+
+        print(
+            "vehicle archive migration applied successfully for PostgreSQL database"
+        )
+
+    except Exception as exc:
+        pg_conn.rollback()
+        raise SystemExit(
+            f"Failed to apply PostgreSQL vehicle archive migration: {exc}"
+        ) from exc
+
+    finally:
+        pg_conn.close()
 
 def apply_account_preferences_schema(_args: argparse.Namespace) -> None:
     if not db.using_postgres():
@@ -576,6 +641,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     owner_analytics_pg = subparsers.add_parser("add-owner-analytics-billing-fields")
     owner_analytics_pg.set_defaults(func=add_owner_analytics_billing_fields_postgres)
+
+    vehicle_archive_local = subparsers.add_parser(
+        "add-vehicle-archive-field-local"
+    )
+    vehicle_archive_local.set_defaults(
+        func=add_vehicle_archive_field_sqlite
+    )
+
+    vehicle_archive_pg = subparsers.add_parser(
+        "add-vehicle-archive-field"
+    )
+    vehicle_archive_pg.set_defaults(
+        func=add_vehicle_archive_field_postgres
+    )
 
     account_preferences_schema = subparsers.add_parser("apply-account-preferences-schema")
     account_preferences_schema.set_defaults(func=apply_account_preferences_schema)
