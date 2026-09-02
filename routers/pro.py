@@ -7391,7 +7391,18 @@ def record_estimate_pdf_document(
         )
         conn.commit()
         estimate_id = int(cur.lastrowid)
-        appointment_id = optional_int_value((payload or {}).get("appointment_id"))
+        estimate_payload = payload or {}
+        source_context = (
+            estimate_payload.get("sourceContext")
+            if isinstance(estimate_payload.get("sourceContext"), dict)
+            else {}
+        )
+        appointment_id = optional_int_value(
+            estimate_payload.get("appointment_id")
+            or estimate_payload.get("appointmentId")
+            or source_context.get("appointment_id")
+            or source_context.get("appointmentId")
+        )
         if appointment_id:
             ensure_calendar_schema(conn)
             conn.execute(
@@ -13785,6 +13796,75 @@ def dashboard_schedule_invoice_id(
     return optional_int_value(row["invoice_id"]) if row else None
 
 
+
+def dashboard_schedule_estimate_id(
+    conn: sqlite3.Connection,
+    appointment_id: int,
+    customer_id: int,
+    vehicle_id: int,
+) -> int | None:
+    """Recover an estimate link from saved estimate payloads when the appointment row was not updated."""
+    ensure_repair_estimate_documents_schema(conn)
+    rows = conn.execute(
+        """
+        SELECT id, payload_json
+        FROM repair_estimate_documents
+        WHERE customer_id = ?
+          AND vehicle_id = ?
+        ORDER BY created_at DESC, id DESC
+        """,
+        (customer_id, vehicle_id),
+    ).fetchall()
+
+    for row in rows:
+        try:
+            payload = json.loads(str(row["payload_json"] or "{}"))
+        except (TypeError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+
+        source_context = payload.get("sourceContext")
+        if not isinstance(source_context, dict):
+            source_context = {}
+
+        saved_appointment_id = optional_int_value(
+            payload.get("appointment_id")
+            or payload.get("appointmentId")
+            or source_context.get("appointment_id")
+            or source_context.get("appointmentId")
+        )
+        if saved_appointment_id != appointment_id:
+            continue
+
+        estimate_id = optional_int_value(row["id"])
+        if not estimate_id:
+            continue
+
+        conn.execute(
+            """
+            UPDATE service_appointments
+            SET estimate_id = ?, updated_at = ?
+            WHERE id = ?
+              AND customer_id = ?
+              AND vehicle_id = ?
+              AND (estimate_id IS NULL OR estimate_id = 0)
+            """,
+            (
+                estimate_id,
+                datetime.utcnow().isoformat(),
+                appointment_id,
+                customer_id,
+                vehicle_id,
+            ),
+        )
+        conn.commit()
+        return estimate_id
+
+    return None
+
+
+
 def build_today_schedule_cards(
     conn: sqlite3.Connection,
     shop_id: int | None = None,
@@ -13816,6 +13896,14 @@ def build_today_schedule_cards(
         estimate_id = optional_int_value(appointment.get("estimate_id"))
         repair_id = optional_int_value(appointment.get("repair_id"))
         status = str(appointment.get("status") or "")
+
+        if not estimate_id and customer_id and vehicle_id:
+            estimate_id = dashboard_schedule_estimate_id(
+                conn,
+                appointment_id,
+                customer_id,
+                vehicle_id,
+            )
 
         vehicle_text = appointment_vehicle_label(appointment) or "Vehicle not linked"
         customer_text = str(appointment.get("customer_name") or "").strip() or "Customer"
