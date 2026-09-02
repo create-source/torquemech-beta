@@ -499,39 +499,7 @@
           id="vehicle-photo-preview"
           aria-live="polite"
         ></div>
-      </div>
-      <div class="tm-book-wide">
-        <h2 class="tm-book-section-title" style="margin-bottom:10px;">
-          Photos of the Vehicle / Issue
-          <span class="tm-book-required">(optional)</span>
-        </h2>
-
-        <p class="tm-book-photo-helper">
-          Upload photos that may help the shop understand the issue before your appointment.
-          Examples include warning lights, leaks, damaged parts, tire wear, or anything unusual.
-        </p>
-
-        <label class="tm-book-photo-upload" for="vehicle_photos">
-          <span class="tm-book-photo-upload-title">Add Photos</span>
-          <span class="tm-book-photo-upload-subtitle">Up to 5 images</span>
-
-          <input
-            id="vehicle_photos"
-            name="vehicle_photos"
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-            multiple
-            hidden
-          >
-        </label>
-
-        <div
-          class="tm-book-photo-preview"
-          id="vehicle-photo-preview"
-          aria-live="polite"
-        ></div>
-      </div>
-      <div class="tm-book-wide">
+      </div>      <div class="tm-book-wide">
         <label class="tm-label" for="notes">Notes or Message to the Shop <span class="tm-book-required">(optional)</span></label>
         <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1600">{{ form.notes if form else '' }}</textarea>
       </div>
