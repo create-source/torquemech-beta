@@ -607,6 +607,135 @@ def backfill_development_subscriptions(_args: argparse.Namespace) -> None:
     finally:
         pg_conn.close()
 
+def add_appointment_workflow_fields_sqlite(_args: argparse.Namespace) -> None:
+    if db.using_postgres():
+        raise SystemExit(
+            "Refusing SQLite appointment workflow migration because the app is configured for PostgreSQL."
+        )
+    if (os.getenv("DATABASE_URL") or "").strip():
+        raise SystemExit(
+            "Refusing SQLite appointment workflow migration because DATABASE_URL is set."
+        )
+
+    sqlite_path = Path(db.active_app_db_path()).resolve()
+    print(f"Applying appointment workflow migration to SQLite database: {sqlite_path}")
+
+    conn = sqlite_connect(sqlite_path)
+    try:
+        columns = sqlite_column_names(conn, "service_appointments")
+
+        if "estimate_id" not in columns:
+            conn.execute(
+                "ALTER TABLE service_appointments ADD COLUMN estimate_id INTEGER"
+            )
+
+        if "repair_id" not in columns:
+            conn.execute(
+                "ALTER TABLE service_appointments ADD COLUMN repair_id INTEGER"
+            )
+
+        if "invoice_id" not in columns:
+            conn.execute(
+                "ALTER TABLE service_appointments ADD COLUMN invoice_id INTEGER"
+            )
+
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_service_appointments_estimate
+            ON service_appointments (estimate_id)
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_service_appointments_repair
+            ON service_appointments (repair_id)
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_service_appointments_invoice
+            ON service_appointments (invoice_id)
+            """
+        )
+
+        conn.commit()
+        print("appointment workflow migration applied successfully for SQLite database")
+
+    except Exception as exc:
+        conn.rollback()
+        raise SystemExit(
+            f"Failed to apply SQLite appointment workflow migration: {exc}"
+        ) from exc
+
+    finally:
+        conn.close()
+
+
+def add_appointment_workflow_fields_postgres(_args: argparse.Namespace) -> None:
+    if not db.using_postgres():
+        raise SystemExit(
+            "DATABASE_URL must be an explicit PostgreSQL URL for PostgreSQL migration commands."
+        )
+
+    pg_conn = pg_connect()
+
+    try:
+        with pg_conn:
+            with pg_conn.cursor() as cur:
+                cur.execute(
+                    """
+                    ALTER TABLE service_appointments
+                    ADD COLUMN IF NOT EXISTS estimate_id INTEGER
+                    """
+                )
+
+                cur.execute(
+                    """
+                    ALTER TABLE service_appointments
+                    ADD COLUMN IF NOT EXISTS repair_id INTEGER
+                    """
+                )
+
+                cur.execute(
+                    """
+                    ALTER TABLE service_appointments
+                    ADD COLUMN IF NOT EXISTS invoice_id INTEGER
+                    """
+                )
+
+                cur.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_service_appointments_estimate
+                    ON service_appointments (estimate_id)
+                    """
+                )
+
+                cur.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_service_appointments_repair
+                    ON service_appointments (repair_id)
+                    """
+                )
+
+                cur.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_service_appointments_invoice
+                    ON service_appointments (invoice_id)
+                    """
+                )
+
+        print(
+            "appointment workflow migration applied successfully for PostgreSQL database"
+        )
+
+    except Exception as exc:
+        pg_conn.rollback()
+        raise SystemExit(
+            f"Failed to apply PostgreSQL appointment workflow migration: {exc}"
+        ) from exc
+
+    finally:
+        pg_conn.close()
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="TorqueMech SQLite to PostgreSQL migration helper")
@@ -654,6 +783,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     vehicle_archive_pg.set_defaults(
         func=add_vehicle_archive_field_postgres
+    )
+
+    appointment_workflow_local = subparsers.add_parser(
+        "add-appointment-workflow-fields-local"
+    )
+    appointment_workflow_local.set_defaults(
+        func=add_appointment_workflow_fields_sqlite
+    )
+
+    appointment_workflow_pg = subparsers.add_parser(
+        "add-appointment-workflow-fields"
+    )
+    appointment_workflow_pg.set_defaults(
+        func=add_appointment_workflow_fields_postgres
     )
 
     account_preferences_schema = subparsers.add_parser("apply-account-preferences-schema")
