@@ -1648,6 +1648,131 @@
     margin-top: 14px !important;
   }
 
+
+  /* Batch 4: Actionable Schedule Cards */
+  .tm-schedule-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .tm-schedule-card {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 12px;
+    background:
+      linear-gradient(145deg, #182536 0%, #111b29 100%);
+  }
+
+  .tm-schedule-time {
+    color: #fb923c;
+    font-size: 0.92rem;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .tm-schedule-main {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+  }
+
+  .tm-schedule-title {
+    margin: 0;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 950;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-schedule-meta {
+    color: #aebdd0;
+    font-size: 0.84rem;
+    line-height: 1.35;
+  }
+
+  .tm-schedule-stage {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    min-height: 24px;
+    padding: 3px 8px;
+    border: 1px solid rgba(96, 165, 250, 0.24);
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.08);
+    color: #bfdbfe;
+    font-size: 0.72rem;
+    font-weight: 900;
+  }
+
+  .tm-schedule-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .tm-schedule-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 11px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 9px;
+    background: #202d3e;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .tm-schedule-action--primary {
+    border-color: #fb923c;
+    background: linear-gradient(180deg, #fb923c 0%, #f97316 100%);
+    color: #111827;
+  }
+
+  .tm-schedule-action:hover,
+  .tm-schedule-action:focus-visible {
+    transform: translateY(-1px);
+    outline: none;
+  }
+
+  .tm-schedule-empty {
+    border: 1px dashed rgba(148, 163, 184, 0.24);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.025);
+    color: #aebdd0;
+    padding: 14px;
+  }
+
+  @media (max-width: 720px) {
+    .tm-schedule-card {
+      grid-template-columns: 1fr;
+      gap: 9px;
+    }
+
+    .tm-schedule-actions {
+      justify-content: stretch;
+    }
+
+    .tm-schedule-action,
+    .tm-schedule-actions form {
+      width: 100%;
+    }
+
+    .tm-schedule-actions form .tm-schedule-action {
+      box-sizing: border-box;
+    }
+  }
+
 </style>
 {% endblock %}
 
@@ -1697,6 +1822,58 @@
         <span class="tm-appointment-notification-label" data-booking-link-label>Share Booking Link</span>
       </button>
     </div>
+  </section>
+
+
+  <section class="tm-dashboard-section" aria-label="Today's Schedule">
+    <div class="tm-dashboard-section-head">
+      <div>
+        <h2>Today's Schedule</h2>
+        <div class="tm-dashboard-section-note">Appointments advance to the next shop action as work progresses.</div>
+      </div>
+      <div class="tm-dashboard-section-note">
+        {{ dashboard.today_schedule | length }} appointment{% if dashboard.today_schedule | length != 1 %}s{% endif %}
+      </div>
+    </div>
+
+    {% if dashboard.today_schedule %}
+    <div class="tm-schedule-list">
+      {% for appointment in dashboard.today_schedule %}
+      <article class="tm-schedule-card">
+        <div class="tm-schedule-time">{{ appointment.time }}</div>
+
+        <div class="tm-schedule-main">
+          <h3 class="tm-schedule-title">{{ appointment.customer_name }} — {{ appointment.vehicle_label }}</h3>
+          {% if appointment.service_name %}
+          <div class="tm-schedule-meta">{{ appointment.service_name }}</div>
+          {% endif %}
+          <span class="tm-schedule-stage">{{ appointment.stage_label }}</span>
+        </div>
+
+        <div class="tm-schedule-actions">
+          {% if appointment.primary_action.method == 'post' %}
+          <form method="post" action="{{ appointment.primary_action.href }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="tm-schedule-action tm-schedule-action--primary" type="submit">
+              {{ appointment.primary_action.label }}
+            </button>
+          </form>
+          {% else %}
+          <a class="tm-schedule-action tm-schedule-action--primary" href="{{ appointment.primary_action.href }}">
+            {{ appointment.primary_action.label }}
+          </a>
+          {% endif %}
+
+          {% if appointment.vehicle_url %}
+          <a class="tm-schedule-action" href="{{ appointment.vehicle_url }}">Open Vehicle</a>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-schedule-empty">No confirmed appointments are scheduled for today.</div>
+    {% endif %}
   </section>
 
   {% set summary_total = namespace(count=0) %}

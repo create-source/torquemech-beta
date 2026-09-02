@@ -126,6 +126,32 @@
   .tm-book-next h2 { margin: 0; font-size: 1.1rem; }
   .tm-book-next ol { display: grid; gap: 6px; margin: 0; padding-left: 22px; color: #475569; line-height: 1.45; }
   .tm-book-required { color: #64748b; font-size: .78rem; font-weight: 700; }
+  .tm-book-required-note {
+    grid-column: 1 / -1;
+    margin: -2px 0 2px;
+    color: #fca5a5;
+    font-size: .82rem;
+    font-weight: 800;
+  }
+  .tm-book-required-mark {
+    color: #fb923c;
+    font-weight: 950;
+  }
+  .tm-book-field-error {
+    margin: 6px 0 0;
+    color: #fca5a5;
+    font-size: .78rem;
+    font-weight: 800;
+  }
+  .tm-input.tm-input--error,
+  .tm-book-field--error .tm-input,
+  .tm-book-field--error .tm-availability-calendar {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, .12) !important;
+  }
+  .tm-book-field--error .tm-label {
+    color: #fecaca !important;
+  }
   .tm-book-form .tm-input { min-height: 46px; }
   .tm-book-form textarea.tm-input { min-height: 112px; }
   .tm-book-submit { min-height: 48px; font-size: 1rem; }
@@ -282,16 +308,17 @@
   {% else %}
   <section class="tm-book-panel" aria-label="Schedule service">
     {% if warning %}<div class="tm-book-warning" role="alert">{{ warning }}</div>{% endif %}
-    <form class="tm-book-form" method="post" action="/book/{{ shop_slug }}" enctype="multipart/form-data">
+    <form class="tm-book-form" method="post" action="/book/{{ shop_slug }}" enctype="multipart/form-data" novalidate data-booking-form>
       <input type="hidden" name="appointment_length_minutes" value="{{ booking_schedule.appointment_length_minutes }}">
       <p class="tm-book-form-intro">Choose a preferred date and time. The shop will review your request and confirm the final appointment window.</p>
+      <p class="tm-book-required-note"><span class="tm-book-required-mark">*</span> Required fields</p>
       <h2 class="tm-book-section-title">Contact information</h2>
       <div>
-        <label class="tm-label" for="customer_name">Customer Name</label>
+        <label class="tm-label" for="customer_name">Customer Name <span class="tm-book-required-mark" aria-hidden="true">*</span></label>
         <input class="tm-input" id="customer_name" name="customer_name" type="text" maxlength="180" value="{{ form.customer_name if form else '' }}" required>
       </div>
       <div>
-        <label class="tm-label" for="customer_phone">Phone</label>
+        <label class="tm-label" for="customer_phone">Phone <span class="tm-book-required-mark" aria-hidden="true">*</span></label>
         <input class="tm-input" id="customer_phone" name="customer_phone" type="tel" inputmode="tel" maxlength="14" value="{{ form.customer_phone if form else '' }}" placeholder="(***)***-****" autocomplete="tel" data-pro-phone-input required>
       </div>
       <div>
@@ -300,26 +327,26 @@
       </div>
       <h2 class="tm-book-section-title">Vehicle and service</h2>
       <div>
-        <label class="tm-label" for="vehicle_year">Vehicle Year</label>
+        <label class="tm-label" for="vehicle_year">Vehicle Year <span class="tm-book-required-mark" aria-hidden="true">*</span></label>
         <input class="tm-input" id="vehicle_year" name="vehicle_year" type="number" inputmode="numeric" min="1900" max="2100" value="{{ form.vehicle_year if form else '' }}" required>
       </div>
       <div>
-        <label class="tm-label" for="vehicle_make">Vehicle Make</label>
+        <label class="tm-label" for="vehicle_make">Vehicle Make <span class="tm-book-required-mark" aria-hidden="true">*</span></label>
         <input class="tm-input" id="vehicle_make" name="vehicle_make" type="text" maxlength="100" value="{{ form.vehicle_make if form else '' }}" required>
       </div>
       <div>
-        <label class="tm-label" for="vehicle_model">Vehicle Model</label>
+        <label class="tm-label" for="vehicle_model">Vehicle Model <span class="tm-book-required-mark" aria-hidden="true">*</span></label>
         <input class="tm-input" id="vehicle_model" name="vehicle_model" type="text" maxlength="120" value="{{ form.vehicle_model if form else '' }}" required>
       </div>
       <div>
-        <label class="tm-label" for="service_name">Requested Service</label>
+        <label class="tm-label" for="service_name">Requested Service <span class="tm-book-required-mark" aria-hidden="true">*</span></label>
         <input class="tm-input" id="service_name" name="service_name" type="text" maxlength="220" value="{{ form.service_name if form else '' }}" required>
       </div>
       <h2 class="tm-book-section-title">Preferred appointment window</h2>
 
       <div class="tm-book-wide">
         <div class="tm-book-date-heading">
-          <label class="tm-label" for="requested_date">Preferred Date</label>
+          <label class="tm-label" for="requested_date">Preferred Date <span class="tm-book-required-mark" aria-hidden="true">*</span></label>
           <button
             class="tm-book-date-clear"
             type="button"
@@ -410,7 +437,7 @@
 
       <div>
         <label class="tm-label" for="requested_time">
-          Preferred Drop-Off / Appointment Time
+          Preferred Drop-Off / Appointment Time <span class="tm-book-required-mark" aria-hidden="true">*</span>
         </label>
 
         <select
@@ -505,7 +532,7 @@
         ></div>
       </div>
       <div class="tm-book-wide">
-        <label class="tm-label" for="notes">Notes or Message to the Shop</label>
+        <label class="tm-label" for="notes">Notes or Message to the Shop <span class="tm-book-required">(optional)</span></label>
         <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1600">{{ form.notes if form else '' }}</textarea>
       </div>
       <button class="tm-btn tm-btn-primary tm-book-wide tm-book-submit" type="submit">Request Appointment</button>
@@ -571,6 +598,117 @@
 
 {% block page_js %}
 <script src="/static/available_date_picker.js?v={{ static_version('/static/available_date_picker.js') }}"></script>
+
+
+<script>
+(() => {
+  const form = document.querySelector("[data-booking-form]");
+  if (!form) return;
+
+  const requiredFields = [
+    { id: "customer_name", label: "Customer Name" },
+    { id: "customer_phone", label: "Phone" },
+    { id: "vehicle_year", label: "Vehicle Year" },
+    { id: "vehicle_make", label: "Vehicle Make" },
+    { id: "vehicle_model", label: "Vehicle Model" },
+    { id: "service_name", label: "Requested Service" },
+    { id: "requested_date", label: "Preferred Date" },
+    { id: "requested_time", label: "Preferred Drop-Off / Appointment Time" }
+  ];
+
+  const clearFieldError = (field) => {
+    const wrapper = field.closest(".tm-book-wide") || field.parentElement;
+    wrapper?.classList.remove("tm-book-field--error");
+    field.classList.remove("tm-input--error");
+    field.removeAttribute("aria-invalid");
+
+    const describedBy = field.getAttribute("aria-describedby");
+    if (describedBy && describedBy.startsWith("booking-error-")) {
+      field.removeAttribute("aria-describedby");
+    }
+
+    const error = document.getElementById(`booking-error-${field.id}`);
+    error?.remove();
+  };
+
+  const showFieldError = (field, label) => {
+    const wrapper = field.closest(".tm-book-wide") || field.parentElement;
+    wrapper?.classList.add("tm-book-field--error");
+    field.classList.add("tm-input--error");
+    field.setAttribute("aria-invalid", "true");
+
+    const errorId = `booking-error-${field.id}`;
+    field.setAttribute("aria-describedby", errorId);
+
+    if (document.getElementById(errorId)) return;
+
+    const error = document.createElement("p");
+    error.id = errorId;
+    error.className = "tm-book-field-error";
+    error.textContent = `${label} is required.`;
+
+    if (field.id === "requested_date") {
+      const picker = wrapper?.querySelector("[data-availability-picker]");
+      (picker || wrapper)?.appendChild(error);
+    } else {
+      wrapper?.appendChild(error);
+    }
+  };
+
+  const isMissing = (field) => {
+    if (field.disabled) {
+      return field.id === "requested_time";
+    }
+    return !String(field.value || "").trim();
+  };
+
+  requiredFields.forEach(({ id }) => {
+    const field = document.getElementById(id);
+    if (!field) return;
+    const eventName = field.tagName === "SELECT" || field.type === "hidden" ? "change" : "input";
+    field.addEventListener(eventName, () => {
+      if (!isMissing(field)) clearFieldError(field);
+    });
+  });
+
+  form.addEventListener("submit", (event) => {
+    let firstInvalid = null;
+
+    requiredFields.forEach(({ id, label }) => {
+      const field = document.getElementById(id);
+      if (!field) return;
+
+      clearFieldError(field);
+
+      if (isMissing(field)) {
+        showFieldError(field, label);
+        firstInvalid ||= field;
+      }
+    });
+
+    if (!firstInvalid) return;
+
+    event.preventDefault();
+
+    const warning = document.querySelector(".tm-book-warning");
+    if (warning) {
+      warning.textContent = "Please complete the highlighted required fields and try again.";
+      warning.hidden = false;
+    }
+
+    const target =
+      firstInvalid.id === "requested_date"
+        ? document.querySelector("[data-availability-picker]")
+        : firstInvalid;
+
+    target?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    if (firstInvalid.type !== "hidden" && !firstInvalid.disabled) {
+      window.setTimeout(() => firstInvalid.focus({ preventScroll: true }), 250);
+    }
+  });
+})();
+</script>
 
 <script>
 (() => {

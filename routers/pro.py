@@ -316,8 +316,8 @@ REPAIR_COMPLETION_CHECKS = (
     ("customer_concern_resolved", "Customer concern resolved"),
 )
 
-APPOINTMENT_STATUS_OPTIONS = ("Requested", "Confirmed", "Rescheduled", "Converted", "Handled", "Declined", "Completed", "Cancelled")
-CONVERTIBLE_APPOINTMENT_STATUSES = {"Confirmed", "Rescheduled"}
+APPOINTMENT_STATUS_OPTIONS = ("Requested", "Confirmed", "Rescheduled", "Checked In", "Converted", "Handled", "Declined", "Completed", "Cancelled")
+CONVERTIBLE_APPOINTMENT_STATUSES = {"Confirmed", "Rescheduled", "Checked In"}
 APPOINTMENT_LENGTH_OPTIONS = (30, 45, 60, 90, 120)
 APPOINTMENT_BUFFER_OPTIONS = (0, 15, 30)
 SHOP_SCHEDULE_DAYS = (
@@ -13751,6 +13751,184 @@ def dashboard_card(
     }
 
 
+
+def dashboard_schedule_invoice_id(
+    conn: sqlite3.Connection,
+    repair_id: int,
+    customer_id: int,
+    vehicle_id: int,
+) -> int | None:
+    row = conn.execute(
+        """
+        SELECT invoice_id
+        FROM (
+            SELECT i.id AS invoice_id, COALESCE(i.created_at, '') AS created_at
+            FROM invoices i
+            WHERE i.customer_id = ?
+              AND i.vehicle_id = ?
+              AND i.repair_record_id = ?
+
+            UNION ALL
+
+            SELECT ii.invoice_id AS invoice_id, COALESCE(i.created_at, '') AS created_at
+            FROM invoice_items ii
+            JOIN invoices i ON i.id = ii.invoice_id
+            WHERE ii.repair_record_id = ?
+              AND i.customer_id = ?
+              AND i.vehicle_id = ?
+        ) invoice_hits
+        ORDER BY created_at DESC, invoice_id DESC
+        LIMIT 1
+        """,
+        (customer_id, vehicle_id, repair_id, repair_id, customer_id, vehicle_id),
+    ).fetchone()
+    return optional_int_value(row["invoice_id"]) if row else None
+
+
+def build_today_schedule_cards(
+    conn: sqlite3.Connection,
+    shop_id: int | None = None,
+) -> list[dict[str, Any]]:
+    ensure_calendar_schema(conn)
+    ensure_repair_records_schema(conn)
+    ensure_invoices_schema(conn)
+
+    today = local_today().isoformat()
+    where_sql, params = shop_scope_where(shop_id, "sa.shop_id")
+    rows = conn.execute(
+        f"""
+        SELECT sa.*
+        FROM service_appointments sa
+        WHERE {where_sql}
+          AND sa.requested_date = ?
+          AND sa.status IN ('Confirmed', 'Rescheduled', 'Checked In', 'Converted')
+        ORDER BY sa.requested_time ASC, sa.id ASC
+        """,
+        [*params, today],
+    ).fetchall()
+
+    cards: list[dict[str, Any]] = []
+    for row in rows:
+        appointment = dict(row)
+        appointment_id = int(appointment["id"])
+        customer_id = optional_int_value(appointment.get("customer_id"))
+        vehicle_id = optional_int_value(appointment.get("vehicle_id"))
+        estimate_id = optional_int_value(appointment.get("estimate_id"))
+        repair_id = optional_int_value(appointment.get("repair_id"))
+        status = str(appointment.get("status") or "")
+
+        vehicle_text = appointment_vehicle_label(appointment) or "Vehicle not linked"
+        customer_text = str(appointment.get("customer_name") or "").strip() or "Customer"
+        service_text = str(appointment.get("service_name") or "").strip()
+        time_label = format_time_label(appointment.get("requested_time"))
+
+        vehicle_url = (
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}"
+            if customer_id and vehicle_id
+            else ""
+        )
+
+        primary = {
+            "label": "Check In",
+            "href": "/pro/calendar",
+            "method": "get",
+        }
+        stage_label = "Scheduled"
+
+        if status in {"Confirmed", "Rescheduled"}:
+            if customer_id and vehicle_id:
+                primary = {
+                    "label": "Check In",
+                    "href": f"/pro/dashboard/appointments/{appointment_id}/check-in",
+                    "method": "post",
+                }
+            else:
+                primary = {
+                    "label": "Check In",
+                    "href": "/pro/calendar",
+                    "method": "get",
+                }
+                stage_label = "Link customer & vehicle"
+
+        elif repair_id and customer_id and vehicle_id:
+            repair = conn.execute(
+                """
+                SELECT id, status, repair_work_status
+                FROM repair_records
+                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                LIMIT 1
+                """,
+                (repair_id, customer_id, vehicle_id),
+            ).fetchone()
+            repair_data = dict(repair) if repair else {}
+            repair_completed = (
+                str(repair_data.get("status") or "") == "Completed"
+                or str(repair_data.get("repair_work_status") or "").strip().lower().replace("-", "_") == "completed"
+            )
+            if repair_completed:
+                invoice_id = optional_int_value(appointment.get("invoice_id"))
+                if not invoice_id:
+                    invoice_id = dashboard_schedule_invoice_id(
+                        conn, repair_id, customer_id, vehicle_id
+                    )
+                if invoice_id:
+                    primary = {
+                        "label": "View Invoice",
+                        "href": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}",
+                        "method": "get",
+                    }
+                    stage_label = "Invoiced"
+                else:
+                    primary = {
+                        "label": "Create Invoice",
+                        "href": (
+                            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/invoices/new"
+                            f"?repair_record_id={repair_id}"
+                        ),
+                        "method": "get",
+                    }
+                    stage_label = "Repair finished"
+            else:
+                primary = {
+                    "label": "Continue Repair",
+                    "href": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}",
+                    "method": "get",
+                }
+                stage_label = "Repair"
+
+        elif estimate_id and customer_id and vehicle_id:
+            primary = {
+                "label": "View Estimate",
+                "href": estimate_document_url(customer_id, vehicle_id, estimate_id),
+                "method": "get",
+            }
+            stage_label = "Estimate / approval"
+
+        elif status in {"Checked In", "Converted"} and customer_id and vehicle_id:
+            primary = {
+                "label": "Start Estimate",
+                "href": appointment_estimator_href(appointment),
+                "method": "get",
+            }
+            stage_label = "Checked in"
+
+        cards.append(
+            {
+                "id": appointment_id,
+                "time": time_label,
+                "customer_name": customer_text,
+                "vehicle_label": vehicle_text,
+                "service_name": service_text,
+                "status": status,
+                "stage_label": stage_label,
+                "primary_action": primary,
+                "vehicle_url": vehicle_url,
+            }
+        )
+    return cards
+
+
+
 def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = None) -> dict[str, Any]:
     today = local_today()
     ensure_customer_status_schema(conn)
@@ -14153,6 +14331,7 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
         "sections": sections,
         "attention_total": attention_total,
         "pending_appointment_count": pending_appointment_count,
+        "today_schedule": build_today_schedule_cards(conn, shop_id=shop_id),
         "quick_actions": [
             {"label": "Add Customer", "href": "/pro/customers?mode=add#add-customer"},
             {"label": "View Customers", "href": "/pro/customers"},
@@ -15248,8 +15427,49 @@ def pro_dashboard(request: Request, welcome: int = 0):
             "dashboard": dashboard,
             "first_name": first_name,
             "show_welcome": welcome == 1,
+            "csrf_token": optional_csrf_token(request),
         },
     )
+
+
+@router.post("/dashboard/appointments/{appointment_id}/check-in")
+async def pro_dashboard_appointment_check_in(request: Request, appointment_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+
+        if str(appointment.get("requested_date") or "") != local_today().isoformat():
+            raise HTTPException(status_code=400, detail="Only today's appointment can be checked in.")
+
+        if str(appointment.get("status") or "") not in {"Confirmed", "Rescheduled", "Checked In"}:
+            raise HTTPException(status_code=400, detail="This appointment is not ready for check-in.")
+
+        customer_id = optional_int_value(appointment.get("customer_id"))
+        vehicle_id = optional_int_value(appointment.get("vehicle_id"))
+        if not customer_id or not vehicle_id:
+            return RedirectResponse(
+                "/pro/calendar?error=Link+the+customer+and+vehicle+before+check-in.",
+                status_code=303,
+            )
+
+        update_service_appointment_status(
+            conn,
+            appointment_id,
+            "Checked In",
+            shop_id=shop_id,
+        )
+    finally:
+        conn.close()
+
+    return RedirectResponse("/pro/dashboard?notice=checked_in", status_code=303)
+
+
 
 @router.get("/active-jobs", response_class=HTMLResponse)
 def pro_active_jobs(
@@ -17789,7 +18009,11 @@ def public_booking_page(request: Request, shop_slug: str, success: str = "", war
 
 @public_router.post("/book/{shop_slug}", response_class=HTMLResponse)
 async def public_booking_submit(request: Request, shop_slug: str):
-    form = await read_form_data(request)
+    # The booking form is multipart/form-data because it supports photos.
+    # Use TorqueMech's built-in multipart parser here instead of request.form().
+    # This avoids relying on Starlette's optional python-multipart dependency
+    # and correctly returns both text fields and uploaded files.
+    form, files = await read_multipart_form_data(request)
     warning = ""
     vehicle_parts = [
         str(form.get("vehicle_year") or "").strip(),
