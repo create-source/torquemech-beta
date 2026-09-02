@@ -7571,10 +7571,18 @@ if (getEstimateHint) {
 
   prepareReviewedEstimateBtn?.addEventListener("click", (e) => {
     e.preventDefault();
-    if (isFindingEstimatorSession()) {
+
+    const sourceContext = getEstimatorSourceContext();
+
+    // Appointment-backed estimates must hit the server-side PDF/save route so
+    // repair_estimate_documents is created and service_appointments.estimate_id
+    // can be linked. A browser-only draft leaves Today's Schedule stuck on
+    // "Start Estimate".
+    if (isFindingEstimatorSession() || sourceContext.source === "appointment") {
       handleGenerateCustomerPdf(e);
       return;
     }
+
     markCustomerQuoteReadyForProJob();
   });
 
