@@ -18676,6 +18676,22 @@ def pro_customer_detail(
                 (customer_id, shop_id),
             ).fetchall()
         ]
+
+        archived_vehicles = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT *
+                FROM customer_vehicles
+                WHERE customer_id = ?
+                  AND shop_id = ?
+                  AND archived_at IS NOT NULL
+                ORDER BY archived_at DESC, updated_at DESC, id DESC
+                """,
+                (customer_id, shop_id),
+            ).fetchall()
+        ]
+
     finally:
         conn.close()
 
@@ -18685,6 +18701,7 @@ def pro_customer_detail(
             "request": request,
             "customer": customer,
             "vehicles": vehicles,
+            "archived_vehicles": archived_vehicles,
             "csrf_token": optional_csrf_token(request),
             "appointment_continuation": appointment_continuation,
         },
@@ -19205,6 +19222,52 @@ async def pro_customer_vehicle_archive(
         status_code=303,
     )
 
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/restore")
+async def pro_customer_vehicle_restore(
+    request: Request,
+    customer_id: int,
+    vehicle_id: int,
+):
+    form = await read_form_data(request)
+
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+
+        cur = conn.execute(
+            """
+            UPDATE customer_vehicles
+            SET archived_at = NULL,
+                updated_at = ?
+            WHERE id = ?
+              AND customer_id = ?
+              AND shop_id = ?
+              AND archived_at IS NOT NULL
+            """,
+            (
+                datetime.utcnow().isoformat(),
+                vehicle_id,
+                customer_id,
+                shop_id,
+            ),
+        )
+
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Archived vehicle not found")
+
+        conn.commit()
+
+    finally:
+        conn.close()
+
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}",
+        status_code=303,
+    )
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/findings")
 async def pro_finding_record_create(request: Request, customer_id: int, vehicle_id: int):

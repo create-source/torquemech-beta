@@ -1035,8 +1035,56 @@
       {% else %}
       <div class="tm-crm-meta">No vehicles saved for this customer yet.</div>
       {% endif %}
+    {% if archived_vehicles %}
+    <details class="tm-crm-disclosure" style="margin-top:18px;">
+      <summary>
+        Archived Vehicles ({{ archived_vehicles|length }})
+      </summary>
+
+      <div class="tm-crm-vehicle-grid" style="margin-top:12px;">
+        {% for vehicle in archived_vehicles %}
+        <div
+          class="tm-crm-vehicle"
+          data-vehicle-type="{% if 'F-150' in (vehicle.model or '')|upper %}truck{% else %}car{% endif %}"
+          style="opacity:0.78;"
+        >
+          <div>
+            <div class="tm-crm-vehicle-title">
+              {{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}
+            </div>
+
+            <div class="tm-crm-meta">
+              {{ vehicle.engine|pro_engine_badge }}
+            </div>
+          </div>
+
+          <div class="tm-crm-meta">
+            {% if vehicle.mileage %}
+              {{ vehicle.mileage|pro_miles }} miles
+            {% else %}
+              Mileage not recorded
+            {% endif %}
+          </div>
+
+          <form
+            method="post"
+            action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/restore"
+            style="margin-top:8px;"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <button class="tm-btn tm-btn-secondary" type="submit">
+              Restore Vehicle
+            </button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+    {% endif %}
     </section>
   </div>
+
 </section>
 {% endblock %}
 
