@@ -1,0 +1,320 @@
+{% extends "pro/base.html" %}
+
+{% block title %}Estimate Review | TorqueMech{% endblock %}
+
+{% block content %}
+<style>
+  .estimate-review-shell {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 24px 18px 48px;
+  }
+
+  .estimate-review-header,
+  .estimate-review-card {
+    background: #111c2c;
+    border: 1px solid #334155;
+    border-radius: 16px;
+  }
+
+  .estimate-review-header {
+    padding: 24px;
+    margin-bottom: 18px;
+  }
+
+  .estimate-review-header h1 {
+    margin: 0 0 8px;
+    color: #f8fafc;
+    font-size: 1.8rem;
+  }
+
+  .estimate-review-header p {
+    margin: 0;
+    color: #94a3b8;
+  }
+
+  .estimate-review-card {
+    padding: 22px;
+    margin-bottom: 18px;
+  }
+
+  .estimate-review-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .estimate-review-detail {
+    padding: 14px;
+    background: #162235;
+    border: 1px solid #334155;
+    border-radius: 12px;
+  }
+
+  .estimate-review-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #94a3b8;
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .estimate-review-value {
+    color: #f8fafc;
+    font-weight: 700;
+  }
+
+  .estimate-review-card h2 {
+    margin: 0 0 15px;
+    color: #f8fafc;
+    font-size: 1.15rem;
+  }
+
+  .estimate-line {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid #334155;
+  }
+
+  .estimate-line:last-child {
+    border-bottom: 0;
+  }
+
+  .estimate-line-name {
+    color: #f8fafc;
+    font-weight: 700;
+  }
+
+  .estimate-line-meta {
+    margin-top: 4px;
+    color: #94a3b8;
+    font-size: .9rem;
+  }
+
+  .estimate-line-total {
+    color: #f8fafc;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .estimate-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #475569;
+    color: #f8fafc;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  .estimate-review-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .estimate-review-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid #475569;
+    background: #1e293b;
+    color: #f8fafc;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .estimate-review-btn-primary {
+    border-color: #f97316;
+    background: #f97316;
+    color: #111827;
+  }
+
+  .estimate-review-btn:hover {
+    filter: brightness(1.06);
+  }
+
+  .approval-note {
+    margin: 0 0 18px;
+    padding: 14px;
+    border-radius: 10px;
+    background: rgba(249, 115, 22, .08);
+    border: 1px solid rgba(249, 115, 22, .35);
+    color: #cbd5e1;
+    line-height: 1.45;
+  }
+
+  @media (max-width: 680px) {
+    .estimate-review-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .estimate-review-actions {
+      flex-direction: column;
+    }
+
+    .estimate-review-btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="estimate-review-shell">
+
+  <section class="estimate-review-header">
+    <h1>Estimate Review</h1>
+    <p>
+      Review the prepared estimate before approving the work and starting the repair.
+    </p>
+  </section>
+
+  <section class="estimate-review-card">
+    <h2>Appointment</h2>
+
+    <div class="estimate-review-grid">
+      <div class="estimate-review-detail">
+        <span class="estimate-review-label">Customer</span>
+        <span class="estimate-review-value">
+          {{ appointment.customer_name or "Customer" }}
+        </span>
+      </div>
+
+      <div class="estimate-review-detail">
+        <span class="estimate-review-label">Vehicle</span>
+        <span class="estimate-review-value">
+          {{ appointment.vehicle_year }}
+          {{ appointment.vehicle_make }}
+          {{ appointment.vehicle_model }}
+        </span>
+      </div>
+
+      <div class="estimate-review-detail">
+        <span class="estimate-review-label">Service</span>
+        <span class="estimate-review-value">
+          {{ appointment.service_name }}
+        </span>
+      </div>
+
+      <div class="estimate-review-detail">
+        <span class="estimate-review-label">Appointment</span>
+        <span class="estimate-review-value">
+          {{ appointment.requested_date|pro_date }}
+          at
+          {{ appointment.requested_time|pro_time }}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="estimate-review-card">
+    <h2>Prepared Estimate</h2>
+
+    {% for item in line_items %}
+      <div class="estimate-line">
+        <div>
+          <div class="estimate-line-name">
+            {{ item.service_name }}
+          </div>
+
+          <div class="estimate-line-meta">
+            {% if item.show_labor_total %}
+              Labor: {{ item.labor_total|pro_currency }}
+            {% endif %}
+
+            {% if item.show_parts_total %}
+              {% if item.show_labor_total %} · {% endif %}
+              Parts: {{ item.parts_total|pro_currency }}
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="estimate-line-total">
+          {{ item.line_total|pro_currency }}
+        </div>
+      </div>
+    {% endfor %}
+
+    <div class="estimate-total-row">
+      <span>Estimate Total</span>
+      <span>{{ estimate.estimate_total|pro_currency }}</span>
+    </div>
+  </section>
+
+  <section class="estimate-review-card">
+
+    <p class="approval-note">
+      Approving this estimate will create the repair job and move this
+      appointment to the repair stage.
+    </p>
+
+    <div class="estimate-review-actions">
+
+      <a
+        class="estimate-review-btn"
+        href="{{ pdf_url }}"
+      >
+        Download PDF
+      </a>
+
+      <a
+        class="estimate-review-btn"
+        href="/pro/dashboard"
+      >
+        Back to Command Center
+      </a>
+
+      <form
+        method="post"
+        action="/pro/estimate-conversion/create"
+        style="margin:0;"
+      >
+        <input
+         type="hidden"
+         name="csrf_token"
+         value="{{ csrf_token }}"
+        >
+        <input
+          type="hidden"
+          name="estimate_payload"
+          value="{{ conversion_payload_json|e }}"
+        >
+
+        <input
+          type="hidden"
+          name="linked_customer_vehicle_locked"
+          value="1"
+        >
+
+        {% for item in line_items %}
+          <input
+            type="hidden"
+            name="service_index"
+            value="{{ loop.index0 }}"
+          >
+        {% endfor %}
+
+        <button
+          class="estimate-review-btn estimate-review-btn-primary"
+          type="submit"
+        >
+          Approve &amp; Start Repair
+        </button>
+      </form>
+
+    </div>
+  </section>
+
+</div>
+{% endblock %}

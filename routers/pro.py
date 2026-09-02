@@ -13987,7 +13987,7 @@ def build_today_schedule_cards(
         elif estimate_id and customer_id and vehicle_id:
             primary = {
                 "label": "View Estimate",
-                "href": estimate_document_url(customer_id, vehicle_id, estimate_id),
+                "href": f"/pro/dashboard/appointments/{appointment_id}/estimate",
                 "method": "get",
             }
             stage_label = "Estimate / approval"
@@ -14520,6 +14520,102 @@ def load_customer_vehicle_for_shop(
     vehicle = load_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
     return customer, vehicle
 
+@router.get(
+    "/dashboard/appointments/{appointment_id}/estimate",
+    response_class=HTMLResponse,
+)
+def appointment_estimate_review(
+    request: Request,
+    appointment_id: int,
+):
+    conn = crm_db_conn()
+
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        appointment = load_service_appointment_for_shop(
+            conn,
+            appointment_id,
+            shop_id,
+        )
+
+        customer_id = optional_int_value(appointment.get("customer_id"))
+        vehicle_id = optional_int_value(appointment.get("vehicle_id"))
+        estimate_id = optional_int_value(appointment.get("estimate_id"))
+
+        if not customer_id or not vehicle_id or not estimate_id:
+            raise HTTPException(
+                status_code=404,
+                detail="Appointment estimate is not available.",
+            )
+
+        customer, vehicle = load_customer_vehicle_for_shop(
+            conn,
+            customer_id,
+            vehicle_id,
+            shop_id,
+        )
+
+        estimate = load_estimate_document_for_shop(
+            conn,
+            customer_id,
+            vehicle_id,
+            estimate_id,
+            shop_id,
+        )
+
+        # Convert the saved PDF payload back into the format already used by
+        # TorqueMech's existing estimate -> repair conversion workflow.
+        stored_payload = estimate_document_payload(estimate)
+        conversion_payload = dict(stored_payload)
+
+        if not isinstance(conversion_payload.get("lineItems"), list):
+            saved_items = conversion_payload.get("line_items")
+            if isinstance(saved_items, list):
+                conversion_payload["lineItems"] = saved_items
+
+        conversion_payload["source"] = "appointment"
+        conversion_payload["appointment_id"] = appointment_id
+        conversion_payload["appointmentId"] = str(appointment_id)
+        conversion_payload["customer_id"] = customer_id
+        conversion_payload["customerId"] = str(customer_id)
+        conversion_payload["vehicle_id"] = vehicle_id
+        conversion_payload["vehicleId"] = str(vehicle_id)
+        conversion_payload["estimate_id"] = estimate_id
+        conversion_payload["estimateId"] = str(estimate_id)
+
+        normalized_payload = load_estimate_conversion_payload(
+            json.dumps(conversion_payload)
+        )
+
+        normalized_payload["source"] = "appointment"
+        normalized_payload["appointment_id"] = appointment_id
+        normalized_payload["customer_id"] = customer_id
+        normalized_payload["vehicle_id"] = vehicle_id
+        normalized_payload["estimate_id"] = estimate_id
+
+        sync_estimate_conversion_source_context(normalized_payload)
+
+        return templates.TemplateResponse(
+            "pro/appointment_estimate_review.html",
+            {
+                "request": request,
+                "csrf_token": csrf_token(request),
+                "appointment": appointment,
+                "customer": customer,
+                "vehicle": vehicle,
+                "estimate": estimate,
+                "line_items": normalize_customer_estimate_line_items(estimate),
+                "conversion_payload_json": json.dumps(normalized_payload),
+                "pdf_url": estimate_document_url(
+                    customer_id,
+                    vehicle_id,
+                    estimate_id,
+                ),
+            },
+        )
+
+    finally:
+        conn.close()
 
 @router.get("/estimator/finding-handoff")
 def pro_estimator_finding_handoff(
@@ -18707,6 +18803,27 @@ async def pro_estimate_conversion_create(request: Request):
                     (repair_id, now, now, *finding_record_where_params(conn, source_id, customer_id, vehicle_id)),
                 )
             created_count += 1
+
+        if (
+            source_type == "estimate"
+            and source_id
+            and first_repair_id
+        ):
+            conn.execute(
+                """
+                UPDATE repair_estimate_documents
+                SET approval_status = 'Approved'
+                WHERE id = ?
+                  AND customer_id = ?
+                  AND vehicle_id = ?
+                """,
+                (
+                    source_id,
+                    customer_id,
+                    vehicle_id,
+                ),
+            )
+
         if appointment_id and first_repair_id:
             ensure_calendar_schema(conn)
             conn.execute(
