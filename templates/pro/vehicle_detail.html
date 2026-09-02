@@ -3788,6 +3788,53 @@
     }
   }
 
+  .tm-vehicle-danger-zone {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(248, 113, 113, 0.28);
+  }
+
+  .tm-vehicle-danger-zone strong {
+    color: #fecaca;
+  }
+
+  .tm-vehicle-danger-zone p {
+    margin: 5px 0 0;
+    max-width: 620px;
+    color: #cbd5e1;
+    font-size: 0.86rem;
+    line-height: 1.4;
+  }
+
+  .tm-vehicle-delete-btn {
+    border: 1px solid rgba(248, 113, 113, 0.6) !important;
+    background: rgba(127, 29, 29, 0.22) !important;
+    color: #fecaca !important;
+  }
+
+  .tm-vehicle-delete-btn:hover,
+  .tm-vehicle-delete-btn:focus-visible {
+    border-color: #ef4444 !important;
+    background: #7f1d1d !important;
+    color: #ffffff !important;
+  }
+
+  @media (max-width: 760px) {
+    .tm-vehicle-danger-zone {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .tm-vehicle-danger-zone form,
+    .tm-vehicle-delete-btn {
+      width: 100%;
+    }
+  }
+
 </style>
 {% include "pro/partials/repair_intelligence_styles.html" %}
 {% endblock %}
@@ -3869,6 +3916,26 @@
       </div>
 
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Vehicle</button>
+      <div class="tm-vehicle-danger-zone">
+        <div>
+          <strong>Danger Zone</strong>
+          <p>
+            Permanently delete this vehicle only if it was added by mistake.
+            Vehicles with existing shop records cannot be deleted.
+          </p>
+        </div>
+
+        <form
+          method="post"
+          action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/delete"
+          onsubmit="return confirm('Permanently delete {{ vehicle.year or '' }} {{ vehicle.make or '' }} {{ vehicle.model or '' }}? This cannot be undone.');"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="tm-btn tm-vehicle-delete-btn" type="submit">
+            Permanently Delete Vehicle
+          </button>
+        </form>
+      </div>
     </form>
   </details>
 

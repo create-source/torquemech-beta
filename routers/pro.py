@@ -19106,6 +19106,100 @@ async def pro_customer_vehicle_update(request: Request, customer_id: int, vehicl
         conn.close()
     return RedirectResponse(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}", status_code=303)
 
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/delete")
+async def pro_customer_vehicle_delete(
+    request: Request,
+    customer_id: int,
+    vehicle_id: int,
+):
+    form = await read_form_data(request)
+
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+
+        load_customer_vehicle_for_shop(
+            conn,
+            customer_id,
+            vehicle_id,
+            shop_id,
+        )
+
+        related_checks = [
+            ("findings_records", "vehicle_id"),
+            ("repair_records", "vehicle_id"),
+            ("maintenance_records", "vehicle_id"),
+            ("service_history_records", "vehicle_id"),
+            ("discrepancy_approvals", "vehicle_id"),
+            ("service_appointments", "vehicle_id"),
+            ("invoices", "vehicle_id"),
+            ("repair_estimate_documents", "vehicle_id"),
+        ]
+
+        for table_name, column_name in related_checks:
+            table_exists = conn.execute(
+                """
+                SELECT 1
+                FROM sqlite_master
+                WHERE type = 'table' AND name = ?
+                LIMIT 1
+                """,
+                (table_name,),
+            ).fetchone()
+
+            if not table_exists:
+                continue
+
+            related = conn.execute(
+                f"""
+                SELECT 1
+                FROM {table_name}
+                WHERE {column_name} = ?
+                LIMIT 1
+                """,
+                (vehicle_id,),
+            ).fetchone()
+
+            if related:
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        "This vehicle has existing TorqueMech records and "
+                        "cannot be permanently deleted."
+                    ),
+                )
+
+        cur = conn.execute(
+            """
+            DELETE FROM customer_vehicles
+            WHERE id = ?
+              AND customer_id = ?
+              AND shop_id = ?
+            """,
+            (
+                vehicle_id,
+                customer_id,
+                shop_id,
+            ),
+        )
+
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Vehicle not found")
+
+        conn.commit()
+
+    finally:
+        conn.close()
+
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}",
+        status_code=303,
+    )
+
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/findings")
 async def pro_finding_record_create(request: Request, customer_id: int, vehicle_id: int):
