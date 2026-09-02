@@ -11786,6 +11786,8 @@ class EstimateRequest(BaseModel):
     customerId: Optional[str] = None
     vehicleId: Optional[str] = None
     findingId: Optional[str] = None
+    appointmentId: Optional[str] = None
+    appointment_id: Optional[str] = None
     problemFound: Optional[str] = None
     recommendedRepair: Optional[str] = None
     sourceContext: Optional[Dict[str, Any]] = None
@@ -13112,6 +13114,8 @@ class MultiPDFRequest(BaseModel):
     customerId: Optional[str] = None
     vehicleId: Optional[str] = None
     findingId: Optional[str] = None
+    appointmentId: Optional[str] = None
+    appointment_id: Optional[str] = None
     problemFound: Optional[str] = None
     recommendedRepair: Optional[str] = None
     sourceContext: Optional[Dict[str, Any]] = None
@@ -13254,13 +13258,22 @@ def pdf_repair_status_label(value: Any) -> str:
 
 
 def estimate_request_source_value(req: Any, key: str) -> str:
-    direct = getattr(req, key, None)
-    if direct not in (None, ""):
-        return str(direct).strip()
+    direct_candidates = [key]
+    snake_key = re.sub(r"(?<!^)(?=[A-Z])", "_", key).lower()
+    camel_key = key[0].lower() + key[1:] if key else key
+
+    for candidate in (camel_key, snake_key):
+        if candidate and candidate not in direct_candidates:
+            direct_candidates.append(candidate)
+
+    for candidate in direct_candidates:
+        direct = getattr(req, candidate, None)
+        if direct not in (None, ""):
+            return str(direct).strip()
+
     source_context = getattr(req, "sourceContext", None)
     if isinstance(source_context, dict):
-        camel_key = key[0].lower() + key[1:]
-        for candidate in (key, camel_key):
+        for candidate in direct_candidates:
             value = source_context.get(candidate)
             if value not in (None, ""):
                 return str(value).strip()
