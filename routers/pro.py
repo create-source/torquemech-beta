@@ -13832,6 +13832,7 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
             repair_summary["already_invoiced_count"] or 0
         ),
         "recently_invoiced": 0,
+        "balance_due": 0,
     }
 
     recent_invoice_cutoff = (today - timedelta(days=14)).isoformat()
@@ -13840,6 +13841,22 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
         shop_id,
         "c.shop_id",
     )
+
+    repair_counts["balance_due"] = int(
+            conn.execute(
+                f"""
+                SELECT COUNT(*) AS count
+                FROM invoices i
+                JOIN customers c ON c.id = i.customer_id
+                WHERE {active_customers_clause}
+                AND {invoice_scope_sql}
+                AND COALESCE(i.grand_total, 0) > COALESCE(i.amount_paid, 0)
+                AND COALESCE(i.payment_status, 'Unpaid') NOT IN ('Paid in Full', 'No Charge')
+                """,
+                invoice_scope_params,
+            ).fetchone()["count"]
+            or 0
+        )
 
     repair_counts["recently_invoiced"] = int(
         conn.execute(
@@ -14043,9 +14060,27 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
             "title": "Invoice Follow-Up",
             "empty": "No invoice follow-up is needed right now.",
             "cards": [
-                dashboard_card("Not Invoiced Repairs", repair_counts["not_invoiced"], "Completed repairs still need an invoice.", "/pro/customers#customer-list", "Create Invoice"),
-                dashboard_card("Recently Invoiced", repair_counts["recently_invoiced"], "Invoices created in the last 14 days.", "/pro/customers#customer-list", "View Invoices"),
-                dashboard_card("Already Invoiced", repair_counts["already_invoiced"], "Completed jobs with final invoices.", "/pro/customers#customer-list", "View Invoices"),
+                dashboard_card(
+                    "Ready to Invoice",
+                    repair_counts["not_invoiced"],
+                    "Completed repairs that still need a final invoice.",
+                    "/pro/invoice-follow-up?queue=ready",
+                    "Create Invoices",
+                ),
+                dashboard_card(
+                    "Recently Invoiced",
+                    repair_counts["recently_invoiced"],
+                    "Invoices created in the last 14 days.",
+                    "/pro/invoice-follow-up?queue=recent",
+                    "Review Invoices",
+                ),
+                dashboard_card(
+                    "Balance Due",
+                    repair_counts["balance_due"],
+                    "Invoices with an unpaid customer balance.",
+                    "/pro/invoice-follow-up?queue=due",
+                    "Follow Up",
+                ),
             ],
         },
         {
@@ -15347,6 +15382,264 @@ def pro_active_jobs(
         },
     )
 
+@router.get("/invoice-follow-up", response_class=HTMLResponse)
+async def pro_invoice_follow_up(request: Request, queue: str = "ready"):
+    queue = str(queue or "ready").strip().lower()
+    if queue not in {"ready", "recent", "due"}:
+        queue = "ready"
+
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+
+        ensure_customer_status_schema(conn)
+        ensure_repair_records_schema(conn)
+        ensure_repair_completion_schema(conn)
+        ensure_invoices_schema(conn)
+
+        active_customer_sql = (
+            "COALESCE(NULLIF(c.customer_status, ''), 'active') = 'active'"
+        )
+        customer_scope_sql, customer_scope_params = shop_scope_where(
+            shop_id,
+            "c.shop_id",
+        )
+
+        recent_invoice_cutoff = (
+            local_today() - timedelta(days=14)
+        ).isoformat()
+
+        if queue == "ready":
+            rows = conn.execute(
+                f"""
+                SELECT
+                    rr.id AS repair_id,
+                    rr.customer_id,
+                    rr.vehicle_id,
+                    rr.repair_name,
+                    rr.repair_date,
+                    rr.status AS repair_status,
+                    rr.created_at AS repair_created_at,
+
+                    rc.completion_date,
+                    rc.completed_at,
+                    rc.completion_mileage,
+                    rc.final_inspection_passed,
+
+                    c.first_name,
+                    c.last_name,
+
+                    v.year AS vehicle_year,
+                    v.make AS vehicle_make,
+                    v.model AS vehicle_model,
+                    v.mileage AS vehicle_mileage
+
+                FROM repair_records rr
+
+                JOIN customers c
+                  ON c.id = rr.customer_id
+
+                JOIN customer_vehicles v
+                  ON v.id = rr.vehicle_id
+
+                JOIN repair_completions rc
+                  ON rc.repair_record_id = rr.id
+
+                WHERE {active_customer_sql}
+                  AND {customer_scope_sql}
+                  AND rr.status = 'Completed'
+                  AND COALESCE(rc.final_inspection_passed, 0) = 1
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM invoices i
+                      WHERE i.repair_record_id = rr.id
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM invoice_items ii
+                      WHERE ii.repair_record_id = rr.id
+                  )
+
+                ORDER BY
+                    COALESCE(
+                        NULLIF(rc.completed_at, ''),
+                        NULLIF(rc.completion_date, ''),
+                        rr.created_at
+                    ) DESC,
+                    rr.id DESC
+                """,
+                customer_scope_params,
+            ).fetchall()
+
+            items = []
+            for row in rows:
+                item = dict(row)
+
+                item["customer_name"] = customer_display_name(item)
+                item["vehicle_label"] = " ".join(
+                    str(item.get(key) or "").strip()
+                    for key in (
+                        "vehicle_year",
+                        "vehicle_make",
+                        "vehicle_model",
+                    )
+                    if str(item.get(key) or "").strip()
+                )
+
+                item["status_label"] = "Ready to Invoice"
+                item["date_value"] = (
+                    item.get("completed_at")
+                    or item.get("completion_date")
+                    or item.get("repair_created_at")
+                    or ""
+                )
+
+                item["primary_action_label"] = "Create Final Invoice"
+                item["primary_action_url"] = (
+                    f"/pro/customers/{item['customer_id']}"
+                    f"/vehicles/{item['vehicle_id']}"
+                    f"/invoices/new?repair_record_id={item['repair_id']}"
+                )
+
+                item["secondary_action_label"] = "Open Repair"
+                item["secondary_action_url"] = (
+                    f"/pro/customers/{item['customer_id']}"
+                    f"/vehicles/{item['vehicle_id']}"
+                    f"/repairs/{item['repair_id']}"
+                )
+
+                items.append(item)
+
+            title = "Ready to Invoice"
+            subtitle = (
+                "Completed repairs that are ready for a final invoice."
+            )
+
+        else:
+            extra_sql = ""
+            extra_params: list[Any] = []
+
+            if queue == "recent":
+                extra_sql = "AND i.created_at >= ?"
+                extra_params.append(recent_invoice_cutoff)
+                title = "Recently Invoiced"
+                subtitle = "Invoices created in the last 14 days."
+            else:
+                extra_sql = """
+                    AND COALESCE(i.grand_total, 0)
+                        > COALESCE(i.amount_paid, 0)
+                    AND COALESCE(i.payment_status, 'Unpaid')
+                        NOT IN ('Paid in Full', 'No Charge')
+                """
+                title = "Balance Due"
+                subtitle = (
+                    "Invoices that still have an unpaid customer balance."
+                )
+
+            rows = conn.execute(
+                f"""
+                SELECT
+                    i.id AS invoice_id,
+                    i.invoice_number,
+                    i.customer_id,
+                    i.vehicle_id,
+                    i.repair_record_id,
+                    i.grand_total,
+                    i.amount_paid,
+                    i.payment_status,
+                    i.created_at AS invoice_created_at,
+
+                    c.first_name,
+                    c.last_name,
+
+                    v.year AS vehicle_year,
+                    v.make AS vehicle_make,
+                    v.model AS vehicle_model
+
+                FROM invoices i
+
+                JOIN customers c
+                  ON c.id = i.customer_id
+
+                JOIN customer_vehicles v
+                  ON v.id = i.vehicle_id
+
+                WHERE {active_customer_sql}
+                  AND {customer_scope_sql}
+                  {extra_sql}
+
+                ORDER BY i.created_at DESC, i.id DESC
+                """,
+                [*customer_scope_params, *extra_params],
+            ).fetchall()
+
+            items = []
+            for row in rows:
+                item = dict(row)
+
+                item["customer_name"] = customer_display_name(item)
+                item["vehicle_label"] = " ".join(
+                    str(item.get(key) or "").strip()
+                    for key in (
+                        "vehicle_year",
+                        "vehicle_make",
+                        "vehicle_model",
+                    )
+                    if str(item.get(key) or "").strip()
+                )
+
+                grand_total = round(
+                    float(item.get("grand_total") or 0),
+                    2,
+                )
+                amount_paid = round(
+                    float(item.get("amount_paid") or 0),
+                    2,
+                )
+
+                item["balance_due"] = max(
+                    round(grand_total - amount_paid, 2),
+                    0.0,
+                )
+
+                item["status_label"] = (
+                    item.get("payment_status")
+                    or "Unpaid"
+                )
+
+                item["date_value"] = (
+                    item.get("invoice_created_at") or ""
+                )
+
+                item["primary_action_label"] = "Open Invoice"
+                item["primary_action_url"] = (
+                    f"/pro/customers/{item['customer_id']}"
+                    f"/vehicles/{item['vehicle_id']}"
+                    f"/invoices/{item['invoice_id']}"
+                )
+
+                item["secondary_action_label"] = "Open Vehicle"
+                item["secondary_action_url"] = (
+                    f"/pro/customers/{item['customer_id']}"
+                    f"/vehicles/{item['vehicle_id']}"
+                )
+
+                items.append(item)
+
+        return templates.TemplateResponse(
+            "pro/invoice_follow_up_queue.html",
+            {
+                "request": request,
+                "queue": queue,
+                "title": title,
+                "subtitle": subtitle,
+                "items": items,
+            },
+        )
+
+    finally:
+        conn.close()
+        
 @router.get("/estimate-approvals", response_class=HTMLResponse)
 def pro_estimate_approvals(
     request: Request,

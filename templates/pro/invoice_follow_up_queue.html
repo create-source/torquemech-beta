@@ -1,0 +1,269 @@
+{% extends "pro/base.html" %}
+
+{% block title %}Invoice Follow-Up | TorqueMech{% endblock %}
+
+{% block content %}
+<div class="pro-page">
+  <div class="pro-page-header">
+    <div>
+      <div class="pro-eyebrow">Invoice Follow-Up</div>
+      <h1>{{ title }}</h1>
+      <p>{{ subtitle }}</p>
+    </div>
+
+    <a href="/pro" class="pro-btn pro-btn-secondary">
+      Back to Command Center
+    </a>
+  </div>
+
+  <div class="pro-tabs" style="margin-bottom: 24px;">
+    <a
+      href="/pro/invoice-follow-up?queue=ready"
+      class="pro-tab {% if queue == 'ready' %}is-active{% endif %}"
+    >
+      Ready to Invoice
+    </a>
+
+    <a
+      href="/pro/invoice-follow-up?queue=recent"
+      class="pro-tab {% if queue == 'recent' %}is-active{% endif %}"
+    >
+      Recently Invoiced
+    </a>
+
+    <a
+      href="/pro/invoice-follow-up?queue=due"
+      class="pro-tab {% if queue == 'due' %}is-active{% endif %}"
+    >
+      Balance Due
+    </a>
+  </div>
+
+  {% if items %}
+    <div style="display: grid; gap: 16px;">
+      {% for item in items %}
+        <div class="pro-card">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              gap: 20px;
+              align-items: flex-start;
+              flex-wrap: wrap;
+            "
+          >
+            <div style="min-width: 0; flex: 1;">
+              <div
+                style="
+                  display: flex;
+                  gap: 8px;
+                  align-items: center;
+                  flex-wrap: wrap;
+                  margin-bottom: 8px;
+                "
+              >
+                <strong style="font-size: 1.05rem;">
+                  {{ item.customer_name or "Customer" }}
+                </strong>
+
+                <span class="pro-badge">
+                  {{ item.status_label }}
+                </span>
+              </div>
+
+              <div
+                style="
+                  color: var(--muted, #94a3b8);
+                  margin-bottom: 12px;
+                "
+              >
+                {{ item.vehicle_label or "Vehicle" }}
+              </div>
+
+              {% if queue == "ready" %}
+                <div style="font-weight: 700; margin-bottom: 8px;">
+                  {{ item.repair_name or "Completed Repair" }}
+                </div>
+
+                <div
+                  style="
+                    display: flex;
+                    gap: 18px;
+                    flex-wrap: wrap;
+                    font-size: 0.92rem;
+                    color: var(--muted, #94a3b8);
+                  "
+                >
+                  {% if item.date_value %}
+                    <span>
+                      Completed:
+                      {{ item.date_value | pro_datetime }}
+                    </span>
+                  {% endif %}
+
+                  {% if item.completion_mileage %}
+                    <span>
+                      Mileage:
+                      {{ item.completion_mileage | pro_miles }}
+                    </span>
+                  {% endif %}
+
+                  <span>
+                    Final Inspection:
+                    {% if item.final_inspection_passed %}
+                      Passed
+                    {% else %}
+                      Not Passed
+                    {% endif %}
+                  </span>
+                </div>
+
+              {% else %}
+                <div
+                  style="
+                    display: flex;
+                    gap: 18px;
+                    flex-wrap: wrap;
+                    font-size: 0.92rem;
+                    color: var(--muted, #94a3b8);
+                  "
+                >
+                  {% if item.invoice_number %}
+                    <span>
+                      Invoice:
+                      {{ item.invoice_number }}
+                    </span>
+                  {% endif %}
+
+                  {% if item.date_value %}
+                    <span>
+                      Created:
+                      {{ item.date_value | pro_datetime }}
+                    </span>
+                  {% endif %}
+
+                  <span>
+                    Total:
+                    {{ item.grand_total | pro_currency }}
+                  </span>
+
+                  <span>
+                    Paid:
+                    {{ item.amount_paid | pro_currency }}
+                  </span>
+
+                  {% if queue == "due" %}
+                    <span style="font-weight: 700;">
+                      Balance:
+                      {{ item.balance_due | pro_currency }}
+                    </span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div
+              style="
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+              "
+            >
+              {% if item.secondary_action_url %}
+                <a
+                  href="{{ item.secondary_action_url }}"
+                  class="pro-btn pro-btn-secondary"
+                >
+                  {{ item.secondary_action_label }}
+                </a>
+              {% endif %}
+
+              {% if item.primary_action_url %}
+                <a
+                  href="{{ item.primary_action_url }}"
+                  class="pro-btn pro-btn-primary"
+                >
+                  {{ item.primary_action_label }}
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div class="pro-card">
+      <div
+        style="
+          text-align: center;
+          padding: 36px 20px;
+        "
+      >
+        {% if queue == "ready" %}
+          <h3>No repairs are waiting for an invoice.</h3>
+          <p>
+            Completed repairs will appear here after final inspection passes.
+          </p>
+
+        {% elif queue == "recent" %}
+          <h3>No recent invoices.</h3>
+          <p>
+            Invoices created within the last 14 days will appear here.
+          </p>
+
+        {% else %}
+          <h3>No unpaid balances.</h3>
+          <p>
+            Customer invoices with a remaining balance will appear here.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+  .pro-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .pro-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    text-decoration: none;
+    font-weight: 700;
+    color: inherit;
+    background: rgba(15, 23, 42, 0.4);
+  }
+
+  .pro-tab:hover {
+    border-color: rgba(249, 115, 22, 0.7);
+  }
+
+  .pro-tab.is-active {
+    background: #f97316;
+    border-color: #f97316;
+    color: #ffffff;
+  }
+
+  @media (max-width: 700px) {
+    .pro-tabs {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .pro-tab {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
