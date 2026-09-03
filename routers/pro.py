@@ -16181,7 +16181,7 @@ def pro_global_search(
                 OR v.vin LIKE ?
                 OR v.license_plate LIKE ?
                 OR (
-                  CAST(COALESCE(v.year, '') AS TEXT)
+                  COALESCE(CAST(v.year AS TEXT), '')
                   || ' '
                   || COALESCE(v.make, '')
                   || ' '
@@ -16335,7 +16335,7 @@ def pro_global_search(
                 || COALESCE(c.last_name, '')
                 ) LIKE ?
                 OR (
-                CAST(COALESCE(v.year, '') AS TEXT)
+                COALESCE(CAST(v.year AS TEXT), '')
                 || ' '
                 || COALESCE(v.make, '')
                 || ' '
@@ -16394,7 +16394,7 @@ def pro_global_search(
                 || COALESCE(c.last_name, '')
                 ) LIKE ?
                 OR (
-                CAST(COALESCE(v.year, '') AS TEXT)
+                COALESCE(CAST(v.year AS TEXT), '')
                 || ' '
                 || COALESCE(v.make, '')
                 || ' '
