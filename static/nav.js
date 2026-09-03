@@ -6,6 +6,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const resourcesPanel = document.getElementById("resourcesMenuPanel");
   const notificationBtn = document.getElementById("notificationBtn");
   const notificationPanel = document.getElementById("notificationPanel");
+  const globalSearchBtn = document.getElementById("globalSearchBtn");
+  const globalSearchPanel = document.getElementById("globalSearchPanel");
+  const globalSearchInput = document.getElementById("globalSearchInput");
+  const globalSearchClose = document.getElementById("globalSearchClose");
+
+  const globalSearchResults = document.getElementById("globalSearchResults");
+
+  let globalSearchTimer = null;
+  let globalSearchController = null;
 
   if (!btn || !menu || !backdrop) {
     console.warn("Nav elements not found");
@@ -25,8 +34,219 @@ document.addEventListener("DOMContentLoaded", () => {
     resourcesPanel.hidden = expanded;
   }
 
+  function escapeSearchHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function globalSearchHint() {
+    if (!globalSearchResults) return;
+
+    globalSearchResults.innerHTML = `
+      <div class="tm-globalSearchPanel__hint">
+        Search by customer, phone, email, vehicle, VIN, plate, appointment, estimate, or invoice.
+      </div>
+    `;
+  }
+
+  function globalSearchLoading() {
+    if (!globalSearchResults) return;
+
+    globalSearchResults.innerHTML = `
+      <div class="tm-globalSearchPanel__hint">
+        Searching...
+      </div>
+    `;
+  }
+
+  function globalSearchEmpty(query) {
+    if (!globalSearchResults) return;
+
+    globalSearchResults.innerHTML = `
+      <div class="tm-globalSearchPanel__hint">
+        No results found for <strong>${escapeSearchHtml(query)}</strong>.
+      </div>
+    `;
+  }
+
+  function renderGlobalSearchGroup(label, items) {
+    if (!Array.isArray(items) || items.length === 0) return "";
+
+    const rows = items.map((item) => {
+      const status = item.status
+        ? `<span class="tm-globalSearchResult__status">${escapeSearchHtml(item.status)}</span>`
+        : "";
+
+      const subtitle = item.subtitle
+        ? `<div class="tm-globalSearchResult__subtitle">${escapeSearchHtml(item.subtitle)}</div>`
+        : "";
+
+      return `
+        <a
+          class="tm-globalSearchResult"
+          href="${escapeSearchHtml(item.url || "#")}"
+        >
+          <div class="tm-globalSearchResult__main">
+            <div class="tm-globalSearchResult__title">
+              ${escapeSearchHtml(item.title || "Result")}
+            </div>
+            ${subtitle}
+          </div>
+          ${status}
+        </a>
+      `;
+    }).join("");
+
+    return `
+      <section class="tm-globalSearchGroup">
+        <div class="tm-globalSearchGroup__title">${escapeSearchHtml(label)}</div>
+        <div class="tm-globalSearchGroup__items">
+          ${rows}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderGlobalSearchResults(payload) {
+    if (!globalSearchResults) return;
+
+    const groups = payload?.groups || {};
+    const customers = groups.customers || [];
+    const vehicles = groups.vehicles || [];
+    const appointments = groups.appointments || [];
+    const estimates = groups.estimates || [];
+    const repairs = groups.repairs || [];
+    const invoices = groups.invoices || [];
+
+    const total =
+      customers.length +
+      vehicles.length +
+      appointments.length +
+      estimates.length +
+      repairs.length +
+      invoices.length;
+
+    if (total === 0) {
+      globalSearchEmpty(payload?.query || globalSearchInput?.value || "");
+      return;
+    }
+
+    globalSearchResults.innerHTML = [
+      renderGlobalSearchGroup("Customers", customers),
+      renderGlobalSearchGroup("Vehicles", vehicles),
+      renderGlobalSearchGroup("Appointments", appointments),
+      renderGlobalSearchGroup("Estimates", estimates),
+      renderGlobalSearchGroup("Repairs", repairs),
+      renderGlobalSearchGroup("Invoices", invoices),
+    ].join("");
+  }
+
+  async function runGlobalSearch(query) {
+    const cleanQuery = String(query || "").trim();
+
+    if (cleanQuery.length < 2) {
+      if (globalSearchController) {
+        globalSearchController.abort();
+        globalSearchController = null;
+      }
+
+      globalSearchHint();
+      return;
+    }
+
+    if (globalSearchController) {
+      globalSearchController.abort();
+    }
+
+    globalSearchController = new AbortController();
+
+    globalSearchLoading();
+
+    try {
+      const response = await fetch(
+        `/pro/global-search?q=${encodeURIComponent(cleanQuery)}`,
+        {
+          method: "GET",
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          signal: globalSearchController.signal,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Search failed with ${response.status}`);
+      }
+
+      const payload = await response.json();
+
+      if (
+        String(globalSearchInput?.value || "").trim() !== cleanQuery
+      ) {
+        return;
+      }
+
+      renderGlobalSearchResults(payload);
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+
+      if (globalSearchResults) {
+        globalSearchResults.innerHTML = `
+          <div class="tm-globalSearchPanel__hint">
+            Search could not be loaded. Please try again.
+          </div>
+        `;
+      }
+    }
+  }
+
+  function openGlobalSearch() {
+    if (!globalSearchBtn || !globalSearchPanel) return;
+
+    closeMenu();
+    closeNotifications();
+
+    globalSearchPanel.hidden = false;
+    globalSearchBtn.setAttribute("aria-expanded", "true");
+
+    window.setTimeout(() => {
+      globalSearchInput?.focus();
+    }, 0);
+  }
+
+  function closeGlobalSearch(options = {}) {
+    if (!globalSearchBtn || !globalSearchPanel) return;
+
+    globalSearchPanel.hidden = true;
+    globalSearchBtn.setAttribute("aria-expanded", "false");
+
+    if (globalSearchInput) {
+      globalSearchInput.value = "";
+    }
+
+    window.clearTimeout(globalSearchTimer);
+
+    if (globalSearchController) {
+      globalSearchController.abort();
+      globalSearchController = null;
+    }
+
+    globalSearchHint();
+
+    if (options.returnFocus) {
+      globalSearchBtn.focus();
+    }
+  }
+
   function openMenu() {
     closeNotifications();
+    closeGlobalSearch();
     collapseResources();
     menu.hidden = false;
     backdrop.hidden = false;
@@ -48,6 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function openNotifications() {
     if (!notificationBtn || !notificationPanel) return;
     closeMenu();
+    closeGlobalSearch();
     notificationPanel.hidden = false;
     notificationBtn.setAttribute("aria-expanded", "true");
     const focusTarget = firstNotificationFocusTarget();
@@ -180,6 +401,41 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  if (globalSearchBtn && globalSearchPanel) {
+    globalSearchBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      if (globalSearchPanel.hidden) {
+        openGlobalSearch();
+      } else {
+        closeGlobalSearch({ returnFocus: true });
+      }
+    });
+
+    globalSearchPanel.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+
+    globalSearchClose?.addEventListener("click", () => {
+      closeGlobalSearch({ returnFocus: true });
+    });
+
+    globalSearchInput?.addEventListener("input", () => {
+      window.clearTimeout(globalSearchTimer);
+
+      const query = globalSearchInput.value.trim();
+
+      if (query.length < 2) {
+        runGlobalSearch(query);
+        return;
+      }
+
+      globalSearchTimer = window.setTimeout(() => {
+        runGlobalSearch(query);
+      }, 250);
+    });
+  }
+
   if (notificationBtn && notificationPanel) {
     notificationBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -208,6 +464,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Escape") {
       closeMenu();
       closeNotifications({ returnFocus: true });
+      closeGlobalSearch({ returnFocus: true });
     }
   });
 
@@ -215,5 +472,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!notificationBtn || !notificationPanel || notificationPanel.hidden) return;
     if (notificationPanel.contains(e.target) || notificationBtn.contains(e.target)) return;
     closeNotifications();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!globalSearchBtn || !globalSearchPanel || globalSearchPanel.hidden) return;
+    if (globalSearchPanel.contains(e.target) || globalSearchBtn.contains(e.target)) return;
+
+    closeGlobalSearch();
   });
 });

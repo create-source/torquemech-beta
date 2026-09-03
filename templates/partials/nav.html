@@ -9,6 +9,64 @@
 
     <!-- Right: Notifications + Hamburger -->
     {% if request.state.current_user %}
+
+      <div class="tm-globalSearch">
+        <button
+          class="tm-globalSearch__button"
+          id="globalSearchBtn"
+          type="button"
+          aria-label="Search TorqueMech"
+          aria-expanded="false"
+          aria-controls="globalSearchPanel"
+        >
+          <span aria-hidden="true">&#128269;</span>
+        </button>
+      </div>
+
+      <section
+        class="tm-globalSearchPanel"
+        id="globalSearchPanel"
+        aria-label="Global Search"
+        hidden
+      >
+        <div class="tm-globalSearchPanel__inner">
+          <div class="tm-globalSearchPanel__top">
+            <div class="tm-globalSearchPanel__field">
+              <span class="tm-globalSearchPanel__icon" aria-hidden="true">&#128269;</span>
+
+              <input
+                class="tm-globalSearchPanel__input"
+                id="globalSearchInput"
+                type="search"
+                name="q"
+                placeholder="Search customers, vehicles, appointments, invoices..."
+                autocomplete="off"
+                spellcheck="false"
+              >
+
+              <button
+                class="tm-globalSearchPanel__close"
+                id="globalSearchClose"
+                type="button"
+                aria-label="Close search"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="tm-globalSearchPanel__results"
+            id="globalSearchResults"
+            aria-live="polite"
+          >
+            <div class="tm-globalSearchPanel__hint">
+              Search by customer, phone, email, vehicle, VIN, plate, appointment, estimate, or invoice.
+            </div>
+          </div>
+        </div>
+      </section>
+
       {% set staff_notifications = request.state.staff_notifications or {"unread_count": 0, "badge": "", "items": []} %}
       {% set unread_count = staff_notifications["unread_count"] or 0 %}
       <div class="tm-notification">

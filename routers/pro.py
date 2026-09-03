@@ -16086,7 +16086,612 @@ async def pro_invoice_follow_up(request: Request, queue: str = "ready"):
 
     finally:
         conn.close()
-        
+
+@router.get("/global-search", response_class=JSONResponse)
+def pro_global_search(
+    request: Request,
+    q: str = "",
+):
+    search = str(q or "").strip()
+
+    empty_results = {
+        "query": search,
+        "groups": {
+            "customers": [],
+            "vehicles": [],
+            "appointments": [],
+            "estimates": [],
+            "repairs": [],
+            "invoices": [],
+        },
+    }
+
+    if len(search) < 2:
+        return JSONResponse(empty_results)
+
+    conn = crm_db_conn()
+
+    try:
+        ensure_customer_status_schema(conn)
+        ensure_calendar_schema(conn)
+        ensure_repair_estimate_documents_schema(conn)
+        ensure_repair_records_schema(conn)
+        ensure_invoices_schema(conn)
+
+        shop_id = required_current_shop_id(conn, request)
+        like = f"%{search}%"
+
+        customer_rows = conn.execute(
+            """
+            SELECT
+              c.id,
+              c.first_name,
+              c.last_name,
+              c.phone,
+              c.email,
+              c.customer_status
+            FROM customers c
+            WHERE c.shop_id = ?
+              AND (
+                c.first_name LIKE ?
+                OR c.last_name LIKE ?
+                OR c.phone LIKE ?
+                OR c.email LIKE ?
+                OR (
+                  COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')
+                ) LIKE ?
+              )
+            ORDER BY
+              COALESCE(c.updated_at, c.created_at) DESC,
+              c.id DESC
+            LIMIT 6
+            """,
+            (
+                shop_id,
+                like,
+                like,
+                like,
+                like,
+                like,
+            ),
+        ).fetchall()
+
+        vehicle_rows = conn.execute(
+            """
+            SELECT
+              v.id,
+              v.customer_id,
+              v.year,
+              v.make,
+              v.model,
+              v.vin,
+              v.license_plate,
+              v.archived_at,
+              c.first_name,
+              c.last_name
+            FROM customer_vehicles v
+            JOIN customers c
+              ON c.id = v.customer_id
+            WHERE v.shop_id = ?
+              AND c.shop_id = ?
+              AND (
+                CAST(v.year AS TEXT) LIKE ?
+                OR v.make LIKE ?
+                OR v.model LIKE ?
+                OR v.vin LIKE ?
+                OR v.license_plate LIKE ?
+                OR (
+                  CAST(COALESCE(v.year, '') AS TEXT)
+                  || ' '
+                  || COALESCE(v.make, '')
+                  || ' '
+                  || COALESCE(v.model, '')
+                ) LIKE ?
+              )
+            ORDER BY
+              COALESCE(v.updated_at, v.created_at) DESC,
+              v.id DESC
+            LIMIT 6
+            """,
+            (
+                shop_id,
+                shop_id,
+                like,
+                like,
+                like,
+                like,
+                like,
+                like,
+            ),
+        ).fetchall()
+
+        appointment_rows = conn.execute(
+            """
+            SELECT
+              a.id,
+              a.customer_id,
+              a.vehicle_id,
+              a.customer_name,
+              a.vehicle_label,
+              a.vehicle_year,
+              a.vehicle_make,
+              a.vehicle_model,
+              a.service_name,
+              a.requested_date,
+              a.requested_time,
+              a.status
+            FROM service_appointments a
+            WHERE a.shop_id = ?
+              AND (
+                a.customer_name LIKE ?
+                OR a.customer_phone LIKE ?
+                OR a.customer_email LIKE ?
+                OR a.vehicle_label LIKE ?
+                OR a.vehicle_year LIKE ?
+                OR a.vehicle_make LIKE ?
+                OR a.vehicle_model LIKE ?
+                OR a.service_name LIKE ?
+                OR a.requested_date LIKE ?
+              )
+            ORDER BY
+              a.requested_date DESC,
+              a.requested_time DESC,
+              a.id DESC
+            LIMIT 6
+            """,
+            (
+                shop_id,
+                like,
+                like,
+                like,
+                like,
+                like,
+                like,
+                like,
+                like,
+                like,
+            ),
+        ).fetchall()
+
+        estimate_rows = conn.execute(
+            """
+            SELECT
+            red.id,
+            red.customer_id,
+            red.vehicle_id,
+            red.finding_id,
+            red.estimate_date,
+            red.customer_name,
+            red.vehicle_label,
+            red.related_title,
+            red.estimate_total,
+            red.approval_status,
+            red.created_at
+            FROM repair_estimate_documents red
+            JOIN customers c
+            ON c.id = red.customer_id
+            JOIN customer_vehicles v
+            ON v.id = red.vehicle_id
+            AND v.customer_id = c.id
+            WHERE c.shop_id = ?
+            AND v.shop_id = ?
+            AND (
+                CAST(red.id AS TEXT) LIKE ?
+                OR red.customer_name LIKE ?
+                OR red.vehicle_label LIKE ?
+                OR red.related_title LIKE ?
+                OR red.approval_status LIKE ?
+            )
+            ORDER BY
+            red.estimate_date DESC,
+            red.created_at DESC,
+            red.id DESC
+            LIMIT 6
+            """,
+            (
+                shop_id,
+                shop_id,
+                like,
+                like,
+                like,
+                like,
+                like,
+            ),
+        ).fetchall()
+
+        repair_rows = conn.execute(
+            """
+            SELECT
+            rr.id,
+            rr.customer_id,
+            rr.vehicle_id,
+            rr.repair_name,
+            rr.repair_date,
+            rr.status,
+            rr.notes,
+            rr.total_cost,
+            rr.created_at,
+            c.first_name,
+            c.last_name,
+            v.year,
+            v.make,
+            v.model
+            FROM repair_records rr
+            JOIN customers c
+            ON c.id = rr.customer_id
+            JOIN customer_vehicles v
+            ON v.id = rr.vehicle_id
+            AND v.customer_id = c.id
+            WHERE c.shop_id = ?
+            AND v.shop_id = ?
+            AND (
+                CAST(rr.id AS TEXT) LIKE ?
+                OR rr.repair_name LIKE ?
+                OR rr.notes LIKE ?
+                OR rr.status LIKE ?
+                OR (
+                COALESCE(c.first_name, '')
+                || ' '
+                || COALESCE(c.last_name, '')
+                ) LIKE ?
+                OR (
+                CAST(COALESCE(v.year, '') AS TEXT)
+                || ' '
+                || COALESCE(v.make, '')
+                || ' '
+                || COALESCE(v.model, '')
+                ) LIKE ?
+            )
+            ORDER BY
+            COALESCE(rr.repair_date, '') DESC,
+            rr.created_at DESC,
+            rr.id DESC
+            LIMIT 6
+            """,
+            (
+                shop_id,
+                shop_id,
+                like,
+                like,
+                like,
+                like,
+                like,
+                like,
+            ),
+        ).fetchall()
+
+        invoice_rows = conn.execute(
+            """
+            SELECT
+            i.id,
+            i.invoice_number,
+            i.customer_id,
+            i.vehicle_id,
+            i.grand_total,
+            i.amount_paid,
+            i.payment_status,
+            i.created_at,
+            c.first_name,
+            c.last_name,
+            v.year,
+            v.make,
+            v.model
+            FROM invoices i
+            JOIN customers c
+            ON c.id = i.customer_id
+            JOIN customer_vehicles v
+            ON v.id = i.vehicle_id
+            AND v.customer_id = c.id
+            WHERE c.shop_id = ?
+            AND v.shop_id = ?
+            AND (
+                CAST(i.id AS TEXT) LIKE ?
+                OR i.invoice_number LIKE ?
+                OR i.payment_status LIKE ?
+                OR (
+                COALESCE(c.first_name, '')
+                || ' '
+                || COALESCE(c.last_name, '')
+                ) LIKE ?
+                OR (
+                CAST(COALESCE(v.year, '') AS TEXT)
+                || ' '
+                || COALESCE(v.make, '')
+                || ' '
+                || COALESCE(v.model, '')
+                ) LIKE ?
+            )
+            ORDER BY
+            i.created_at DESC,
+            i.id DESC
+            LIMIT 6
+            """,
+            (
+                shop_id,
+                shop_id,
+                like,
+                like,
+                like,
+                like,
+                like,
+            ),
+        ).fetchall()
+
+        customers = []
+
+        for row in customer_rows:
+            item = dict(row)
+
+            name = " ".join(
+                part
+                for part in [
+                    str(item.get("first_name") or "").strip(),
+                    str(item.get("last_name") or "").strip(),
+                ]
+                if part
+            ).strip() or "Customer"
+
+            detail_parts = [
+                format_phone(item.get("phone")),
+                str(item.get("email") or "").strip(),
+            ]
+
+            customers.append(
+                {
+                    "id": item["id"],
+                    "title": name,
+                    "subtitle": " • ".join(
+                        part for part in detail_parts if part
+                    ),
+                    "status": str(
+                        item.get("customer_status") or "active"
+                    ).strip(),
+                    "url": f"/pro/customers/{item['id']}",
+                }
+            )
+
+        vehicles = []
+
+        for row in vehicle_rows:
+            item = dict(row)
+
+            vehicle_name = " ".join(
+                str(item.get(key) or "").strip()
+                for key in ("year", "make", "model")
+                if str(item.get(key) or "").strip()
+            ).strip() or "Vehicle"
+
+            customer_label = " ".join(
+                part
+                for part in [
+                    str(item.get("first_name") or "").strip(),
+                    str(item.get("last_name") or "").strip(),
+                ]
+                if part
+            ).strip()
+
+            vehicle_details = [
+                customer_label,
+                f"VIN {item['vin']}" if item.get("vin") else "",
+                f"Plate {item['license_plate']}"
+                if item.get("license_plate")
+                else "",
+            ]
+
+            vehicles.append(
+                {
+                    "id": item["id"],
+                    "title": vehicle_name,
+                    "subtitle": " • ".join(
+                        part for part in vehicle_details if part
+                    ),
+                    "status": (
+                        "archived"
+                        if item.get("archived_at")
+                        else "active"
+                    ),
+                    "url": (
+                        f"/pro/customers/{item['customer_id']}"
+                        f"/vehicles/{item['id']}"
+                    ),
+                }
+            )
+
+        appointments = []
+
+        for row in appointment_rows:
+            item = dict(row)
+
+            vehicle_name = (
+                str(item.get("vehicle_label") or "").strip()
+                or " ".join(
+                    str(item.get(key) or "").strip()
+                    for key in (
+                        "vehicle_year",
+                        "vehicle_make",
+                        "vehicle_model",
+                    )
+                    if str(item.get(key) or "").strip()
+                ).strip()
+            )
+
+            subtitle_parts = [
+                vehicle_name,
+                str(item.get("service_name") or "").strip(),
+                format_pro_date(item.get("requested_date")),
+                format_pro_time(item.get("requested_time")),
+            ]
+
+            appointments.append(
+                {
+                    "id": item["id"],
+                    "title": (
+                        str(item.get("customer_name") or "").strip()
+                        or "Appointment"
+                    ),
+                    "subtitle": " • ".join(
+                        part for part in subtitle_parts if part
+                    ),
+                    "status": str(
+                        item.get("status") or ""
+                    ).strip(),
+                    "url": "/pro/calendar",
+                }
+            )
+
+        estimates = []
+
+        for row in estimate_rows:
+            item = dict(row)
+
+            subtitle_parts = [
+                str(item.get("customer_name") or "").strip(),
+                str(item.get("vehicle_label") or "").strip(),
+                str(item.get("related_title") or "").strip(),
+                format_currency(item.get("estimate_total")),
+                format_pro_date(item.get("estimate_date")),
+            ]
+
+            estimates.append(
+                {
+                    "id": item["id"],
+                    "title": f"Estimate #{item['id']}",
+                    "subtitle": " • ".join(
+                        part for part in subtitle_parts if part
+                    ),
+                    "status": str(
+                        item.get("approval_status") or "Prepared"
+                    ).strip(),
+                    "url": estimate_document_url(
+                        item["customer_id"],
+                        item["vehicle_id"],
+                        item["id"],
+                    ),
+                }
+            )
+
+
+        repairs = []
+
+        for row in repair_rows:
+            item = dict(row)
+
+            customer_label = " ".join(
+                part
+                for part in [
+                    str(item.get("first_name") or "").strip(),
+                    str(item.get("last_name") or "").strip(),
+                ]
+                if part
+            ).strip()
+
+            vehicle_label_value = " ".join(
+                str(item.get(key) or "").strip()
+                for key in ("year", "make", "model")
+                if str(item.get(key) or "").strip()
+            ).strip()
+
+            subtitle_parts = [
+                customer_label,
+                vehicle_label_value,
+                format_pro_date(item.get("repair_date")),
+                format_currency(item.get("total_cost")),
+            ]
+
+            repairs.append(
+                {
+                    "id": item["id"],
+                    "title": (
+                        str(item.get("repair_name") or "").strip()
+                        or f"Repair #{item['id']}"
+                    ),
+                    "subtitle": " • ".join(
+                        part for part in subtitle_parts if part
+                    ),
+                    "status": str(
+                        item.get("status") or "Open"
+                    ).strip(),
+                    "url": (
+                        f"/pro/customers/{item['customer_id']}"
+                        f"/vehicles/{item['vehicle_id']}"
+                        f"/repairs/{item['id']}"
+                    ),
+                }
+            )
+
+
+        invoices = []
+
+        for row in invoice_rows:
+            item = dict(row)
+
+            customer_label = " ".join(
+                part
+                for part in [
+                    str(item.get("first_name") or "").strip(),
+                    str(item.get("last_name") or "").strip(),
+                ]
+                if part
+            ).strip()
+
+            vehicle_label_value = " ".join(
+                str(item.get(key) or "").strip()
+                for key in ("year", "make", "model")
+                if str(item.get(key) or "").strip()
+            ).strip()
+
+            grand_total = float(item.get("grand_total") or 0)
+            amount_paid = float(item.get("amount_paid") or 0)
+            balance_due = max(grand_total - amount_paid, 0)
+
+            subtitle_parts = [
+                customer_label,
+                vehicle_label_value,
+                format_currency(grand_total),
+            ]
+
+            if balance_due > 0:
+                subtitle_parts.append(
+                    f"{format_currency(balance_due)} due"
+                )
+
+            invoices.append(
+                {
+                    "id": item["id"],
+                    "title": (
+                        str(item.get("invoice_number") or "").strip()
+                        or f"Invoice #{item['id']}"
+                    ),
+                    "subtitle": " • ".join(
+                        part for part in subtitle_parts if part
+                    ),
+                    "status": str(
+                        item.get("payment_status") or "Unpaid"
+                    ).strip(),
+                    "url": (
+                        f"/pro/customers/{item['customer_id']}"
+                        f"/vehicles/{item['vehicle_id']}"
+                        f"/invoices/{item['id']}"
+                    ),
+                }
+            )
+        return JSONResponse(
+            {
+                "query": search,
+                "groups": {
+                "customers": customers,
+                "vehicles": vehicles,
+                "appointments": appointments,
+                "estimates": estimates,
+                "repairs": repairs,
+                "invoices": invoices,
+            },
+            }
+        )
+
+    finally:
+        conn.close()
+
 @router.get("/estimate-approvals", response_class=HTMLResponse)
 def pro_estimate_approvals(
     request: Request,
