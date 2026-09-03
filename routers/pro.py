@@ -16175,19 +16175,19 @@ def pro_global_search(
             WHERE v.shop_id = ?
               AND c.shop_id = ?
               AND (
-                CAST(v.year AS TEXT) LIKE ?
-                OR v.make LIKE ?
-                OR v.model LIKE ?
-                OR v.vin LIKE ?
-                OR v.license_plate LIKE ?
-                OR (
-                  COALESCE(CAST(v.year AS TEXT), '')
-                  || ' '
-                  || COALESCE(v.make, '')
-                  || ' '
-                  || COALESCE(v.model, '')
+                LOWER(COALESCE(CAST(v.year AS TEXT), '')) LIKE ?
+                OR LOWER(COALESCE(v.make, '')) LIKE ?
+                OR LOWER(COALESCE(v.model, '')) LIKE ?
+                OR LOWER(COALESCE(v.vin, '')) LIKE ?
+                OR LOWER(COALESCE(v.license_plate, '')) LIKE ?
+                OR LOWER(
+                COALESCE(CAST(v.year AS TEXT), '')
+                || ' '
+                || COALESCE(v.make, '')
+                || ' '
+                || COALESCE(v.model, '')
                 ) LIKE ?
-              )
+            )
             ORDER BY
               COALESCE(v.updated_at, v.created_at) DESC,
               v.id DESC
@@ -16223,16 +16223,16 @@ def pro_global_search(
             FROM service_appointments a
             WHERE a.shop_id = ?
               AND (
-                a.customer_name LIKE ?
-                OR a.customer_phone LIKE ?
-                OR a.customer_email LIKE ?
-                OR a.vehicle_label LIKE ?
-                OR a.vehicle_year LIKE ?
-                OR a.vehicle_make LIKE ?
-                OR a.vehicle_model LIKE ?
-                OR a.service_name LIKE ?
-                OR a.requested_date LIKE ?
-              )
+                LOWER(COALESCE(a.customer_name, '')) LIKE ?
+                OR LOWER(COALESCE(a.customer_phone, '')) LIKE ?
+                OR LOWER(COALESCE(a.customer_email, '')) LIKE ?
+                OR LOWER(COALESCE(a.vehicle_label, '')) LIKE ?
+                OR LOWER(COALESCE(a.vehicle_year, '')) LIKE ?
+                OR LOWER(COALESCE(a.vehicle_make, '')) LIKE ?
+                OR LOWER(COALESCE(a.vehicle_model, '')) LIKE ?
+                OR LOWER(COALESCE(a.service_name, '')) LIKE ?
+                OR LOWER(COALESCE(a.requested_date, '')) LIKE ?
+            )
             ORDER BY
               a.requested_date DESC,
               a.requested_time DESC,
@@ -16277,10 +16277,10 @@ def pro_global_search(
             AND v.shop_id = ?
             AND (
                 CAST(red.id AS TEXT) LIKE ?
-                OR red.customer_name LIKE ?
-                OR red.vehicle_label LIKE ?
-                OR red.related_title LIKE ?
-                OR red.approval_status LIKE ?
+                OR LOWER(COALESCE(red.customer_name, '')) LIKE ?
+                OR LOWER(COALESCE(red.vehicle_label, '')) LIKE ?
+                OR LOWER(COALESCE(red.related_title, '')) LIKE ?
+                OR LOWER(COALESCE(red.approval_status, '')) LIKE ?
             )
             ORDER BY
             red.estimate_date DESC,
@@ -16326,15 +16326,15 @@ def pro_global_search(
             AND v.shop_id = ?
             AND (
                 CAST(rr.id AS TEXT) LIKE ?
-                OR rr.repair_name LIKE ?
-                OR rr.notes LIKE ?
-                OR rr.status LIKE ?
-                OR (
+                OR LOWER(COALESCE(rr.repair_name, '')) LIKE ?
+                OR LOWER(COALESCE(rr.notes, '')) LIKE ?
+                OR LOWER(COALESCE(rr.status, '')) LIKE ?
+                OR LOWER(
                 COALESCE(c.first_name, '')
                 || ' '
                 || COALESCE(c.last_name, '')
                 ) LIKE ?
-                OR (
+                OR LOWER(
                 COALESCE(CAST(v.year AS TEXT), '')
                 || ' '
                 || COALESCE(v.make, '')
@@ -16386,14 +16386,14 @@ def pro_global_search(
             AND v.shop_id = ?
             AND (
                 CAST(i.id AS TEXT) LIKE ?
-                OR i.invoice_number LIKE ?
-                OR i.payment_status LIKE ?
-                OR (
+                OR LOWER(COALESCE(i.invoice_number, '')) LIKE ?
+                OR LOWER(COALESCE(i.payment_status, '')) LIKE ?
+                OR LOWER(
                 COALESCE(c.first_name, '')
                 || ' '
                 || COALESCE(c.last_name, '')
                 ) LIKE ?
-                OR (
+                OR LOWER(
                 COALESCE(CAST(v.year AS TEXT), '')
                 || ' '
                 || COALESCE(v.make, '')
