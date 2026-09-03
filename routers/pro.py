@@ -16119,7 +16119,7 @@ def pro_global_search(
         ensure_invoices_schema(conn)
 
         shop_id = required_current_shop_id(conn, request)
-        like = f"%{search}%"
+        like = f"%{search.lower()}%"
 
         customer_rows = conn.execute(
             """
@@ -16133,12 +16133,12 @@ def pro_global_search(
             FROM customers c
             WHERE c.shop_id = ?
               AND (
-                c.first_name LIKE ?
-                OR c.last_name LIKE ?
-                OR c.phone LIKE ?
-                OR c.email LIKE ?
-                OR (
-                  COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')
+                LOWER(COALESCE(c.first_name, '')) LIKE ?
+                OR LOWER(COALESCE(c.last_name, '')) LIKE ?
+                OR LOWER(COALESCE(c.phone, '')) LIKE ?
+                OR LOWER(COALESCE(c.email, '')) LIKE ?
+                OR LOWER(
+                COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')
                 ) LIKE ?
               )
             ORDER BY
@@ -18955,7 +18955,7 @@ def pro_customers(
             params.append(status_filter)
 
         if search:
-            like = f"%{search}%"
+            like = f"%{search.lower()}%"
             conditions.append(
                 "(c.first_name LIKE ? "
                 "OR c.last_name LIKE ? "
