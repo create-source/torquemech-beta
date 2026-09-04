@@ -7658,11 +7658,12 @@ def home(request: Request):
 
 @app.get("/quick-find", response_class=HTMLResponse)
 def quick_find_page(request: Request):
+    metric_incr("page_quick_find")
     return templates.TemplateResponse(
         "quick_find_page.html",
         {
             "request": request,
-            "quick_find_items": [],
+            "quick_find_items": build_quick_find_items(),
         },
     )
 
