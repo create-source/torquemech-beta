@@ -23,6 +23,164 @@
     margin-bottom: 0;
   }
 
+  .tm-vehicle-workspace-header {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 8px;
+    background:
+      linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.96));
+    color: #f8fafc;
+    padding: 20px;
+    box-shadow: 0 18px 42px rgba(2, 6, 23, 0.18);
+  }
+
+  .tm-vehicle-workspace-header .tm-pro-eyebrow,
+  .tm-vehicle-workspace-header .tm-pro-subtitle {
+    color: #cbd5e1;
+  }
+
+  .tm-vehicle-workspace-header .tm-pro-title {
+    color: #ffffff;
+  }
+
+  .tm-vehicle-workspace-topline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .tm-vehicle-workspace-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .tm-vehicle-workspace-meta {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .tm-vehicle-workspace-meta-card {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.52);
+    padding: 12px;
+    min-width: 0;
+  }
+
+  .tm-vehicle-workspace-meta-card span {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.74rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-workspace-overview-card span {
+    display: block;
+    color: #475569;
+    font-size: 0.74rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-vehicle-workspace-meta-card strong {
+    display: block;
+    margin-top: 5px;
+    color: #ffffff;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-vehicle-workspace-status {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    border: 1px solid rgba(249, 115, 22, 0.4);
+    border-radius: 999px;
+    background: rgba(249, 115, 22, 0.14);
+    color: #fed7aa;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 6px 10px;
+    text-transform: uppercase;
+  }
+
+  .tm-workspace-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.96);
+    padding: 8px;
+    scrollbar-width: thin;
+  }
+
+  .tm-workspace-tab {
+    flex: 0 0 auto;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: #cbd5e1;
+    font-weight: 900;
+    line-height: 1;
+    padding: 11px 12px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .tm-workspace-tab:hover,
+  .tm-workspace-tab:focus-visible {
+    border-color: rgba(249, 115, 22, 0.5);
+    color: #ffffff;
+    outline: none;
+  }
+
+  .tm-workspace-tab.is-active {
+    border-color: rgba(249, 115, 22, 0.68);
+    background: rgba(249, 115, 22, 0.16);
+    color: #ffffff;
+  }
+
+  .tm-workspace-pane[hidden],
+  [data-workspace-pane][hidden] {
+    display: none !important;
+  }
+
+  .tm-workspace-overview {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tm-workspace-overview-card {
+    display: grid;
+    gap: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 16px;
+    min-width: 0;
+  }
+
+  .tm-workspace-overview-card strong {
+    color: #0f172a;
+    font-size: 1.05rem;
+  }
+
+  .tm-workspace-overview-card p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.45;
+    font-weight: 500;
+  }
+
   .tm-crm-chip-row {
     display: flex;
     gap: 10px;
@@ -3833,6 +3991,30 @@
     .tm-vehicle-delete-btn {
       width: 100%;
     }
+
+    .tm-vehicle-workspace-topline,
+    .tm-vehicle-workspace-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      justify-items: stretch;
+    }
+
+    .tm-vehicle-workspace-meta,
+    .tm-workspace-overview {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-workspace-tab {
+      min-height: 42px;
+      padding-inline: 10px;
+    }
+  }
+
+/* Vehicle Workspace overview readability */
+  .tm-pro-shell--vehicle .tm-workspace-overview-card p {
+    color: #334155 !important;
+    opacity: 1 !important;
+    font-weight: 600;
   }
 
 </style>
@@ -3841,16 +4023,66 @@
 
 {% block content %}
 <section class="tm-pro-shell tm-pro-shell--vehicle">
-  <div class="tm-pro-pagehead">
-    <div>
-      <div class="tm-pro-eyebrow">Internal Pro Area</div>
-      <h1 class="tm-pro-title">{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</h1>
-      <p class="tm-pro-subtitle">
-        {{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Unnamed Customer" }}
-      </p>
+  {% set workspace_active_repair_items = repair_workspace_groups.active|default([], true)|list %}
+  {% set workspace_in_progress_items = repair_workspace_groups.in_progress|default([], true)|list %}
+  {% set workspace_ready_to_complete_items = repair_workspace_groups.ready_to_complete|default([], true)|list %}
+  {% set workspace_ready_invoice_items = repair_workspace_groups.ready_for_invoice|default([], true)|list %}
+  {% set workspace_estimates = estimate_document_records|default([], true)|list %}
+  {% set workspace_invoices = invoice_records|default([], true)|list %}
+  {% set workspace_overdue_maintenance = namespace(count=0) %}
+  {% for record in maintenance_records %}
+    {% if record.maintenance_status_key in ["overdue", "due_soon"] %}
+      {% set workspace_overdue_maintenance.count = workspace_overdue_maintenance.count + 1 %}
+    {% endif %}
+  {% endfor %}
+  {% set vehicle_name = ((vehicle.year or "") ~ " " ~ (vehicle.make or "") ~ " " ~ (vehicle.model or "") ~ " " ~ (vehicle.trim or ""))|trim %}
+  {% set customer_name = (customer.first_name ~ " " ~ customer.last_name)|trim or "Unnamed Customer" %}
+  {% set workspace_status = "No active workflow" %}
+  {% if workspace_ready_invoice_items %}
+    {% set workspace_status = "Ready for invoice" %}
+  {% elif workspace_ready_to_complete_items %}
+    {% set workspace_status = "Ready to complete" %}
+  {% elif workspace_in_progress_items %}
+    {% set workspace_status = "Repair in progress" %}
+  {% elif workspace_active_repair_items %}
+    {% set workspace_status = "Repair workflow active" %}
+  {% elif findings_summary.open %}
+    {% set workspace_status = "Findings need attention" %}
+  {% elif workspace_estimates %}
+    {% set workspace_status = "Estimate activity" %}
+  {% endif %}
+
+  <header class="tm-vehicle-workspace-header" aria-label="Vehicle workspace header">
+    <div class="tm-vehicle-workspace-topline">
+      <div>
+        <div class="tm-pro-eyebrow">Vehicle Workspace</div>
+        <h1 class="tm-pro-title">{{ vehicle_name or "Vehicle" }}</h1>
+        <p class="tm-pro-subtitle">{{ customer_name }}</p>
+      </div>
+      <div class="tm-vehicle-workspace-actions">
+        <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}">Back to Customer</a>
+        <a class="tm-btn tm-btn-secondary" href="#vehicle-edit">Edit Vehicle</a>
+      </div>
     </div>
-    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}">Back to Customer</a>
-  </div>
+    <div class="tm-vehicle-workspace-meta" aria-label="Vehicle workspace facts">
+      <div class="tm-vehicle-workspace-meta-card">
+        <span>VIN</span>
+        <strong>{{ vehicle.vin or "Not recorded" }}</strong>
+      </div>
+      <div class="tm-vehicle-workspace-meta-card">
+        <span>Current Mileage</span>
+        <strong>{% if vehicle.mileage %}{{ vehicle.mileage|pro_miles }} miles{% else %}Not recorded{% endif %}</strong>
+      </div>
+      <div class="tm-vehicle-workspace-meta-card">
+        <span>Customer</span>
+        <strong>{{ customer_name }}</strong>
+      </div>
+      <div class="tm-vehicle-workspace-meta-card">
+        <span>Status</span>
+        <strong class="tm-vehicle-workspace-status">{{ workspace_status }}</strong>
+      </div>
+    </div>
+  </header>
 
   <section class="tm-crm-vehicle-summary" id="vehicle-information" aria-label="Vehicle summary">
     <div class="tm-crm-kicker">Vehicle</div>
@@ -3867,6 +4099,62 @@
     {% if vehicle.notes %}
     <div style="color:#475569;">{{ vehicle.notes }}</div>
     {% endif %}
+  </section>
+
+  <nav class="tm-workspace-nav" aria-label="Vehicle workspace navigation">
+    <a class="tm-workspace-tab is-active" href="#overview" data-workspace-tab="overview" aria-current="page">Overview</a>
+    <a class="tm-workspace-tab" href="#current-repair" data-workspace-tab="current-repair">Current Repair</a>
+    <a class="tm-workspace-tab" href="#findings" data-workspace-tab="findings">Findings</a>
+    <a class="tm-workspace-tab" href="#estimates" data-workspace-tab="estimates">Estimates</a>
+    <a class="tm-workspace-tab" href="#photos" data-workspace-tab="photos">Photos</a>
+    <a class="tm-workspace-tab" href="#maintenance" data-workspace-tab="maintenance">Maintenance</a>
+    <a class="tm-workspace-tab" href="#invoices" data-workspace-tab="invoices">Invoices</a>
+  </nav>
+
+  <section class="tm-crm-panel tm-workspace-pane" id="overview" data-workspace-pane="overview" aria-label="Vehicle workspace overview">
+    <div class="tm-crm-kicker">Overview</div>
+    <div class="tm-workspace-overview" style="margin-top:12px;">
+      <article class="tm-workspace-overview-card">
+        <span>Vehicle / Customer</span>
+        <strong>{{ vehicle_name or "Vehicle" }}</strong>
+        <p>{{ customer_name }}{% if vehicle.engine %} | {{ vehicle.engine|pro_engine_badge }}{% endif %}</p>
+        <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}">Open Customer</a>
+      </article>
+      <article class="tm-workspace-overview-card">
+        <span>Current Repair</span>
+        <strong>{{ workspace_active_repair_items|length }} active</strong>
+        <p>{{ workspace_status }}</p>
+        <a class="tm-btn tm-btn-secondary" href="#current-repair" data-workspace-jump="current-repair">Open Repair Workspace</a>
+      </article>
+      <article class="tm-workspace-overview-card">
+        <span>Findings</span>
+        <strong>{{ findings_summary.open }} need attention</strong>
+        <p>{{ findings_summary.approved }} approved, {{ findings_summary.declined }} declined or deferred.</p>
+        <a class="tm-btn tm-btn-secondary" href="#findings" data-workspace-jump="findings">Review Findings</a>
+      </article>
+      <article class="tm-workspace-overview-card">
+        <span>Estimates</span>
+        <strong>{{ workspace_estimates|length }} prepared</strong>
+        <p>{% if approval_summary.pending %}{{ approval_summary.pending }} approval{% if approval_summary.pending != 1 %}s{% endif %} pending.{% else %}No pending approval summary in the current data.{% endif %}</p>
+        <a class="tm-btn tm-btn-secondary" href="#estimates" data-workspace-jump="estimates">Open Estimates</a>
+      </article>
+      {% if maintenance_records %}
+      <article class="tm-workspace-overview-card">
+        <span>Maintenance</span>
+        <strong>{{ workspace_overdue_maintenance.count }} due or soon</strong>
+        <p>{{ maintenance_records|length }} tracked maintenance record{% if maintenance_records|length != 1 %}s{% endif %}.</p>
+        <a class="tm-btn tm-btn-secondary" href="#maintenance" data-workspace-jump="maintenance">Review Maintenance</a>
+      </article>
+      {% endif %}
+      {% if workspace_invoices %}
+      <article class="tm-workspace-overview-card">
+        <span>Invoices</span>
+        <strong>{{ workspace_invoices|length }} invoice{% if workspace_invoices|length != 1 %}s{% endif %}</strong>
+        <p>{{ workspace_ready_invoice_items|length }} completed repair{% if workspace_ready_invoice_items|length != 1 %}s{% endif %} ready for invoice.</p>
+        <a class="tm-btn tm-btn-secondary" href="#invoices" data-workspace-jump="invoices">Open Invoices</a>
+      </article>
+      {% endif %}
+    </div>
   </section>
 
   <details class="tm-crm-panel" id="vehicle-edit">
@@ -3941,7 +4229,7 @@
     
   </details>
 
-  <section class="tm-crm-panel" aria-label="Add finding or recommended work" style="margin-top:16px;">
+  <section class="tm-crm-panel tm-workspace-pane" aria-label="Add finding or recommended work" style="margin-top:16px;" data-workspace-pane="findings" hidden>
     <div class="tm-crm-kicker">Finding / Recommended Work</div>
     <details class="tm-crm-disclosure" style="margin-top:10px;">
       <summary>+ Add Finding / Recommended Work</summary>
@@ -3987,6 +4275,7 @@
             aria-expanded="false"
             aria-controls="before_inspection_photo_actions"
             data-photo-menu-toggle
+            data-photo-access-key="torquemech.photo_access_explained.before_inspection"
           >Add Photos</button>
 
           <div class="tm-photo-source-menu" id="before_inspection_photo_actions" data-photo-source-menu hidden>
@@ -4062,7 +4351,8 @@
     </details>
   </section>
 
-  <details class="tm-crm-panel" id="repair-workspace" aria-label="Repair workspace" style="margin-top:16px;" {% if estimate_conversion_success %}open{% endif %}>
+  <section class="tm-workspace-pane" id="current-repair" data-workspace-pane="current-repair" hidden>
+  <details class="tm-crm-panel" id="repair-workspace" aria-label="Repair workspace" style="margin-top:16px;" open>
     <summary class="tm-workspace-summary">
       <span class="tm-workspace-summary-title">
         <span>Repair Workspace</span>
@@ -4758,12 +5048,14 @@
     {% endif %}
 
     </div>
-  </details> 
+  </details>
+  </section>
+<section class="tm-workspace-pane" id="findings" data-workspace-pane="findings" hidden>
 <details class="tm-crm-panel"
          id="recommendations-findings"
          aria-label="Additional findings and recommended work"
          style="margin-top:16px;"
-         {% if finding_added_success %}open{% endif %}>
+         open>
       <summary class="tm-workspace-summary">
         <span class="tm-workspace-summary-title">
           <span>Additional Findings / Recommended Work</span>
@@ -4969,7 +5261,56 @@
       </div>
     </div>
   </details>
-  <details class="tm-crm-panel" id="maintenance" aria-label="Maintenance tracking" style="margin-top:16px;">
+</section>
+  <section class="tm-workspace-pane" id="estimates" data-workspace-pane="estimates" hidden>
+    <details class="tm-crm-panel" aria-label="Vehicle estimates" style="margin-top:16px;" open>
+      <summary class="tm-workspace-summary">
+        <span class="tm-workspace-summary-title">
+          <span>Estimates</span>
+          <strong>Estimates <span class="tm-timeline-count">({{ workspace_estimates|length }})</span></strong>
+        </span>
+      </summary>
+      <div class="tm-workspace-panel-body">
+        {% if estimate_email_notice %}
+        <div class="tm-history-empty" style="margin-bottom:12px; border-style:solid; background:#fffbeb; color:#92400e;" role="status">
+          {{ estimate_email_notice }}
+        </div>
+        {% endif %}
+        {% if workspace_estimates %}
+        <div class="tm-history-list">
+          {% for estimate in workspace_estimates %}
+          <article class="tm-history-item">
+            <div class="tm-history-head">
+              <div class="tm-history-title">{{ estimate.related_title or "Repair Estimate" }}</div>
+              <div class="tm-history-date">{{ estimate.estimate_date|pro_date if estimate.estimate_date else "No date" }}</div>
+            </div>
+            <div class="tm-finding-meta">
+              {% if estimate.estimate_total is not none %}<span class="tm-crm-chip">Estimate {{ estimate.estimate_total|pro_currency }}</span>{% endif %}
+              {% if estimate.approval_status %}<span class="tm-crm-chip">{{ estimate.approval_status }}</span>{% endif %}
+              {% if estimate.invoice_number %}<span class="tm-crm-chip">Invoice {{ estimate.invoice_number }}</span>{% endif %}
+            </div>
+            <div class="tm-repair-card-actions">
+              <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/estimates/{{ estimate.id }}/pdf">Open Estimate PDF</a>
+              {% if estimate.edit_url %}<a class="tm-btn tm-btn-secondary" href="{{ estimate.edit_url }}">Edit / Reopen Estimate</a>{% endif %}
+              {% if customer.email %}
+              <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/estimates/{{ estimate.id }}/email">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button class="tm-btn tm-btn-secondary" type="submit">Email Estimate</button>
+              </form>
+              {% else %}
+              <p class="tm-history-empty" style="margin:0;">Add a customer email address before emailing this estimate.</p>
+              {% endif %}
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="tm-history-empty" style="margin-top:12px;">No estimates have been prepared for this vehicle yet.</div>
+        {% endif %}
+      </div>
+    </details>
+  </section>
+  <details class="tm-crm-panel" id="maintenance" data-workspace-pane="maintenance" aria-label="Maintenance tracking" style="margin-top:16px;" hidden>
     <summary class="tm-workspace-summary">
       <span class="tm-workspace-summary-title">
         <span>Tracked Maintenance / Smart Reminders</span>
@@ -5114,7 +5455,7 @@
     </div>
   </details>
   
-  <details class="tm-crm-panel" id="vehicle-photos" aria-label="Vehicle photos" style="margin-top:16px;">
+  <details class="tm-crm-panel tm-workspace-pane" id="vehicle-photos" data-workspace-pane="photos" aria-label="Vehicle photos" style="margin-top:16px;" hidden>
     <summary class="tm-workspace-summary">
       <span class="tm-workspace-summary-title">
         <span>Vehicle Photos</span>
@@ -5156,6 +5497,49 @@
     </div>
   </details>
 
+  <section class="tm-workspace-pane" id="invoices" data-workspace-pane="invoices" hidden>
+    <details class="tm-crm-panel" aria-label="Vehicle invoices" style="margin-top:16px;" open>
+      <summary class="tm-workspace-summary">
+        <span class="tm-workspace-summary-title">
+          <span>Invoices</span>
+          <strong>Invoices <span class="tm-timeline-count">({{ workspace_invoices|length }})</span></strong>
+        </span>
+      </summary>
+      <div class="tm-workspace-panel-body">
+        {% if workspace_ready_invoice_items %}
+        <div class="tm-history-empty" style="margin-bottom:12px; border-style:solid; background:#fffbeb; color:#92400e;">
+          {{ workspace_ready_invoice_items|length }} completed repair{% if workspace_ready_invoice_items|length != 1 %}s are{% else %} is{% endif %} ready for invoice in Current Repair.
+        </div>
+        {% endif %}
+        {% if workspace_invoices %}
+        <div class="tm-history-list">
+          {% for invoice in workspace_invoices %}
+          <article class="tm-history-item">
+            <div class="tm-history-head">
+              <div class="tm-history-title">Invoice {{ invoice.invoice_number or invoice.id }}</div>
+              <div class="tm-history-date">{{ invoice.created_at|pro_date if invoice.created_at else "No date" }}</div>
+            </div>
+            <div class="tm-finding-meta">
+              {% if invoice.repair_name %}<span class="tm-crm-chip">{{ invoice.repair_name }}</span>{% endif %}
+              {% if invoice.service_count %}<span class="tm-crm-chip">{{ invoice.service_count }} service{% if invoice.service_count != 1 %}s{% endif %}</span>{% endif %}
+              {% if invoice.payment_status %}<span class="tm-crm-chip">{{ invoice.payment_status }}</span>{% endif %}
+              {% if invoice.grand_total is not none %}<span class="tm-crm-chip">Total {{ invoice.grand_total|pro_currency }}</span>{% endif %}
+            </div>
+            <div class="tm-repair-card-actions">
+              <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}">Open Invoice</a>
+              <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/edit">Edit Invoice</a>
+              <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/pdf">Open PDF</a>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="tm-history-empty" style="margin-top:12px;">No invoices have been created for this vehicle yet.</div>
+        {% endif %}
+      </div>
+    </details>
+  </section>
+
   {% set timeline_total = vehicle_timeline_total|default(0, true) %}
   {% if not timeline_total and vehicle_timeline %}
     {% set timeline_counter = namespace(total=0) %}
@@ -5168,7 +5552,7 @@
     {% endfor %}
     {% set timeline_total = timeline_counter.total %}
   {% endif %}
-  <details class="tm-crm-panel tm-crm-panel--timeline" id="vehicle-timeline" aria-label="Vehicle timeline" style="margin-top:16px;" data-vehicle-timeline-section data-timeline-limit="5" data-timeline-expanded="false">
+  <details class="tm-crm-panel tm-crm-panel--timeline tm-workspace-pane" id="vehicle-timeline" data-workspace-pane="overview" aria-label="Vehicle timeline" style="margin-top:16px;" data-vehicle-timeline-section data-timeline-limit="5" data-timeline-expanded="false">
     <summary class="tm-workspace-summary">
       <span class="tm-workspace-summary-title">
         <span>Vehicle Timeline</span>
@@ -5284,8 +5668,103 @@
   </details>
 </section>
 
+<div class="tm-photo-access-modal" data-photo-access-modal hidden>
+  <button class="tm-photo-access-backdrop" type="button" aria-label="Close photo access notice" data-photo-access-close></button>
+  <section class="tm-photo-access-dialog" role="dialog" aria-modal="true" aria-labelledby="photo-access-title">
+    <button class="tm-photo-access-close" type="button" aria-label="Close photo access notice" data-photo-access-close>x</button>
+    <div class="tm-photo-access-icon" aria-hidden="true">📷</div>
+    <h2 id="photo-access-title">Photo Access</h2>
+    <p>Choose camera or photo library access only when you are ready to attach inspection photos to this repair record.</p>
+    <p class="tm-photo-access-privacy">TorqueMech only saves photos after the finding form is submitted.</p>
+    <div class="tm-photo-access-actions">
+      <button class="tm-btn tm-btn-secondary" type="button" data-photo-access-close>Cancel</button>
+      <button class="tm-btn tm-btn-primary" type="button" data-photo-access-confirm>Continue</button>
+    </div>
+  </section>
+</div>
+
 
 <script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
+<script>
+(() => {
+  const hashToPane = {
+    "#overview": "overview",
+    "#current-repair": "current-repair",
+    "#repair-workspace": "current-repair",
+    "#findings": "findings",
+    "#recommendations-findings": "findings",
+    "#estimates": "estimates",
+    "#photos": "photos",
+    "#vehicle-photos": "photos",
+    "#maintenance": "maintenance",
+    "#invoices": "invoices",
+    "#vehicle-timeline": "overview"
+  };
+  const defaultPane = "overview";
+  const tabs = Array.from(document.querySelectorAll("[data-workspace-tab]"));
+  const panes = Array.from(document.querySelectorAll("[data-workspace-pane]"));
+
+  function paneFromHash(hash) {
+    return hashToPane[hash] || defaultPane;
+  }
+
+  function setActivePane(paneKey) {
+    const nextPane = paneKey || defaultPane;
+    panes.forEach((pane) => {
+      const active = pane.dataset.workspacePane === nextPane;
+      pane.hidden = !active;
+      if (active && pane.matches("details.tm-crm-panel")) {
+        pane.open = true;
+      }
+      if (active) {
+        pane.querySelectorAll(":scope > details.tm-crm-panel").forEach((details) => {
+          details.open = true;
+        });
+      }
+    });
+    tabs.forEach((tab) => {
+      const active = tab.dataset.workspaceTab === nextPane;
+      tab.classList.toggle("is-active", active);
+      if (active) {
+        tab.setAttribute("aria-current", "page");
+      } else {
+        tab.removeAttribute("aria-current");
+      }
+    });
+  }
+
+  function openHashTarget() {
+    const hash = window.location.hash;
+    if (!hash) return;
+    const id = hash.slice(1);
+    if (!id) return;
+    const target = document.getElementById(id);
+    if (!target) return;
+    if (target.matches("details")) {
+      target.open = true;
+    }
+    const parentDetails = target.closest("details");
+    if (parentDetails) {
+      parentDetails.open = true;
+    }
+    window.requestAnimationFrame(() => target.scrollIntoView({ block: "start" }));
+  }
+
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-workspace-tab], [data-workspace-jump]");
+    if (!trigger) return;
+    const paneKey = trigger.dataset.workspaceTab || trigger.dataset.workspaceJump || defaultPane;
+    setActivePane(paneKey);
+  });
+
+  window.addEventListener("hashchange", () => {
+    setActivePane(paneFromHash(window.location.hash));
+    openHashTarget();
+  });
+  setActivePane(paneFromHash(window.location.hash));
+  openHashTarget();
+})();
+</script>
 <script>
 (() => {
   document.querySelectorAll(".tm-workspace-summary").forEach((summary) => {
@@ -6283,7 +6762,63 @@
 <script>
 (() => {
   const MAX_PHOTOS = 5;
+  const photoAccessAcknowledgedKey = "torquemech.photo_access_explained.before_inspection";
+  const photoAccessModal = document.querySelector("[data-photo-access-modal]");
+  let pendingPhotoInput = null;
   const selectedPhotos = (picker) => picker._selectedPhotos || [];
+
+  function hasPhotoAccessAcknowledgment() {
+    try {
+      return window.localStorage?.getItem(photoAccessAcknowledgedKey) === "1";
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function recordPhotoAccessAcknowledgment() {
+    try {
+      window.localStorage?.setItem(photoAccessAcknowledgedKey, "1");
+    } catch (error) {
+      // Local storage is only used to avoid repeating the explanation.
+    }
+  }
+
+  function closePhotoAccessModal() {
+    if (!photoAccessModal) return;
+    photoAccessModal.hidden = true;
+    document.body.classList.remove("tm-photo-access-open");
+    pendingPhotoInput = null;
+  }
+
+  function openPhotoAccessModal(input) {
+    if (!photoAccessModal) {
+      input?.click();
+      return;
+    }
+    pendingPhotoInput = input;
+    photoAccessModal.hidden = false;
+    document.body.classList.add("tm-photo-access-open");
+  }
+
+  function requestPhotoInput(input) {
+    if (!input) return;
+    if (hasPhotoAccessAcknowledgment()) {
+      input.click();
+      return;
+    }
+    openPhotoAccessModal(input);
+  }
+
+  photoAccessModal?.querySelector("[data-photo-access-confirm]")?.addEventListener("click", () => {
+    const input = pendingPhotoInput;
+    recordPhotoAccessAcknowledgment();
+    input?.click();
+    closePhotoAccessModal();
+  });
+
+  photoAccessModal?.querySelectorAll("[data-photo-access-close]").forEach((button) => {
+    button.addEventListener("click", closePhotoAccessModal);
+  });
 
   function syncPhotoInputs(picker) {
     const inputs = Array.from(picker.querySelectorAll('input[type="file"][data-photo-source]'));
@@ -6395,7 +6930,7 @@
       if (menu) menu.hidden = true;
       if (toggleButton) toggleButton.setAttribute("aria-expanded", "false");
 
-      input?.click();
+      requestPhotoInput(input);
       return;
     }
 
