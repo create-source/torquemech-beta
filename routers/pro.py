@@ -18641,7 +18641,10 @@ async def pro_calendar_assignment_update(request: Request, appointment_id: int):
         )
     finally:
         conn.close()
-    return RedirectResponse("/pro/calendar?notice=assignment_saved", status_code=303)
+    return RedirectResponse(
+        f"/pro/calendar?notice=assignment_saved#assignment-{appointment_id}",
+        status_code=303,
+    )
 
 
 @router.post("/calendar/{appointment_id}/status")
