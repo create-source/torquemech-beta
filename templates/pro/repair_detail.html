@@ -549,6 +549,72 @@
       margin-top: 22px;
     }
 
+  .tm-repair-assignment {
+    display: grid;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border: 1px solid rgba(14, 116, 144, .22);
+    border-radius: 10px;
+    background: #ecfeff;
+  }
+
+  .tm-repair-assignment-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tm-repair-assignment-title {
+    color: #0f172a;
+    font-size: .82rem;
+    font-weight: 950;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .tm-repair-assignment-summary {
+    color: #0f766e;
+    font-size: .86rem;
+    font-weight: 950;
+  }
+
+  .tm-repair-assignment-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .tm-repair-assignment-item {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    padding: 9px 10px;
+    border: 1px solid rgba(15, 23, 42, .10);
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  .tm-repair-assignment-item span {
+    color: #526174;
+    font-size: .7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-repair-assignment-item strong {
+    color: #0f172a !important;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width:760px) {
+    .tm-repair-assignment-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
   @media (min-width:761px) {
     .tm-pro-shell--repair-detail {
       position: relative;
@@ -638,6 +704,24 @@
       {% if invoice %}<a class="tm-status-chip" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}">Invoiced: {{ invoice.invoice_number }}</a>{% else %}<span class="tm-status-chip">Not Invoiced</span>{% endif %}
       {% if repair.workflow_source_type == "estimate" %}<span class="tm-status-chip">Estimate</span>{% endif %}
     </div>
+
+    <section class="tm-repair-assignment" aria-label="Technician and service bay assignment">
+      <div class="tm-repair-assignment-head">
+        <span class="tm-repair-assignment-title">Assignment</span>
+        <span class="tm-repair-assignment-summary">{{ repair_assignment.assignment_label if repair_assignment else "Unassigned · No Bay" }}</span>
+      </div>
+      <div class="tm-repair-assignment-grid">
+        <div class="tm-repair-assignment-item">
+          <span>Technician</span>
+          <strong>{{ repair_assignment.technician_name if repair_assignment and repair_assignment.technician_name else "Unassigned" }}</strong>
+        </div>
+        <div class="tm-repair-assignment-item">
+          <span>Service Bay</span>
+          <strong>{{ repair_assignment.service_bay_name if repair_assignment and repair_assignment.service_bay_name else "No Bay" }}</strong>
+        </div>
+      </div>
+    </section>
+
     <div class="tm-repair-grid">
       <div class="tm-repair-field"><span>Repair Name</span><strong>{{ repair.repair_name or "-" }}</strong></div>
       <div class="tm-repair-field"><span>Repair Date</span><strong>{{ repair.repair_date|pro_date if repair.repair_date else "-" }}</strong></div>

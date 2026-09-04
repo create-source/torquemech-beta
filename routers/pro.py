@@ -1623,6 +1623,15 @@ def save_appointment_assignment(
     conn.commit()
 
 
+def service_bay_display_name(value: Any) -> str:
+    name = str(value or "").strip()
+    if not name:
+        return ""
+    if re.fullmatch(r"\d+[A-Za-z]?", name):
+        return f"Bay {name}"
+    return name
+
+
 def attach_appointment_assignment_labels(
     appointments: list[dict[str, Any]],
     technicians: list[dict[str, Any]],
@@ -1634,11 +1643,69 @@ def attach_appointment_assignment_labels(
         tech = tech_by_id.get(optional_int_value(appointment.get("technician_id")) or 0)
         bay = bay_by_id.get(optional_int_value(appointment.get("service_bay_id")) or 0)
         appointment["technician_name"] = str((tech or {}).get("name") or "").strip()
-        appointment["service_bay_name"] = str((bay or {}).get("name") or "").strip()
+        appointment["service_bay_name"] = service_bay_display_name((bay or {}).get("name"))
         appointment["assignment_label"] = " · ".join(
             part for part in [appointment["technician_name"], appointment["service_bay_name"]] if part
         ) or "Unassigned · No Bay"
     return appointments
+
+
+def load_repair_assignment_context(
+    conn: sqlite3.Connection,
+    *,
+    repair_id: int,
+    customer_id: int,
+    vehicle_id: int,
+    shop_id: int | None,
+) -> dict[str, Any]:
+    ensure_calendar_schema(conn)
+    where_sql, params = shop_scope_where(shop_id, "sa.shop_id")
+    row = conn.execute(
+        f"""
+        SELECT
+          sa.id AS appointment_id,
+          sa.technician_id,
+          sa.service_bay_id,
+          t.name AS technician_name,
+          sb.name AS service_bay_name
+        FROM service_appointments sa
+        LEFT JOIN technicians t
+          ON t.id = sa.technician_id
+         AND t.shop_id = sa.shop_id
+        LEFT JOIN service_bays sb
+          ON sb.id = sa.service_bay_id
+         AND sb.shop_id = sa.shop_id
+        WHERE sa.repair_id = ?
+          AND sa.customer_id = ?
+          AND sa.vehicle_id = ?
+          AND {where_sql}
+        ORDER BY sa.updated_at DESC, sa.id DESC
+        LIMIT 1
+        """,
+        [repair_id, customer_id, vehicle_id, *params],
+    ).fetchone()
+    if not row:
+        return {
+            "appointment_id": None,
+            "technician_id": None,
+            "service_bay_id": None,
+            "technician_name": "",
+            "service_bay_name": "",
+            "assignment_label": "Unassigned · No Bay",
+        }
+    assignment = dict(row)
+    assignment["technician_name"] = str(assignment.get("technician_name") or "").strip()
+    assignment["service_bay_name"] = service_bay_display_name(assignment.get("service_bay_name"))
+    assignment["assignment_label"] = " · ".join(
+        part
+        for part in [
+            assignment["technician_name"],
+            assignment["service_bay_name"],
+        ]
+        if part
+    ) or "Unassigned · No Bay"
+    return assignment
+
 
 def default_shop_availability_rows() -> list[dict[str, Any]]:
     return [
@@ -14203,11 +14270,11 @@ def build_today_schedule_cards(
                 "vehicle_label": vehicle_text,
                 "service_name": service_text,
                 "technician_name": str(appointment.get("technician_name") or "").strip(),
-                "service_bay_name": str(appointment.get("service_bay_name") or "").strip(),
+                "service_bay_name": service_bay_display_name(appointment.get("service_bay_name")),
                 "assignment_label": " · ".join(
                     part for part in [
                         str(appointment.get("technician_name") or "").strip(),
-                        str(appointment.get("service_bay_name") or "").strip(),
+                        service_bay_display_name(appointment.get("service_bay_name")),
                     ] if part
                 ) or "Unassigned · No Bay",
                 "status": status,
@@ -22424,6 +22491,13 @@ def pro_repair_record_detail(
                 for record in load_repair_intelligence_seed_records()
                 if repair_intelligence_matches_repair(record, repair.get("repair_name"))
             ]
+        repair_assignment = load_repair_assignment_context(
+            conn,
+            repair_id=repair_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            shop_id=current_shop_id(conn, request),
+        )
     finally:
         conn.close()
 
@@ -22451,6 +22525,7 @@ def pro_repair_record_detail(
             "completion_warnings": [],
             "repair_intelligence_records": repair_intelligence_records,
             "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
+            "repair_assignment": repair_assignment,
             "csrf_token": optional_csrf_token(request),
             "repair_saved_success": saved == "1",
         },
@@ -23285,6 +23360,13 @@ def completion_detail_context(
     invoice_warnings = repair_invoice_warnings(repair) if not invoice else []
     completion_progress = repair_completion_progress(completion)
     source_finding = load_repair_source_finding_for_detail(conn, repair, customer_id, vehicle_id)
+    repair_assignment = load_repair_assignment_context(
+        conn,
+        repair_id=repair_id,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+        shop_id=current_shop_id(conn, request),
+    )
     repair_intelligence_records = load_repair_intelligence_for_repair(
         conn,
         vehicle,
@@ -23314,6 +23396,7 @@ def completion_detail_context(
         "completion_warnings": completion_warnings or [],
         "repair_intelligence_records": repair_intelligence_records,
         "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
+        "repair_assignment": repair_assignment,
         "csrf_token": optional_csrf_token(request),
         "repair_saved_success": False,
     }
