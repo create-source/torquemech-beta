@@ -654,11 +654,10 @@
         <button
           class="tm-btn tm-btn-secondary"
           type="button"
-          data-share-customer-review
-          data-share-url="{{ customer_review_url }}"
-          hidden
+          data-text-customer-review
+          data-customer-phone="{{ customer.phone or '' }}"
         >
-          Share Message + Link
+          Text Customer
         </button>
 
         <button class="tm-btn tm-btn-secondary" type="button" data-copy-customer-review data-copy-kind="message">
@@ -838,36 +837,37 @@
     textarea.remove();
     return copied;
   }
-  const customerReviewShareButton = document.querySelector(
-    "[data-share-customer-review]"
+  const customerReviewTextButton = document.querySelector(
+    "[data-text-customer-review]"
   );
 
-  if (customerReviewShareButton && navigator.share) {
-    customerReviewShareButton.hidden = false;
-
-    customerReviewShareButton.addEventListener("click", async () => {
+  if (customerReviewTextButton) {
+    customerReviewTextButton.addEventListener("click", () => {
       const status = document.querySelector(
         "[data-copy-customer-review-status]"
       );
       const messageEl = document.querySelector(
         "[data-customer-review-message]"
       );
-      const url = customerReviewShareButton.dataset.shareUrl || "";
       const fullMessage = messageEl?.value || "";
-      const messageWithoutUrl = fullMessage.replace(url, "").trim();
+      const phone = String(customerReviewTextButton.dataset.customerPhone || "")
+        .replace(/\D/g, "");
 
-      try {
-        await navigator.share({
-          title: "TorqueMech Customer Review",
-          text: messageWithoutUrl,
-          url: url
-        });
-      } catch (error) {
-        if (error?.name !== "AbortError" && status) {
+      if (!fullMessage) {
+        if (status) {
           status.hidden = false;
-          status.textContent = "Unable to share. Please try again.";
+          status.textContent = "Customer message is unavailable.";
         }
+        return;
       }
+
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+        || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const separator = isIOS ? "&" : "?";
+      const recipient = phone ? phone : "";
+      const smsUrl = `sms:${recipient}${separator}body=${encodeURIComponent(fullMessage)}`;
+
+      window.location.href = smsUrl;
     });
   }
 
