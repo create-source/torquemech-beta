@@ -7519,9 +7519,60 @@ def build_platform_sections(current_href: str = "") -> List[Dict[str, str]]:
 
     return [section for section in sections if section.get("href") != current_href]
 
-def build_quick_find_items() -> List[Dict[str, str]]:
-    items: List[Dict[str, str]] = []
+def build_quick_find_items() -> List[Dict[str, Any]]:
+    items: List[Dict[str, Any]] = []
     seen_hrefs: set[str] = set()
+
+    def clean_text_list(values: Any, limit: int = 4) -> List[str]:
+        if not isinstance(values, list):
+            return []
+
+        cleaned: List[str] = []
+        for value in values:
+            if isinstance(value, dict):
+                text = str(
+                    value.get("title")
+                    or value.get("name")
+                    or value.get("code")
+                    or value.get("label")
+                    or ""
+                ).strip()
+            else:
+                text = str(value or "").strip()
+
+            if text and text not in cleaned:
+                cleaned.append(text)
+
+            if len(cleaned) >= limit:
+                break
+
+        return cleaned
+
+    def related_code_labels(values: Any, limit: int = 4) -> List[str]:
+        if not isinstance(values, list):
+            return []
+
+        results: List[str] = []
+
+        for value in values:
+            if isinstance(value, dict):
+                code = str(value.get("code") or "").strip().upper()
+                title = str(value.get("title") or "").strip()
+
+                if code and title:
+                    label = f"{code} — {title}"
+                else:
+                    label = code or title
+            else:
+                label = str(value or "").strip()
+
+            if label and label not in results:
+                results.append(label)
+
+            if len(results) >= limit:
+                break
+
+        return results
 
     def add_item(
         *,
@@ -7531,12 +7582,19 @@ def build_quick_find_items() -> List[Dict[str, str]]:
         subtitle: str = "",
         code: str = "",
         keywords: str = "",
+        likely_involved: Any = None,
+        diagnostic_directions: Any = None,
+        related_codes: Any = None,
+        related_symptoms: Any = None,
+        related_repairs: Any = None,
     ) -> None:
         href = str(href or "").strip()
+
         if not href or href in seen_hrefs:
             return
 
         seen_hrefs.add(href)
+
         items.append(
             {
                 "href": href,
@@ -7544,6 +7602,32 @@ def build_quick_find_items() -> List[Dict[str, str]]:
                 "title": str(title or "").strip(),
                 "subtitle": str(subtitle or "").strip(),
                 "code": str(code or "").strip().lower(),
+
+                "likely_involved": clean_text_list(
+                    likely_involved or [],
+                    limit=4,
+                ),
+
+                "diagnostic_directions": clean_text_list(
+                    diagnostic_directions or [],
+                    limit=3,
+                ),
+
+                "related_codes": related_code_labels(
+                    related_codes or [],
+                    limit=4,
+                ),
+
+                "related_symptoms": clean_text_list(
+                    related_symptoms or [],
+                    limit=4,
+                ),
+
+                "related_repairs": clean_text_list(
+                    related_repairs or [],
+                    limit=4,
+                ),
+
                 "search": " ".join(
                     filter(
                         None,
@@ -7558,22 +7642,38 @@ def build_quick_find_items() -> List[Dict[str, str]]:
             }
         )
 
+    # ---------------------------------------------------------
+    # OBD codes
+    # ---------------------------------------------------------
+
     if OBD_SEED_JSON_PATH.exists():
         try:
-            obd_data = json.loads(OBD_SEED_JSON_PATH.read_text(encoding="utf-8-sig"))
+            obd_data = json.loads(
+                OBD_SEED_JSON_PATH.read_text(encoding="utf-8-sig")
+            )
         except Exception:
             obd_data = {}
 
         if isinstance(obd_data, dict):
             for raw_code, item in sorted(obd_data.items()):
-                code = "".join(ch for ch in str(raw_code or "").upper() if ch.isalnum())[:7]
+                code = "".join(
+                    ch
+                    for ch in str(raw_code or "").upper()
+                    if ch.isalnum()
+                )[:7]
+
                 if len(code) < 4:
                     continue
 
-                title = str((item or {}).get("title") or "").strip()
-                description = str((item or {}).get("description") or "").strip()
+                item = item if isinstance(item, dict) else {}
+
+                title = str(item.get("title") or "").strip()
+                description = str(item.get("description") or "").strip()
+
                 if not title:
                     continue
+
+                knowledge = build_obd_knowledge_sections(code)
 
                 add_item(
                     href=f"/obd/{code.lower()}",
@@ -7581,14 +7681,47 @@ def build_quick_find_items() -> List[Dict[str, str]]:
                     title=code,
                     subtitle=title,
                     code=code,
-                    keywords=description,
+                    keywords=" ".join(
+                        filter(
+                            None,
+                            [
+                                description,
+                                " ".join(knowledge.get("causes") or []),
+                                " ".join(
+                                    knowledge.get("diagnostic_steps") or []
+                                ),
+                                " ".join(
+                                    knowledge.get("symptoms") or []
+                                ),
+                                " ".join(
+                                    knowledge.get("related_codes") or []
+                                ),
+                            ],
+                        )
+                    ),
+                    likely_involved=knowledge.get("causes") or [],
+                    diagnostic_directions=knowledge.get(
+                        "diagnostic_steps"
+                    )
+                    or [],
+                    related_codes=knowledge.get("related_codes") or [],
+                    related_symptoms=knowledge.get("symptoms") or [],
                 )
+
+    # ---------------------------------------------------------
+    # Repair cost / component entries
+    # ---------------------------------------------------------
 
     for guide in build_repair_cost_guide_cards():
         href = str(guide.get("href") or "").strip()
         title = str(guide.get("title") or "").strip()
         description = str(guide.get("description") or "").strip()
-        slug_keywords = href.removeprefix("/cost/").replace("-", " ")
+
+        slug_keywords = (
+            href.removeprefix("/cost/")
+            .replace("-", " ")
+        )
+
         add_item(
             href=href,
             item_type="Cost Guide",
@@ -7597,47 +7730,159 @@ def build_quick_find_items() -> List[Dict[str, str]]:
             keywords=slug_keywords,
         )
 
+    # ---------------------------------------------------------
+    # Symptoms
+    # ---------------------------------------------------------
+
     repair_guides = load_normalized_repair_guides_map()
+
     for entry in load_symptom_entries(repair_guides):
         add_item(
-            href=str(entry.get("detail_href") or f"/symptoms/{entry.get('slug', '')}").strip(),
+            href=str(entry.get("detail_href") or ""),
             item_type="Symptom",
             title=str(entry.get("title") or "").strip(),
             subtitle=str(entry.get("summary") or "").strip(),
+
             keywords=" ".join(
                 filter(
                     None,
                     [
                         str(entry.get("system") or "").strip(),
-                        " ".join(entry.get("possible_causes") or []),
-                        " ".join(entry.get("common_sounds") or []),
-                        " ".join(item.get("code") or "" for item in entry.get("related_obd_codes") or []),
-                        " ".join(item.get("title") or "" for item in entry.get("recommended_repairs") or []),
-                        str(entry.get("slug") or "").replace("-", " "),
+
+                        " ".join(
+                            entry.get("possible_causes") or []
+                        ),
+
+                        " ".join(
+                            entry.get("common_sounds") or []
+                        ),
+
+                        " ".join(
+                            item.get("code") or ""
+                            for item in entry.get(
+                                "related_obd_codes"
+                            )
+                            or []
+                            if isinstance(item, dict)
+                        ),
+
+                        " ".join(
+                            item.get("title") or ""
+                            for item in entry.get(
+                                "recommended_repairs"
+                            )
+                            or []
+                            if isinstance(item, dict)
+                        ),
+
+                        str(entry.get("slug") or "")
+                        .replace("-", " "),
                     ],
                 )
             ),
+
+            likely_involved=entry.get("possible_causes") or [],
+
+            diagnostic_directions=(
+                entry.get("quick_checks")
+                or entry.get("diagnostic_paths")
+                or []
+            ),
+
+            related_codes=entry.get("related_obd_codes") or [],
+
+            related_symptoms=entry.get("related_symptoms") or [],
+
+            related_repairs=(
+                entry.get("recommended_repairs")
+                or entry.get("related_repair_guides")
+                or []
+            ),
         )
 
-    for slug, guide in sorted(repair_guides.items(), key=lambda item: item[0]):
+    # ---------------------------------------------------------
+    # Repair guides / components
+    # ---------------------------------------------------------
+
+    for slug, guide in sorted(
+        repair_guides.items(),
+        key=lambda item: item[0],
+    ):
         add_item(
             href=f"/repair-guides/{slug}",
             item_type="Repair Guide",
-            title=str(guide.get("title") or slug.replace("-", " ").title()).strip(),
-            subtitle=str(guide.get("summary") or "").strip(),
+
+            title=str(
+                guide.get("title")
+                or slug.replace("-", " ").title()
+            ).strip(),
+
+            subtitle=str(
+                guide.get("summary") or ""
+            ).strip(),
+
             keywords=" ".join(
                 filter(
                     None,
                     [
-                        str(guide.get("category") or "").strip(),
-                        str(guide.get("subcategory") or "").strip(),
-                        " ".join(guide.get("symptoms") or []),
-                        " ".join(guide.get("likely_causes") or []),
-                        " ".join(guide.get("testing_approach") or []),
-                        " ".join(item.get("code") or "" for item in guide.get("related_obd_codes") or []),
+                        str(
+                            guide.get("category") or ""
+                        ).strip(),
+
+                        str(
+                            guide.get("subcategory") or ""
+                        ).strip(),
+
+                        " ".join(
+                            guide.get("symptoms") or []
+                        ),
+
+                        " ".join(
+                            guide.get("likely_causes") or []
+                        ),
+
+                        " ".join(
+                            guide.get("testing_approach") or []
+                        ),
+
+                        " ".join(
+                            item.get("code") or ""
+                            for item in guide.get(
+                                "related_obd_codes"
+                            )
+                            or []
+                            if isinstance(item, dict)
+                        ),
+
                         slug.replace("-", " "),
                     ],
                 )
+            ),
+
+            likely_involved=(
+                guide.get("likely_causes")
+                or guide.get("related_systems")
+                or []
+            ),
+
+            diagnostic_directions=(
+                guide.get("testing_approach")
+                or guide.get("inspection_priority")
+                or []
+            ),
+
+            related_codes=guide.get("related_obd_codes") or [],
+
+            related_symptoms=(
+                guide.get("related_symptoms")
+                or guide.get("symptoms")
+                or []
+            ),
+
+            related_repairs=(
+                guide.get("recommended_repairs")
+                or guide.get("bundled_repair_suggestions")
+                or []
             ),
         )
 

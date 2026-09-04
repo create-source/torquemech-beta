@@ -134,35 +134,97 @@
     return "Open →";
   }
 
-  function renderResults(resultsNode, results) {
-    resultsNode.innerHTML = results
-      .map(function (item) {
-        return (
-          '<a class="tm-quick-find__result" href="' +
-          item.href +
+  function escapeHtml(value) {
+  return (value || "")
+    .toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function renderPreviewList(label, items) {
+  if (!Array.isArray(items) || !items.length) {
+    return "";
+  }
+
+  return (
+    '<div class="tm-quick-find__preview">' +
+      '<div class="tm-quick-find__preview-label">' +
+        escapeHtml(label) +
+      "</div>" +
+
+      '<ul class="tm-quick-find__preview-list">' +
+        items
+          .slice(0, 3)
+          .map(function (item) {
+            return "<li>" + escapeHtml(item) + "</li>";
+          })
+          .join("") +
+      "</ul>" +
+    "</div>"
+  );
+}
+
+function renderResults(resultsNode, results) {
+  resultsNode.innerHTML = results
+    .map(function (item) {
+      const related = []
+        .concat(item.related_codes || [])
+        .concat(item.related_symptoms || [])
+        .concat(item.related_repairs || [])
+        .slice(0, 4);
+
+      return (
+        '<article class="tm-quick-find__result">' +
+
+          '<a class="tm-quick-find__result-main" href="' +
+            escapeHtml(item.href) +
           '">' +
+
             '<div class="tm-quick-find__result-type">' +
-              (item.type || "Diagnostic Result") +
+              escapeHtml(item.type || "Diagnostic Result") +
             "</div>" +
 
             '<div class="tm-quick-find__result-title">' +
-              (item.title || "") +
+              escapeHtml(item.title || "") +
             "</div>" +
 
             (item.subtitle
               ? '<p class="tm-quick-find__result-subtitle">' +
-                  item.subtitle +
+                  escapeHtml(item.subtitle) +
                 "</p>"
               : "") +
 
-            '<div class="tm-quick-find__result-footer">' +
-              resultActionLabel(item) +
-            "</div>" +
-          "</a>"
-        );
-      })
-      .join("");
-  }
+          "</a>" +
+
+          renderPreviewList(
+            "Likely involved",
+            item.likely_involved
+          ) +
+
+          renderPreviewList(
+            "Common diagnostic directions",
+            item.diagnostic_directions
+          ) +
+
+          renderPreviewList(
+            "Related",
+            related
+          ) +
+
+          '<a class="tm-quick-find__result-footer" href="' +
+            escapeHtml(item.href) +
+          '">' +
+            resultActionLabel(item) +
+          "</a>" +
+
+        "</article>"
+      );
+    })
+    .join("");
+}
 
   function initQuickFind(root) {
     const dataNode = root.querySelector("[data-quick-find-index]");
