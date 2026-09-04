@@ -134,6 +134,38 @@
     return "Open →";
   }
 
+  function escapeHtml(value) {
+    return (value || "")
+      .toString()
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function renderPreviewList(label, items) {
+    if (!Array.isArray(items) || !items.length) {
+      return "";
+    }
+
+    return (
+      '<div class="tm-quick-find__preview">' +
+        '<div class="tm-quick-find__preview-label">' +
+          escapeHtml(label) +
+        "</div>" +
+        '<ul class="tm-quick-find__preview-list">' +
+          items
+            .slice(0, 3)
+            .map(function (item) {
+              return "<li>" + escapeHtml(item) + "</li>";
+            })
+            .join("") +
+        "</ul>" +
+      "</div>"
+    );
+  }
+
   function renderResults(resultsNode, results) {
     if (!results.length) {
       resultsNode.innerHTML = "";
