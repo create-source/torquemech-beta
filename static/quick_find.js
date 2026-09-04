@@ -9,29 +9,129 @@
       .replace(/\s+/g, " ");
   }
 
+  function queryWords(term) {
+    return normalize(term)
+      .split(" ")
+      .filter(function (word) {
+        return word.length >= 2;
+      });
+  }
+
   function scoreItem(item, term) {
+    const normalizedTerm = normalize(term);
+    const words = queryWords(normalizedTerm);
+
     const search = normalize(item.search || "");
     const title = normalize(item.title || "");
     const subtitle = normalize(item.subtitle || "");
     const code = normalize(item.code || "");
 
-    if (!term || !(search.includes(term) || title.includes(term) || subtitle.includes(term) || code === term)) {
+    const combined = [code, title, subtitle, search]
+      .filter(Boolean)
+      .join(" ");
+
+    if (!normalizedTerm) {
       return -1;
     }
 
     let score = 0;
-    if (code && term === code) score += 1000;
-    if (title === term) score += 700;
-    if (title.startsWith(term)) score += 300;
-    if (code && code.startsWith(term)) score += 260;
-    if (title.includes(term)) score += 180;
-    if (subtitle.includes(term)) score += 100;
-    if (search.includes(term)) score += 60;
 
-    if (item.type === "Cost Guide" && title.includes(term)) score += 35;
-    if (item.type === "OBD Code" && code && code.startsWith(term)) score += 25;
+    // Exact DTC always wins.
+    if (code && normalizedTerm === code) {
+      score += 2000;
+    }
+
+    // Exact title / component / symptom.
+    if (title === normalizedTerm) {
+      score += 1500;
+    }
+
+    // Strong prefix matches.
+    if (code && code.startsWith(normalizedTerm)) {
+      score += 1000;
+    }
+
+    if (title.startsWith(normalizedTerm)) {
+      score += 850;
+    }
+
+    // Exact phrase anywhere in the record.
+    if (title.includes(normalizedTerm)) {
+      score += 650;
+    }
+
+    if (subtitle.includes(normalizedTerm)) {
+      score += 450;
+    }
+
+    if (search.includes(normalizedTerm)) {
+      score += 350;
+    }
+
+    // Multi-word matching.
+    if (words.length) {
+      const matchedWords = words.filter(function (word) {
+        return combined.includes(word);
+      });
+
+      if (!matchedWords.length) {
+        return -1;
+      }
+
+      if (matchedWords.length === words.length) {
+        score += 300;
+      } else {
+        score += matchedWords.length * 60;
+      }
+
+      // Favor records where every query word appears in the title.
+      const titleWordMatches = words.filter(function (word) {
+        return title.includes(word);
+      });
+
+      if (titleWordMatches.length === words.length) {
+        score += 250;
+      }
+    }
+
+    // Search-type priorities.
+    if (item.type === "OBD Code") {
+      score += 80;
+    }
+
+    if (item.type === "Symptom") {
+      score += 60;
+    }
+
+    if (item.type === "Repair Guide") {
+      score += 45;
+    }
+
+    if (item.type === "Cost Guide") {
+      score += 20;
+    }
 
     return score;
+  }
+
+  function resultActionLabel(item) {
+    if (item.type === "OBD Code") {
+      return "Open Code →";
+    }
+
+    if (item.type === "Symptom") {
+      return "Open Diagnostic Path →";
+    }
+
+    if (item.type === "Repair Guide") {
+      return "Open Repair Guide →";
+    }
+
+    if (item.type === "Cost Guide") {
+      return "View Repair Details →";
+    }
+
+    return "Open →";
   }
 
   function renderResults(resultsNode, results) {
@@ -41,16 +141,23 @@
           '<a class="tm-quick-find__result" href="' +
           item.href +
           '">' +
-          '<div class="tm-quick-find__result-type">' +
-          item.type +
-          "</div>" +
-          '<div class="tm-quick-find__result-title">' +
-          item.title +
-          "</div>" +
-          (item.subtitle
-            ? '<p class="tm-quick-find__result-subtitle">' + item.subtitle + "</p>"
-            : "") +
-          '<div class="tm-quick-find__result-footer">Open page →</div>' +
+            '<div class="tm-quick-find__result-type">' +
+              (item.type || "Diagnostic Result") +
+            "</div>" +
+
+            '<div class="tm-quick-find__result-title">' +
+              (item.title || "") +
+            "</div>" +
+
+            (item.subtitle
+              ? '<p class="tm-quick-find__result-subtitle">' +
+                  item.subtitle +
+                "</p>"
+              : "") +
+
+            '<div class="tm-quick-find__result-footer">' +
+              resultActionLabel(item) +
+            "</div>" +
           "</a>"
         );
       })
@@ -61,14 +168,28 @@
     const dataNode = root.querySelector("[data-quick-find-index]");
     const inputWrap = root.querySelector(".quick-find-input-wrap");
     const input = inputWrap ? inputWrap.querySelector("input") : null;
-    const clearButton = inputWrap ? inputWrap.querySelector(":scope > .quick-find-clear") : null;
+    const clearButton = inputWrap
+      ? inputWrap.querySelector(":scope > .quick-find-clear")
+      : null;
+
     const form = root.querySelector(".tm-quick-find__form");
     const resultsNode = root.querySelector("[data-quick-find-results]");
     const emptyNode = root.querySelector("[data-quick-find-empty]");
 
-    if (!dataNode || !inputWrap || !input || !clearButton || !form || !resultsNode || !emptyNode) return;
+    if (
+      !dataNode ||
+      !inputWrap ||
+      !input ||
+      !clearButton ||
+      !form ||
+      !resultsNode ||
+      !emptyNode
+    ) {
+      return;
+    }
 
     let items = [];
+
     try {
       items = JSON.parse(dataNode.textContent || "[]");
     } catch (error) {
@@ -77,9 +198,8 @@
 
     function search(term) {
       const normalizedTerm = normalize(term);
-      if (clearButton) {
-        clearButton.hidden = !input.value.trim();
-      }
+
+      clearButton.hidden = !input.value.trim();
 
       if (normalizedTerm.length < 2) {
         resultsNode.hidden = true;
@@ -90,16 +210,24 @@
 
       const ranked = items
         .map(function (item) {
-          return { item: item, score: scoreItem(item, normalizedTerm) };
+          return {
+            item: item,
+            score: scoreItem(item, normalizedTerm),
+          };
         })
         .filter(function (entry) {
           return entry.score >= 0;
         })
         .sort(function (left, right) {
-          if (right.score !== left.score) return right.score - left.score;
-          return (left.item.title || "").localeCompare(right.item.title || "");
+          if (right.score !== left.score) {
+            return right.score - left.score;
+          }
+
+          return (left.item.title || "").localeCompare(
+            right.item.title || ""
+          );
         })
-        .slice(0, 8)
+        .slice(0, 10)
         .map(function (entry) {
           return entry.item;
         });
@@ -114,6 +242,7 @@
       renderResults(resultsNode, ranked);
       resultsNode.hidden = false;
       emptyNode.hidden = true;
+
       return ranked;
     }
 
@@ -121,22 +250,29 @@
       search(input.value);
     });
 
-    if (clearButton) {
-      clearButton.addEventListener("click", function () {
-        input.value = "";
-        search("");
-        input.focus();
-      });
-    }
+    clearButton.addEventListener("click", function () {
+      input.value = "";
+      search("");
+      input.focus();
+    });
 
     form.addEventListener("submit", function (event) {
       event.preventDefault();
-      const results = search(input.value);
-      if (results.length) {
-        window.location.href = results[0].href;
+
+      // Do NOT automatically open the first result.
+      // Let the technician review the diagnostic choices.
+      search(input.value);
+
+      if (!resultsNode.hidden) {
+        resultsNode.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
       }
     });
   }
 
-  document.querySelectorAll("[data-quick-find]").forEach(initQuickFind);
+  document
+    .querySelectorAll("[data-quick-find]")
+    .forEach(initQuickFind);
 })();
