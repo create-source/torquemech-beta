@@ -274,8 +274,17 @@
     .tm-calendar-message-preview-actions .tm-btn { width: 100%; }
     .tm-assignment-grid { grid-template-columns:1fr; }
     .tm-assignment-grid .tm-btn { width:100%; }
+    .tm-calendar-time-status-row { grid-template-columns: 1fr; }
     .tm-calendar-panel { padding: 13px; }
     .tm-calendar-card { gap: 7px; padding: 11px; }
+  }
+
+  .tm-calendar-time-status-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    align-items: start;
   }
 </style>
 {% endblock %}
@@ -695,18 +704,23 @@
           <div class="tm-availability-status" data-availability-status aria-live="polite"></div>
         </div>
       </div>
-      <div>
-        <label class="tm-label" for="pro_requested_time">Time</label>
-        <select class="tm-input" id="pro_requested_time" name="requested_time" required disabled>
-          <option value="">Select an available drop-off time</option>
-        </select>
-        <p class="tm-book-time-message" data-pro-time-message aria-live="polite"></p>
-      </div>
-      <div>
-        <label class="tm-label" for="status">Status</label>
-        <select class="tm-input" id="status" name="status">
-          {% for status in status_options %}<option value="{{ status }}">{{ status }}</option>{% endfor %}
-        </select>
+      <div class="tm-calendar-time-status-row">
+        <div>
+          <label class="tm-label" for="pro_requested_time">Time</label>
+          <select class="tm-input" id="pro_requested_time" name="requested_time" required disabled>
+            <option value="">Select an available drop-off time</option>
+          </select>
+          <p class="tm-book-time-message" data-pro-time-message aria-live="polite"></p>
+        </div>
+
+        <div>
+          <label class="tm-label" for="status">Status</label>
+          <select class="tm-input" id="status" name="status">
+            {% for status in status_options %}
+            <option value="{{ status }}">{{ status }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
       <div style="grid-column:1/-1;"><label class="tm-label" for="notes">Notes</label><textarea class="tm-input" id="notes" name="notes" rows="3"></textarea></div>
       <button class="tm-btn tm-btn-primary" type="submit">Add Appointment</button>
