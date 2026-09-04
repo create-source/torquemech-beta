@@ -193,4 +193,47 @@
 
   <!-- Click-outside backdrop -->
   <div class="tm-menuBackdrop" id="menuBackdrop" hidden></div>
+
+  {% if request.state.current_user %}
+  <nav class="tm-mobileDock" aria-label="Mobile shop navigation">
+    <a class="tm-mobileDock__item"
+      href="/pro/dashboard"
+      data-mobile-nav="hub">
+      <span class="tm-mobileDock__icon" aria-hidden="true">⌂</span>
+      <span>Hub</span>
+    </a>
+
+    <a class="tm-mobileDock__item"
+      href="/pro/calendar"
+      data-mobile-nav="schedule">
+      <span class="tm-mobileDock__icon" aria-hidden="true">▣</span>
+      <span>Schedule</span>
+    </a>
+
+    <a class="tm-mobileDock__item"
+      href="/pro/customers"
+      data-mobile-nav="customers">
+      <span class="tm-mobileDock__icon" aria-hidden="true">♟</span>
+      <span>Customers</span>
+    </a>
+
+    <button class="tm-mobileDock__item"
+            id="mobileSearchBtn"
+            type="button"
+            data-mobile-nav="search"
+            aria-label="Search TorqueMech">
+      <span class="tm-mobileDock__icon" aria-hidden="true">⌕</span>
+      <span>Search</span>
+    </button>
+
+    <button class="tm-mobileDock__item"
+            id="mobileMoreBtn"
+            type="button"
+            data-mobile-nav="more"
+            aria-label="Open more navigation">
+      <span class="tm-mobileDock__icon" aria-hidden="true">☰</span>
+      <span>More</span>
+    </button>
+  </nav>
+  {% endif %}
 </header>

@@ -13,6 +13,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const globalSearchResults = document.getElementById("globalSearchResults");
 
+  const mobileSearchBtn = document.getElementById("mobileSearchBtn");
+  const mobileMoreBtn = document.getElementById("mobileMoreBtn");
+  const mobileNavItems = document.querySelectorAll("[data-mobile-nav]");
+
   let globalSearchTimer = null;
   let globalSearchController = null;
 
@@ -349,6 +353,8 @@ document.addEventListener("DOMContentLoaded", () => {
           "X-Requested-With": "XMLHttpRequest",
         },
       });
+
+      
       let payload = null;
       try {
         payload = await response.json();
@@ -480,4 +486,55 @@ document.addEventListener("DOMContentLoaded", () => {
 
     closeGlobalSearch();
   });
+
+  if (mobileSearchBtn) {
+    mobileSearchBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openGlobalSearch();
+    });
+  }
+
+  if (mobileMoreBtn) {
+    mobileMoreBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      if (menu.hidden) {
+        openMenu();
+      } else {
+        closeMenu();
+      }
+    });
+  }
+
+      function setMobileNavActiveState() {
+        const path = window.location.pathname;
+
+        mobileNavItems.forEach((item) => {
+          item.classList.remove("is-active");
+          item.removeAttribute("aria-current");
+        });
+
+        let key = "";
+
+        if (path === "/pro/dashboard" || path === "/pro") {
+          key = "hub";
+        } else if (path.startsWith("/pro/calendar")) {
+          key = "schedule";
+        } else if (path.startsWith("/pro/customers")) {
+          key = "customers";
+        }
+
+        if (!key) return;
+
+        const activeItem = document.querySelector(
+          `[data-mobile-nav="${key}"]`
+        );
+
+        if (activeItem) {
+          activeItem.classList.add("is-active");
+          activeItem.setAttribute("aria-current", "page");
+        }
+      }
+
+      setMobileNavActiveState();
 });
