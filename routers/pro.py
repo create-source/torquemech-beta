@@ -1400,6 +1400,8 @@ def ensure_calendar_schema(conn: sqlite3.Connection) -> None:
           estimate_id INTEGER,
           repair_id INTEGER,
           invoice_id INTEGER,
+          technician_id INTEGER,
+          service_bay_id INTEGER,
           customer_name TEXT NOT NULL,
           customer_phone TEXT NOT NULL,
           customer_email TEXT,
@@ -1425,6 +1427,8 @@ def ensure_calendar_schema(conn: sqlite3.Connection) -> None:
         "estimate_id": "estimate_id INTEGER",
         "repair_id": "repair_id INTEGER",
         "invoice_id": "invoice_id INTEGER",
+        "technician_id": "technician_id INTEGER",
+        "service_bay_id": "service_bay_id INTEGER",
         "customer_name": "customer_name TEXT",
         "customer_phone": "customer_phone TEXT",
         "customer_email": "customer_email TEXT",
@@ -1449,8 +1453,192 @@ def ensure_calendar_schema(conn: sqlite3.Connection) -> None:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_estimate ON service_appointments (estimate_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_repair ON service_appointments (repair_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_invoice ON service_appointments (invoice_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_technician ON service_appointments (technician_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_service_bay ON service_appointments (service_bay_id)")
+    ensure_shop_resources_schema(conn)
     conn.commit()
 
+
+
+def ensure_shop_resources_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS technicians (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS service_bays (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_technicians_shop_active ON technicians (shop_id, is_active, name)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_bays_shop_active ON service_bays (shop_id, is_active, name)")
+
+
+def load_shop_technicians(conn: sqlite3.Connection, shop_id: int, *, include_inactive: bool = False) -> list[dict[str, Any]]:
+    ensure_shop_resources_schema(conn)
+    active_sql = "" if include_inactive else "AND is_active = 1"
+    return [
+        dict(row)
+        for row in conn.execute(
+            f"""
+            SELECT * FROM technicians
+            WHERE shop_id = ? {active_sql}
+            ORDER BY is_active DESC, LOWER(name) ASC, id ASC
+            """,
+            (shop_id,),
+        ).fetchall()
+    ]
+
+
+def load_shop_service_bays(conn: sqlite3.Connection, shop_id: int, *, include_inactive: bool = False) -> list[dict[str, Any]]:
+    ensure_shop_resources_schema(conn)
+    active_sql = "" if include_inactive else "AND is_active = 1"
+    return [
+        dict(row)
+        for row in conn.execute(
+            f"""
+            SELECT * FROM service_bays
+            WHERE shop_id = ? {active_sql}
+            ORDER BY is_active DESC, LOWER(name) ASC, id ASC
+            """,
+            (shop_id,),
+        ).fetchall()
+    ]
+
+
+def shop_resource_for_assignment(
+    conn: sqlite3.Connection,
+    table_name: str,
+    resource_id: int | None,
+    shop_id: int,
+) -> dict[str, Any] | None:
+    if resource_id is None:
+        return None
+    if table_name not in {"technicians", "service_bays"}:
+        raise HTTPException(status_code=400, detail="Invalid shop resource")
+    row = conn.execute(
+        f"SELECT * FROM {table_name} WHERE id = ? AND shop_id = ? LIMIT 1",
+        (resource_id, shop_id),
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=400, detail="Selected shop resource is unavailable.")
+    return dict(row)
+
+
+def appointment_assignment_conflicts(
+    conn: sqlite3.Connection,
+    *,
+    appointment: dict[str, Any],
+    shop_id: int,
+    technician_id: int | None,
+    service_bay_id: int | None,
+) -> list[str]:
+    if not technician_id and not service_bay_id:
+        return []
+    requested_date = str(appointment.get("requested_date") or "").strip()
+    requested_time = str(appointment.get("requested_time") or "").strip()[:5]
+    if not requested_date or not requested_time:
+        return []
+    availability = load_shop_availability(conn, shop_id=shop_id)
+    appointment_date = parse_date_value(requested_date)
+    day_row = next(
+        (row for row in availability if appointment_date and int(row.get("day_of_week") or 0) == appointment_date.weekday()),
+        {},
+    )
+    duration = int(day_row.get("appointment_length_minutes") or 60)
+    try:
+        start = datetime.strptime(requested_time, "%H:%M")
+    except ValueError:
+        return []
+    end = start + timedelta(minutes=duration)
+    rows = conn.execute(
+        """
+        SELECT id, requested_time, technician_id, service_bay_id
+        FROM service_appointments
+        WHERE shop_id = ?
+          AND requested_date = ?
+          AND id <> ?
+          AND status IN ('Requested', 'Confirmed', 'Rescheduled', 'Checked In', 'Converted')
+          AND ((? IS NOT NULL AND technician_id = ?) OR (? IS NOT NULL AND service_bay_id = ?))
+        """,
+        (
+            shop_id,
+            requested_date,
+            int(appointment["id"]),
+            technician_id,
+            technician_id,
+            service_bay_id,
+            service_bay_id,
+        ),
+    ).fetchall()
+    conflicts: list[str] = []
+    for row in rows:
+        try:
+            other_start = datetime.strptime(str(row["requested_time"] or "")[:5], "%H:%M")
+        except ValueError:
+            continue
+        other_end = other_start + timedelta(minutes=duration)
+        if start < other_end and end > other_start:
+            if technician_id and optional_int_value(row["technician_id"]) == technician_id:
+                conflicts.append("The selected technician is already assigned to another appointment at this time.")
+            if service_bay_id and optional_int_value(row["service_bay_id"]) == service_bay_id:
+                conflicts.append("The selected service bay is already assigned to another appointment at this time.")
+    return list(dict.fromkeys(conflicts))
+
+
+def save_appointment_assignment(
+    conn: sqlite3.Connection,
+    *,
+    appointment_id: int,
+    shop_id: int,
+    technician_id: int | None,
+    service_bay_id: int | None,
+) -> None:
+    appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+    shop_resource_for_assignment(conn, "technicians", technician_id, shop_id)
+    shop_resource_for_assignment(conn, "service_bays", service_bay_id, shop_id)
+    conn.execute(
+        """
+        UPDATE service_appointments
+        SET technician_id = ?, service_bay_id = ?, updated_at = ?
+        WHERE id = ? AND shop_id = ?
+        """,
+        (technician_id, service_bay_id, datetime.utcnow().isoformat(), appointment_id, shop_id),
+    )
+    conn.commit()
+
+
+def attach_appointment_assignment_labels(
+    appointments: list[dict[str, Any]],
+    technicians: list[dict[str, Any]],
+    service_bays: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    tech_by_id = {int(item["id"]): item for item in technicians}
+    bay_by_id = {int(item["id"]): item for item in service_bays}
+    for appointment in appointments:
+        tech = tech_by_id.get(optional_int_value(appointment.get("technician_id")) or 0)
+        bay = bay_by_id.get(optional_int_value(appointment.get("service_bay_id")) or 0)
+        appointment["technician_name"] = str((tech or {}).get("name") or "").strip()
+        appointment["service_bay_name"] = str((bay or {}).get("name") or "").strip()
+        appointment["assignment_label"] = " · ".join(
+            part for part in [appointment["technician_name"], appointment["service_bay_name"]] if part
+        ) or "Unassigned · No Bay"
+    return appointments
 
 def default_shop_availability_rows() -> list[dict[str, Any]]:
     return [
@@ -1850,11 +2038,11 @@ def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any], s
     cur = conn.execute(
         """
         INSERT INTO service_appointments (
-          shop_id, customer_id, vehicle_id, estimate_id, repair_id, invoice_id, customer_name, customer_phone,
+          shop_id, customer_id, vehicle_id, estimate_id, repair_id, invoice_id, technician_id, service_bay_id, customer_name, customer_phone,
           customer_email, vehicle_label, vehicle_year, vehicle_make, vehicle_model, service_name, requested_date,
           requested_time, notes, source, status, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             shop_id,
@@ -1863,6 +2051,8 @@ def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any], s
             optional_int_value(data.get("estimate_id")),
             optional_int_value(data.get("repair_id")),
             optional_int_value(data.get("invoice_id")),
+            optional_int_value(data.get("technician_id")),
+            optional_int_value(data.get("service_bay_id")),
             str(data.get("customer_name") or "").strip(),
             str(data.get("customer_phone") or "").strip(),
             str(data.get("customer_email") or "").strip(),
@@ -13872,13 +14062,18 @@ def build_today_schedule_cards(
     ensure_calendar_schema(conn)
     ensure_repair_records_schema(conn)
     ensure_invoices_schema(conn)
+    ensure_shop_resources_schema(conn)
 
     today = local_today().isoformat()
     where_sql, params = shop_scope_where(shop_id, "sa.shop_id")
     rows = conn.execute(
         f"""
-        SELECT sa.*
+        SELECT sa.*,
+               t.name AS technician_name,
+               sb.name AS service_bay_name
         FROM service_appointments sa
+        LEFT JOIN technicians t ON t.id = sa.technician_id AND t.shop_id = sa.shop_id
+        LEFT JOIN service_bays sb ON sb.id = sa.service_bay_id AND sb.shop_id = sa.shop_id
         WHERE {where_sql}
           AND sa.requested_date = ?
           AND sa.status IN ('Confirmed', 'Rescheduled', 'Checked In', 'Converted')
@@ -14007,6 +14202,14 @@ def build_today_schedule_cards(
                 "customer_name": customer_text,
                 "vehicle_label": vehicle_text,
                 "service_name": service_text,
+                "technician_name": str(appointment.get("technician_name") or "").strip(),
+                "service_bay_name": str(appointment.get("service_bay_name") or "").strip(),
+                "assignment_label": " · ".join(
+                    part for part in [
+                        str(appointment.get("technician_name") or "").strip(),
+                        str(appointment.get("service_bay_name") or "").strip(),
+                    ] if part
+                ) or "Unassigned · No Bay",
                 "status": status,
                 "stage_label": stage_label,
                 "primary_action": primary,
@@ -17622,8 +17825,10 @@ def pro_follow_ups(request: Request):
 def pro_shop_settings(request: Request, saved: str = "", notice: str = ""):
     conn = crm_db_conn()
     try:
-        shop_id = current_shop_id(conn, request)
+        shop_id = required_current_shop_id(conn, request)
         profile = attach_shop_booking_context(load_shop_profile_context(conn, shop_id=shop_id), request)
+        technicians = load_shop_technicians(conn, shop_id, include_inactive=True)
+        service_bays = load_shop_service_bays(conn, shop_id, include_inactive=True)
     finally:
         conn.close()
 
@@ -17632,6 +17837,9 @@ def pro_shop_settings(request: Request, saved: str = "", notice: str = ""):
         {
             "request": request,
             "profile": profile,
+            "technicians": technicians,
+            "service_bays": service_bays,
+            "csrf_token": optional_csrf_token(request),
             "saved": saved == "1",
             "first_setup_notice": notice == "first_setup",
             "email_verified_notice": notice == "email_verified",
@@ -17648,6 +17856,94 @@ async def pro_shop_settings_save(request: Request):
     finally:
         conn.close()
     return RedirectResponse("/pro/shop-settings?saved=1", status_code=303)
+
+
+@router.post("/shop-settings/technicians")
+async def pro_shop_technician_add(request: Request):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    name = str(form.get("name") or "").strip()[:120]
+    if not name:
+        return RedirectResponse("/pro/shop-settings?notice=technician_name_required", status_code=303)
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        ensure_shop_resources_schema(conn)
+        now = datetime.utcnow().isoformat()
+        conn.execute(
+            "INSERT INTO technicians (shop_id, name, is_active, created_at, updated_at) VALUES (?, ?, 1, ?, ?)",
+            (shop_id, name, now, now),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/shop-settings?notice=technician_added", status_code=303)
+
+
+@router.post("/shop-settings/technicians/{technician_id}/toggle")
+async def pro_shop_technician_toggle(request: Request, technician_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        tech = shop_resource_for_assignment(conn, "technicians", technician_id, shop_id)
+        conn.execute(
+            "UPDATE technicians SET is_active = ?, updated_at = ? WHERE id = ? AND shop_id = ?",
+            (0 if bool(tech.get("is_active")) else 1, datetime.utcnow().isoformat(), technician_id, shop_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/shop-settings?notice=technician_updated", status_code=303)
+
+
+@router.post("/shop-settings/service-bays")
+async def pro_shop_service_bay_add(request: Request):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    name = str(form.get("name") or "").strip()[:120]
+    if not name:
+        return RedirectResponse("/pro/shop-settings?notice=bay_name_required", status_code=303)
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        ensure_shop_resources_schema(conn)
+        now = datetime.utcnow().isoformat()
+        conn.execute(
+            "INSERT INTO service_bays (shop_id, name, is_active, created_at, updated_at) VALUES (?, ?, 1, ?, ?)",
+            (shop_id, name, now, now),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/shop-settings?notice=bay_added", status_code=303)
+
+
+@router.post("/shop-settings/service-bays/{service_bay_id}/toggle")
+async def pro_shop_service_bay_toggle(request: Request, service_bay_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        bay = shop_resource_for_assignment(conn, "service_bays", service_bay_id, shop_id)
+        conn.execute(
+            "UPDATE service_bays SET is_active = ?, updated_at = ? WHERE id = ? AND shop_id = ?",
+            (0 if bool(bay.get("is_active")) else 1, datetime.utcnow().isoformat(), service_bay_id, shop_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/shop-settings?notice=bay_updated", status_code=303)
 
 
 def billing_base_url(request: Request) -> str:
@@ -17968,9 +18264,15 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
     try:
         shop_id = current_shop_id(conn, request)
         profile = load_shop_profile_context(conn, shop_id=shop_id)
-        appointments = attach_appointment_customer_messages(
-            load_service_appointments(conn, shop_id=shop_id),
-            profile,
+        technicians = load_shop_technicians(conn, shop_id, include_inactive=True)
+        service_bays = load_shop_service_bays(conn, shop_id, include_inactive=True)
+        appointments = attach_appointment_assignment_labels(
+            attach_appointment_customer_messages(
+                load_service_appointments(conn, shop_id=shop_id),
+                profile,
+            ),
+            technicians,
+            service_bays,
         )
         conversion_context = load_calendar_conversion_context(conn, shop_id=shop_id)
         customer_by_id = {
@@ -18146,6 +18448,11 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
             "status_options": APPOINTMENT_STATUS_OPTIONS,
             "customers": conversion_context["customers"],
             "vehicles_by_customer": conversion_context["vehicles_by_customer"],
+            "technicians": technicians,
+            "service_bays": service_bays,
+            "assignment_appointment_id": optional_int_value(request.query_params.get("assignment_appointment_id")),
+            "assignment_technician_id": optional_int_value(request.query_params.get("technician_id")),
+            "assignment_service_bay_id": optional_int_value(request.query_params.get("service_bay_id")),
             "csrf_token": optional_csrf_token(request),
             "saved": saved == "1",
             "error": error,
@@ -18174,6 +18481,8 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
                 "customer_added_cancellation_email_failed": "Customer added, but the cancellation email could not be sent. Use Send Email to retry.",
                 "customer_added_cancellation_email_missing": "Customer added. Add an email address before emailing this cancellation.",
                 "linked": "Appointment linked to customer.",
+                "assignment_saved": "Technician and bay assignment saved.",
+                "assignment_conflict": "Assignment conflict detected. Review the warning below and choose Assign Anyway if the overlap is intentional.",
             }.get(notice, ""),
         },
     )
@@ -18221,6 +18530,51 @@ async def pro_calendar_add(request: Request):
     finally:
         conn.close()
     return RedirectResponse("/pro/calendar?saved=1", status_code=303)
+
+
+@router.post("/calendar/{appointment_id}/assignment")
+async def pro_calendar_assignment_update(request: Request, appointment_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    technician_id = optional_int(form, "technician_id")
+    service_bay_id = optional_int(form, "service_bay_id")
+    force = str(form.get("force") or "").strip() == "1"
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+        shop_resource_for_assignment(conn, "technicians", technician_id, shop_id)
+        shop_resource_for_assignment(conn, "service_bays", service_bay_id, shop_id)
+        conflicts = appointment_assignment_conflicts(
+            conn,
+            appointment=appointment,
+            shop_id=shop_id,
+            technician_id=technician_id,
+            service_bay_id=service_bay_id,
+        )
+        if conflicts and not force:
+            query = urlencode(
+                {
+                    "notice": "assignment_conflict",
+                    "error": " ".join(conflicts),
+                    "assignment_appointment_id": appointment_id,
+                    "technician_id": technician_id or "",
+                    "service_bay_id": service_bay_id or "",
+                }
+            )
+            return RedirectResponse(f"/pro/calendar?{query}#assignment-{appointment_id}", status_code=303)
+        save_appointment_assignment(
+            conn,
+            appointment_id=appointment_id,
+            shop_id=shop_id,
+            technician_id=technician_id,
+            service_bay_id=service_bay_id,
+        )
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/calendar?notice=assignment_saved", status_code=303)
 
 
 @router.post("/calendar/{appointment_id}/status")
@@ -19990,6 +20344,8 @@ def pro_customer_vehicle_detail(
         repair_completion_events = load_vehicle_repair_completion_events(conn, customer_id, vehicle_id)
         invoice_records = load_vehicle_invoice_records(conn, customer_id, vehicle_id)
         estimate_document_records = load_vehicle_estimate_documents(conn, customer_id, vehicle_id)
+        for estimate_record in estimate_document_records:
+            estimate_record["edit_url"] = estimate_document_edit_url(customer_id, vehicle_id, estimate_record)
         vehicle_photo_groups = build_vehicle_photo_groups(
             conn,
             customer_id=customer_id,
@@ -20121,6 +20477,7 @@ def pro_customer_vehicle_detail(
             "repair_workspace_groups": repair_workspace_groups,
             "vehicle_photo_groups": vehicle_photo_groups,
             "vehicle_photo_count": count_vehicle_photos(vehicle_photo_groups),
+            "estimate_document_records": estimate_document_records,
             "visual_reference_records": visual_reference_records,
             "repair_intelligence_records": repair_intelligence_records,
             "repair_work_status_options": [

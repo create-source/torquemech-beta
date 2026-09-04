@@ -129,6 +129,13 @@
     background: #dc2626;
     color: #ffffff;
   }
+  .tm-assignment-panel { display:grid; gap:9px; border:1px solid rgba(14,116,144,.18); border-radius:8px; background:#f8fafc; padding:11px; }
+  .tm-assignment-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .tm-assignment-head strong { color:#0f172a; }
+  .tm-assignment-label { color:#0f766e; font-size:.86rem; font-weight:900; }
+  .tm-assignment-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)) auto; gap:8px; align-items:end; }
+  .tm-assignment-conflict { border:1px solid rgba(217,119,6,.28); border-radius:8px; background:#fffbeb; color:#92400e; padding:10px; font-weight:800; }
+  .tm-assignment-conflict-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
   .tm-calendar-copy-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .tm-calendar-message-editor {
     display: grid;
@@ -248,6 +255,8 @@
       width: 100%;
     }
     .tm-calendar-message-preview-actions .tm-btn { width: 100%; }
+    .tm-assignment-grid { grid-template-columns:1fr; }
+    .tm-assignment-grid .tm-btn { width:100%; }
     .tm-calendar-panel { padding: 13px; }
     .tm-calendar-card { gap: 7px; padding: 11px; }
   }
@@ -270,6 +279,55 @@
     <div class="tm-calendar-field"><span>Service</span><strong>{{ item.service_name or "-" }}</strong></div>
   </div>
   {% if item.notes %}<div class="tm-calendar-field"><span>Notes</span><strong>{{ item.notes }}</strong></div>{% endif %}
+  {% if item.status in ["Confirmed", "Rescheduled", "Checked In", "Converted"] %}
+  <section class="tm-assignment-panel" id="assignment-{{ item.id }}" aria-label="Technician and bay assignment">
+    <div class="tm-assignment-head">
+      <strong>Technician &amp; Bay</strong>
+      <span class="tm-assignment-label">{{ item.assignment_label }}</span>
+    </div>
+    <form class="tm-assignment-grid" method="post" action="/pro/calendar/{{ item.id }}/assignment">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div>
+        <label class="tm-label" for="technician_{{ item.id }}">Technician</label>
+        <select class="tm-input" id="technician_{{ item.id }}" name="technician_id">
+          <option value="">Unassigned</option>
+          {% for technician in technicians %}
+          {% if technician.is_active or technician.id == item.technician_id %}
+          <option value="{{ technician.id }}" {% if technician.id == item.technician_id %}selected{% endif %}>{{ technician.name }}{% if not technician.is_active %} (Inactive){% endif %}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="tm-label" for="service_bay_{{ item.id }}">Service Bay</label>
+        <select class="tm-input" id="service_bay_{{ item.id }}" name="service_bay_id">
+          <option value="">No Bay</option>
+          {% for bay in service_bays %}
+          {% if bay.is_active or bay.id == item.service_bay_id %}
+          <option value="{{ bay.id }}" {% if bay.id == item.service_bay_id %}selected{% endif %}>{{ bay.name }}{% if not bay.is_active %} (Inactive){% endif %}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+      <button class="tm-btn tm-btn-secondary" type="submit">Save Assignment</button>
+    </form>
+    {% if assignment_appointment_id == item.id and error %}
+    <div class="tm-assignment-conflict">
+      {{ error }}
+      <div class="tm-assignment-conflict-actions">
+        <form method="post" action="/pro/calendar/{{ item.id }}/assignment">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="technician_id" value="{{ assignment_technician_id or '' }}">
+          <input type="hidden" name="service_bay_id" value="{{ assignment_service_bay_id or '' }}">
+          <input type="hidden" name="force" value="1">
+          <button class="tm-btn tm-btn-primary" type="submit">Assign Anyway</button>
+        </form>
+        <a class="tm-btn tm-btn-secondary" href="/pro/calendar#assignment-{{ item.id }}">Keep Current Assignment</a>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
   <div class="tm-calendar-actions">
     {% if item.status == "Requested" %}
     {% for status, label, style in [("Confirmed", "Confirm Appointment", "tm-btn-primary"), ("Handled", "Mark Handled", "tm-btn-secondary"), ("Declined", "Decline Request", "tm-btn-secondary")] %}

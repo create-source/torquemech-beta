@@ -1148,6 +1148,20 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Status {{ item.status_label }}", vehicle_detail)
         self.assertNotIn('<h2 style="margin:4px 0 0;">Inspection Findings</h2>', vehicle_detail)
 
+    def test_vehicle_detail_has_workspace_shell_tabs_and_panes(self):
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+        pro_router = (ROOT / "routers" / "pro.py").read_text(encoding="utf-8")
+
+        self.assertIn("Vehicle Workspace", vehicle_detail)
+        self.assertIn('aria-label="Vehicle workspace navigation"', vehicle_detail)
+        for tab in ("overview", "current-repair", "findings", "estimates", "photos", "maintenance", "invoices"):
+            self.assertIn(f'data-workspace-tab="{tab}"', vehicle_detail)
+            self.assertIn(f'data-workspace-pane="{tab}"', vehicle_detail)
+        self.assertIn('"#repair-workspace": "current-repair"', vehicle_detail)
+        self.assertIn('"#recommendations-findings": "findings"', vehicle_detail)
+        self.assertIn('"#vehicle-photos": "photos"', vehicle_detail)
+        self.assertIn('"estimate_document_records": estimate_document_records', pro_router)
+
     def test_workspace_groups_status_lanes_and_primary_actions(self):
         vehicle = {"id": 1, "year": 2016, "make": "Honda", "model": "Accord", "mileage": 120000}
         active = [

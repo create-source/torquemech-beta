@@ -311,6 +311,16 @@
     display: none !important;
   }
 
+  .tm-resource-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+  .tm-resource-column { display:grid; gap:10px; min-width:0; }
+  .tm-resource-add { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:end; }
+  .tm-resource-list { display:grid; gap:8px; }
+  .tm-resource-row { display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid rgba(15,23,42,.10); border-radius:8px; background:#fff; padding:10px 11px; }
+  .tm-resource-row strong { color:#0f172a; overflow-wrap:anywhere; }
+  .tm-resource-status { color:#64748b; font-size:.82rem; font-weight:900; }
+  .tm-resource-status.is-inactive { color:#b45309; }
+  .tm-resource-empty { color:#64748b; border:1px dashed rgba(15,23,42,.16); border-radius:8px; padding:11px; }
+
   @media (max-width: 760px) {
     .tm-shop-settings-grid,
     .tm-shop-settings-grid--three {
@@ -324,6 +334,8 @@
     .tm-shop-settings-form {
       gap: 14px;
     }
+    .tm-resource-grid, .tm-resource-add { grid-template-columns:1fr; }
+    .tm-resource-add .tm-btn { width:100%; }
   }
 </style>
 {% endblock %}
@@ -373,6 +385,74 @@
         <li>Appointment request goes into TorqueMech Calendar</li>
       </ol>
     </details>
+  </section>
+
+  <section class="tm-shop-settings-panel" aria-label="Technicians and service bays">
+    <h2 style="margin:0 0 8px;">Technicians &amp; Service Bays</h2>
+    <p class="tm-shop-settings-help" style="margin:0 0 12px;">Create the people and bays used for appointment assignments. Deactivate old entries instead of deleting them so historical jobs keep their assignment.</p>
+    <div class="tm-resource-grid">
+      <div class="tm-resource-column">
+        <div>
+          <h3 style="margin:0 0 4px;">Technicians</h3>
+          <div class="tm-shop-settings-help">Active technicians appear in Calendar assignment menus.</div>
+        </div>
+        <form class="tm-resource-add" method="post" action="/pro/shop-settings/technicians">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div>
+            <label class="tm-label" for="technician_name">Technician Name</label>
+            <input class="tm-input" id="technician_name" name="name" type="text" maxlength="120" placeholder="Mike R." required>
+          </div>
+          <button class="tm-btn tm-btn-primary" type="submit">Add Technician</button>
+        </form>
+        <div class="tm-resource-list">
+          {% for technician in technicians %}
+          <div class="tm-resource-row">
+            <div>
+              <strong>{{ technician.name }}</strong>
+              <div class="tm-resource-status{% if not technician.is_active %} is-inactive{% endif %}">{{ "Active" if technician.is_active else "Inactive" }}</div>
+            </div>
+            <form method="post" action="/pro/shop-settings/technicians/{{ technician.id }}/toggle">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="tm-btn tm-btn-secondary" type="submit">{{ "Deactivate" if technician.is_active else "Reactivate" }}</button>
+            </form>
+          </div>
+          {% else %}
+          <div class="tm-resource-empty">No technicians yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="tm-resource-column">
+        <div>
+          <h3 style="margin:0 0 4px;">Service Bays</h3>
+          <div class="tm-shop-settings-help">Examples: Bay 1, Bay 2, Alignment, Diagnostics.</div>
+        </div>
+        <form class="tm-resource-add" method="post" action="/pro/shop-settings/service-bays">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div>
+            <label class="tm-label" for="service_bay_name">Bay Name</label>
+            <input class="tm-input" id="service_bay_name" name="name" type="text" maxlength="120" placeholder="Bay 1" required>
+          </div>
+          <button class="tm-btn tm-btn-primary" type="submit">Add Bay</button>
+        </form>
+        <div class="tm-resource-list">
+          {% for bay in service_bays %}
+          <div class="tm-resource-row">
+            <div>
+              <strong>{{ bay.name }}</strong>
+              <div class="tm-resource-status{% if not bay.is_active %} is-inactive{% endif %}">{{ "Active" if bay.is_active else "Inactive" }}</div>
+            </div>
+            <form method="post" action="/pro/shop-settings/service-bays/{{ bay.id }}/toggle">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="tm-btn tm-btn-secondary" type="submit">{{ "Deactivate" if bay.is_active else "Reactivate" }}</button>
+            </form>
+          </div>
+          {% else %}
+          <div class="tm-resource-empty">No service bays yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
   </section>
 
   <form class="tm-shop-settings-form" method="post" action="/pro/shop-settings">
