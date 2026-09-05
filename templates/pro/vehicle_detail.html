@@ -5773,7 +5773,7 @@
       <section class="tm-assistant-context" aria-label="Assistant vehicle context">
         <strong>{{ vehicle_name or 'Vehicle' }}</strong>
         <div class="tm-assistant-context-meta">
-          {{ customer_name }}{% if vehicle.engine %} · {{ vehicle.engine|pro_engine_badge }}{% endif %}{% if vehicle.mileage %} · {{ vehicle.mileage|pro_mileage }} mi{% endif %}
+          {{ customer_name }}{% if vehicle.engine %} · {{ vehicle.engine|pro_engine_badge }}{% endif %}{% if vehicle.mileage %} · {{ vehicle.mileage|pro_miles }} mi{% endif %}
         </div>
         <div class="tm-assistant-context-meta">
           {{ findings_summary.open }} finding{% if findings_summary.open != 1 %}s{% endif %} need attention ·
