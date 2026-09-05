@@ -166,6 +166,18 @@
         <div class="tm-menu__item" aria-label="Signed-in account">
           <strong>Hello, {{ greeting_name }}</strong>
         </div>
+        <button
+          class="tm-menu__item tm-menu__item--mobileNotifications"
+          id="mobileNotificationsBtn"
+          type="button"
+          aria-label="Notifications, {{ unread_count }} unread"
+        >
+          <span class="tm-menu__notificationLabel">
+            <span aria-hidden="true">&#128276;</span>
+            <span>Notifications</span>
+          </span>
+          <span class="tm-menu__notificationCount" id="mobileNotificationMenuCount">{{ unread_count }} unread</span>
+        </button>
         <a class="tm-menu__item" href="/pro/dashboard" data-i18n="nav.command_center">Command Center</a>
         <a class="tm-menu__item" href="/account/settings" data-i18n="nav.account_settings">Account Settings</a>
         <form method="post" action="/logout" style="margin:0;">
@@ -231,7 +243,16 @@
             type="button"
             data-mobile-nav="more"
             aria-label="Open more navigation">
-      <span class="tm-mobileDock__icon" aria-hidden="true">☰</span>
+      <span class="tm-mobileDock__icon tm-mobileDock__icon--more" aria-hidden="true">
+        ☰
+        {% if staff_notifications["badge"] %}
+        <span
+          class="tm-mobileDock__badge"
+          id="mobileNotificationBadge"
+          aria-label="{{ unread_count }} unread notifications"
+        >{{ staff_notifications["badge"] }}</span>
+        {% endif %}
+      </span>
       <span>More</span>
     </button>
   </nav>

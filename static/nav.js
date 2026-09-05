@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const mobileSearchBtn = document.getElementById("mobileSearchBtn");
   const mobileMoreBtn = document.getElementById("mobileMoreBtn");
+  const mobileNotificationsBtn = document.getElementById("mobileNotificationsBtn");
   const mobileNavItems = document.querySelectorAll("[data-mobile-nav]");
 
   let globalSearchTimer = null;
@@ -311,6 +312,58 @@ document.addEventListener("DOMContentLoaded", () => {
         badge.setAttribute("aria-label", `${safeCount} unread notifications`);
       }
     }
+    if (mobileMoreBtn) {
+      mobileMoreBtn.setAttribute(
+        "aria-label",
+        safeCount > 0
+          ? `Open more navigation, ${safeCount} unread notifications`
+          : "Open more navigation"
+      );
+
+      let mobileBadge = document.getElementById("mobileNotificationBadge");
+
+      if (safeCount === 0) {
+        mobileBadge?.remove();
+      } else {
+        if (!mobileBadge) {
+          const moreIcon = mobileMoreBtn.querySelector(
+            ".tm-mobileDock__icon--more"
+          );
+
+          if (moreIcon) {
+            mobileBadge = document.createElement("span");
+            mobileBadge.className = "tm-mobileDock__badge";
+            mobileBadge.id = "mobileNotificationBadge";
+            moreIcon.appendChild(mobileBadge);
+          }
+        }
+
+        if (mobileBadge) {
+          mobileBadge.textContent =
+            safeCount > 99 ? "99+" : String(safeCount);
+
+          mobileBadge.setAttribute(
+            "aria-label",
+            `${safeCount} unread notifications`
+          );
+        }
+      }
+    }
+
+    if (mobileNotificationsBtn) {
+      mobileNotificationsBtn.setAttribute(
+        "aria-label",
+        `Notifications, ${safeCount} unread`
+      );
+
+      const menuCount = document.getElementById(
+        "mobileNotificationMenuCount"
+      );
+
+      if (menuCount) {
+        menuCount.textContent = `${safeCount} unread`;
+      }
+    }
   }
 
   function showNotificationEmptyState() {
@@ -506,6 +559,13 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         closeMenu();
       }
+    });
+  }
+
+  if (mobileNotificationsBtn) {
+    mobileNotificationsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openNotifications();
     });
   }
 

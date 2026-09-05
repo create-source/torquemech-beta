@@ -15514,3 +15514,74 @@ body.tm-estimator-page
     bottom:calc(82px + env(safe-area-inset-bottom));
   }
 }
+
+/* =========================================================
+   MOBILE NOTIFICATION ACCESS
+   Keep the five-item dock while surfacing unread notifications
+   through More and the existing notification panel.
+   ========================================================= */
+
+.tm-menu__item--mobileNotifications{
+  display:none;
+}
+
+@media (max-width:700px){
+
+  .tm-menu__item--mobileNotifications{
+    display:flex;
+    width:100%;
+    border:0;
+    background:transparent;
+    text-align:left;
+    cursor:pointer;
+  }
+
+  .tm-menu__notificationLabel{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+  }
+
+  .tm-menu__notificationCount{
+    flex:0 0 auto;
+    color:#fbbf24;
+    font-size:.76rem;
+    font-weight:900;
+    white-space:nowrap;
+  }
+
+  .tm-mobileDock__icon--more{
+    position:relative;
+  }
+
+  .tm-mobileDock__badge{
+    position:absolute;
+    top:-7px;
+    right:-10px;
+    min-width:18px;
+    height:18px;
+    padding:0 5px;
+
+    border:2px solid rgba(7,18,33,.97);
+    border-radius:999px;
+
+    background:#fbbf24;
+    color:#172033;
+
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:.62rem;
+    font-weight:950;
+    line-height:1;
+
+    box-shadow:0 4px 10px rgba(0,0,0,.28);
+    pointer-events:none;
+  }
+
+  .tm-mobileDock__item.is-active .tm-mobileDock__badge{
+    border-color:rgba(27,24,27,.98);
+  }
+}
