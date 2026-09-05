@@ -20687,7 +20687,6 @@ def torquemech_assistant_context_payload(
               repair_date,
               mileage,
               status,
-              repair_work_status,
               notes,
               total_cost
             FROM repair_records
@@ -20762,10 +20761,7 @@ def torquemech_assistant_context_payload(
     ]
     active_repairs = [
         item for item in repairs
-        if str(item.get("repair_work_status") or "").strip().lower() in {
-            "ready", "in_progress", "waiting_parts"
-        }
-        and str(item.get("status") or "").strip() != "Completed"
+        if str(item.get("status") or "").strip().lower() != "completed"
     ]
 
     current_mileage = optional_int_value(vehicle.get("mileage"))
