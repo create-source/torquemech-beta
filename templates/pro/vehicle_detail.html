@@ -4017,6 +4017,91 @@
     font-weight: 600;
   }
 
+
+  /* =========================================================
+   CONTEXTUAL TORQUEMECH ASSISTANT — STEP 1
+   ========================================================= */
+  .tm-assistant-launcher {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 1800;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 46px;
+    border: 1px solid rgba(249, 115, 22, 0.65);
+    border-radius: 999px;
+    background: linear-gradient(180deg, #fb923c 0%, #f97316 100%);
+    color: #111827;
+    font-weight: 900;
+    padding: 10px 16px;
+    box-shadow: 0 16px 34px rgba(0,0,0,.28);
+    cursor: pointer;
+  }
+  .tm-assistant-launcher:hover,
+  .tm-assistant-launcher:focus-visible {
+    transform: translateY(-1px);
+    outline: 3px solid rgba(249,115,22,.24);
+    outline-offset: 2px;
+  }
+  .tm-assistant-modal { position: fixed; inset: 0; z-index: 2100; }
+  .tm-assistant-modal[hidden] { display: none !important; }
+  .tm-assistant-backdrop {
+    position: absolute; inset: 0; border: 0; width: 100%; height: 100%;
+    background: rgba(2, 6, 23, .58); cursor: pointer;
+  }
+  .tm-assistant-panel {
+    position: absolute; top: 0; right: 0;
+    display: grid; grid-template-rows: auto minmax(0,1fr) auto;
+    width: min(440px, 100%); height: 100%;
+    background: #0b1625; color: #f8fafc;
+    border-left: 1px solid rgba(148,163,184,.25);
+    box-shadow: -24px 0 60px rgba(0,0,0,.35);
+  }
+  .tm-assistant-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    padding: 18px; border-bottom: 1px solid rgba(148,163,184,.18);
+    background: #101c2d;
+  }
+  .tm-assistant-eyebrow { color: #fb923c; font-size: .72rem; font-weight: 900; text-transform: uppercase; }
+  .tm-assistant-title { margin: 4px 0 0; color: #fff; font-size: 1.18rem; }
+  .tm-assistant-close {
+    display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto;
+    border: 1px solid rgba(148,163,184,.28); border-radius: 9px;
+    background: #172231; color: #fff; font-size: 1.2rem; cursor: pointer;
+  }
+  .tm-assistant-body { overflow: auto; padding: 16px; display: grid; align-content: start; gap: 14px; }
+  .tm-assistant-context {
+    display: grid; gap: 8px; padding: 12px; border: 1px solid rgba(148,163,184,.2);
+    border-radius: 10px; background: #111923;
+  }
+  .tm-assistant-context strong { color: #fff; }
+  .tm-assistant-context-meta { color: #cbd5e1; font-size: .86rem; line-height: 1.4; }
+  .tm-assistant-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tm-assistant-action {
+    min-height: 44px; border: 1px solid rgba(148,163,184,.27); border-radius: 9px;
+    background: #172231; color: #f8fafc; font-weight: 800; padding: 9px 10px; cursor: pointer; text-align: left;
+  }
+  .tm-assistant-action:hover, .tm-assistant-action:focus-visible { border-color: #f97316; outline: none; background: #202c3c; }
+  .tm-assistant-response {
+    min-height: 90px; border: 1px dashed rgba(148,163,184,.28); border-radius: 10px;
+    background: #0f1824; color: #cbd5e1; padding: 12px; line-height: 1.45;
+  }
+  .tm-assistant-foot {
+    display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px;
+    padding: 14px; border-top: 1px solid rgba(148,163,184,.18); background: #101c2d;
+  }
+  .tm-assistant-input {
+    width: 100%; min-height: 44px; border: 1px solid #94a3b8; border-radius: 9px;
+    background: #f8fafc; color: #0f172a; padding: 10px 12px;
+  }
+  .tm-assistant-send { min-width: 72px; }
+  @media (max-width: 760px) {
+    .tm-assistant-launcher { right: 14px; bottom: 14px; }
+    .tm-assistant-actions { grid-template-columns: 1fr; }
+    .tm-assistant-panel { width: 100%; }
+  }
 </style>
 {% include "pro/partials/repair_intelligence_styles.html" %}
 {% endblock %}
@@ -5668,6 +5753,54 @@
   </details>
 </section>
 
+
+<button class="tm-assistant-launcher" type="button" data-tm-assistant-open aria-haspopup="dialog" aria-controls="tm-context-assistant">
+  <span aria-hidden="true">✦</span> Ask TorqueMech
+</button>
+
+<div class="tm-assistant-modal" id="tm-context-assistant" data-tm-assistant-modal hidden>
+  <button class="tm-assistant-backdrop" type="button" aria-label="Close TorqueMech Assistant" data-tm-assistant-close></button>
+  <aside class="tm-assistant-panel" role="dialog" aria-modal="true" aria-labelledby="tm-assistant-title">
+    <header class="tm-assistant-head">
+      <div>
+        <div class="tm-assistant-eyebrow">Current vehicle context</div>
+        <h2 class="tm-assistant-title" id="tm-assistant-title">TorqueMech Assistant</h2>
+      </div>
+      <button class="tm-assistant-close" type="button" aria-label="Close assistant" data-tm-assistant-close>×</button>
+    </header>
+
+    <div class="tm-assistant-body">
+      <section class="tm-assistant-context" aria-label="Assistant vehicle context">
+        <strong>{{ vehicle_name or 'Vehicle' }}</strong>
+        <div class="tm-assistant-context-meta">
+          {{ customer_name }}{% if vehicle.engine %} · {{ vehicle.engine|pro_engine_badge }}{% endif %}{% if vehicle.mileage %} · {{ vehicle.mileage|pro_mileage }} mi{% endif %}
+        </div>
+        <div class="tm-assistant-context-meta">
+          {{ findings_summary.open }} finding{% if findings_summary.open != 1 %}s{% endif %} need attention ·
+          {{ workspace_active_repair_items|length }} active repair{% if workspace_active_repair_items|length != 1 %}s{% endif %} ·
+          {{ maintenance_records|length }} maintenance record{% if maintenance_records|length != 1 %}s{% endif %}
+        </div>
+      </section>
+
+      <div class="tm-assistant-actions" aria-label="Suggested assistant actions">
+        <button class="tm-assistant-action" type="button" data-tm-assistant-prompt="Summarize this vehicle">Summarize this vehicle</button>
+        <button class="tm-assistant-action" type="button" data-tm-assistant-prompt="What should I check next?">What should I check next?</button>
+        <button class="tm-assistant-action" type="button" data-tm-assistant-prompt="Help diagnose the current findings">Help diagnose findings</button>
+        <button class="tm-assistant-action" type="button" data-tm-assistant-prompt="Review maintenance due">Review maintenance due</button>
+      </div>
+
+      <div class="tm-assistant-response" data-tm-assistant-response>
+        Loading secure vehicle context…
+      </div>
+    </div>
+
+    <footer class="tm-assistant-foot">
+      <input class="tm-assistant-input" type="text" data-tm-assistant-input placeholder="Ask about this vehicle…" autocomplete="off">
+      <button class="tm-btn tm-btn-primary tm-assistant-send" type="button" data-tm-assistant-send>Send</button>
+    </footer>
+  </aside>
+</div>
+
 <div class="tm-photo-access-modal" data-photo-access-modal hidden>
   <button class="tm-photo-access-backdrop" type="button" aria-label="Close photo access notice" data-photo-access-close></button>
   <section class="tm-photo-access-dialog" role="dialog" aria-modal="true" aria-labelledby="photo-access-title">
@@ -6960,6 +7093,154 @@
 
     updateCount(picker);
     renderPhotoPreviews(picker);
+  });
+})();
+</script>
+
+<script>
+(() => {
+  const modal = document.querySelector('[data-tm-assistant-modal]');
+  const openButton = document.querySelector('[data-tm-assistant-open]');
+  if (!modal || !openButton) return;
+
+  const input = modal.querySelector('[data-tm-assistant-input]');
+  const response = modal.querySelector('[data-tm-assistant-response]');
+  const sendButton = modal.querySelector('[data-tm-assistant-send]');
+  const promptButtons = [...modal.querySelectorAll('[data-tm-assistant-prompt]')];
+  const contextUrl = "/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/assistant/context";
+  const askUrl = "/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/assistant/ask";
+  const csrfToken = {{ csrf_token|tojson }};
+  let lastFocused = null;
+  let contextPayload = null;
+  let loadingContext = null;
+  let asking = false;
+
+  const setBusy = (busy) => {
+    asking = busy;
+    if (sendButton) {
+      sendButton.disabled = busy;
+      sendButton.textContent = busy ? "Thinking…" : "Send";
+    }
+    if (input) input.disabled = busy;
+    promptButtons.forEach((button) => { button.disabled = busy; });
+  };
+
+  const renderContextReady = (payload) => {
+    if (!response || !payload?.ok) return;
+    const summary = payload.summary || {};
+    const vehicle = payload.vehicle || {};
+    response.textContent =
+      `Context loaded for ${vehicle.label || "this vehicle"}: ` +
+      `${summary.open_findings || 0} open finding(s), ` +
+      `${summary.active_repairs || 0} active repair(s), ` +
+      `${summary.maintenance_due_now || 0} maintenance item(s) due now.`;
+  };
+
+  const loadContext = async () => {
+    if (contextPayload) return contextPayload;
+    if (loadingContext) return loadingContext;
+
+    if (response) response.textContent = "Loading secure vehicle context…";
+
+    loadingContext = fetch(contextUrl, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+        "X-Requested-With": "fetch",
+      },
+      credentials: "same-origin",
+    })
+      .then(async (result) => {
+        const payload = await result.json().catch(() => null);
+        if (!result.ok || !payload?.ok) {
+          throw new Error(payload?.detail || payload?.message || "Unable to load vehicle context.");
+        }
+        contextPayload = payload;
+        renderContextReady(payload);
+        return payload;
+      })
+      .catch((error) => {
+        if (response) response.textContent = error?.message || "Unable to load vehicle context.";
+        throw error;
+      })
+      .finally(() => {
+        loadingContext = null;
+      });
+
+    return loadingContext;
+  };
+
+  const openAssistant = async () => {
+    lastFocused = document.activeElement;
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    window.setTimeout(() => input?.focus(), 0);
+    try {
+      await loadContext();
+    } catch (error) {
+      // Error is already shown.
+    }
+  };
+
+  const closeAssistant = () => {
+    modal.hidden = true;
+    document.body.style.overflow = '';
+    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+  };
+
+  const askAssistant = async (text) => {
+    const question = String(text || "").trim();
+    if (!question || asking) return;
+
+    if (input) input.value = question;
+    setBusy(true);
+    if (response) response.textContent = "TorqueMech is reviewing this vehicle…";
+
+    try {
+      await loadContext();
+
+      const result = await fetch(askUrl, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-Requested-With": "fetch",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          question,
+          csrf_token: csrfToken,
+        }),
+      });
+
+      const payload = await result.json().catch(() => null);
+      if (!result.ok || !payload?.ok) {
+        throw new Error(payload?.detail || payload?.message || "TorqueMech Assistant could not answer that question.");
+      }
+
+      if (response) response.textContent = payload.answer || "No response returned.";
+    } catch (error) {
+      if (response) response.textContent = error?.message || "TorqueMech Assistant is temporarily unavailable.";
+    } finally {
+      setBusy(false);
+      input?.focus();
+    }
+  };
+
+  openButton.addEventListener('click', openAssistant);
+  modal.querySelectorAll('[data-tm-assistant-close]').forEach((button) => button.addEventListener('click', closeAssistant));
+  promptButtons.forEach((button) => {
+    button.addEventListener('click', () => askAssistant(button.dataset.tmAssistantPrompt || ''));
+  });
+  sendButton?.addEventListener('click', () => askAssistant(input?.value || ''));
+  input?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      askAssistant(input.value);
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !modal.hidden) closeAssistant();
   });
 })();
 </script>
