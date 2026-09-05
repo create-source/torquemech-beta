@@ -758,3 +758,112 @@ body:has(.tm-quick-find-page) .tm-footer-inner {
     width: 100%;
   }
 }
+
+/* =========================================================
+   Diagnostic Search — action row / finding panel alignment
+   ========================================================= */
+
+.tm-quick-find__result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.tm-quick-find__result-actions .tm-quick-find__result-footer {
+  margin-top: 0;
+}
+
+.tm-quick-find__workflow {
+  display: contents;
+}
+
+.tm-quick-find__add-finding {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid rgba(249, 115, 22, 0.48);
+  border-radius: 10px;
+  background: rgba(249, 115, 22, 0.12);
+  color: #fed7aa;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tm-quick-find__add-finding:hover,
+.tm-quick-find__add-finding:focus-visible {
+  border-color: #fb923c;
+  background: rgba(249, 115, 22, 0.2);
+  color: #fff7ed;
+}
+
+.tm-quick-find__finding-panel {
+  flex: 0 0 100%;
+  width: 100%;
+  margin-top: 2px;
+  padding: 14px;
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  border-radius: 12px;
+  background: rgba(8, 20, 36, 0.82);
+}
+
+.tm-quick-find__finding-panel[hidden] {
+  display: none !important;
+}
+
+.tm-quick-find__finding-heading {
+  margin-bottom: 12px;
+  color: #f8fafc;
+  font-size: 0.92rem;
+  font-weight: 850;
+}
+
+.tm-quick-find__field + .tm-quick-find__field {
+  margin-top: 10px;
+}
+
+.tm-quick-find__field label {
+  display: block;
+  margin-bottom: 5px;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.tm-quick-find__field select {
+  width: 100%;
+  min-height: 40px;
+}
+
+.tm-quick-find__finding-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 719px) {
+  .tm-quick-find__result-actions {
+    align-items: stretch;
+  }
+
+  .tm-quick-find__result-footer,
+  .tm-quick-find__add-finding {
+    min-height: 40px;
+  }
+
+  .tm-quick-find__finding-actions {
+    flex-direction: column-reverse;
+  }
+
+  .tm-quick-find__finding-actions button {
+    width: 100%;
+  }
+}
