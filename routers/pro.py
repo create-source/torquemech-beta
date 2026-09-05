@@ -20737,14 +20737,13 @@ def torquemech_assistant_context_payload(
             SELECT
               id,
               invoice_number,
-              invoice_date,
-              repair_name,
-              total_amount,
+              created_at,
+              grand_total,
               payment_status
             FROM invoices
             WHERE customer_id = ?
               AND vehicle_id = ?
-            ORDER BY invoice_date DESC, id DESC
+            ORDER BY created_at DESC, id DESC
             LIMIT 10
             """,
             (customer_id, vehicle_id),
