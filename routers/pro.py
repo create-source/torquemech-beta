@@ -20656,9 +20656,7 @@ def torquemech_assistant_context_payload(
               severity,
               status,
               finding_date,
-              mileage,
-              linked_repair_record_id,
-              repair_work_status
+              mileage
             FROM findings_records
             WHERE vehicle_id = ?
               AND (customer_id = ? OR customer_id IS NULL)
