@@ -7904,11 +7904,82 @@ def home(request: Request):
 @app.get("/quick-find", response_class=HTMLResponse)
 def quick_find_page(request: Request):
     metric_incr("page_quick_find")
+
+    customers = []
+    vehicles_by_customer = {}
+
+    conn = app_db_conn(row_factory=True)
+
+    try:
+        user = current_user(conn, request)
+
+        if user:
+            shop = current_shop_context(conn, request)
+            shop_id = int(shop.get("id") or 0)
+
+            customer_rows = conn.execute(
+                """
+                SELECT
+                    id,
+                    first_name,
+                    last_name,
+                    phone,
+                    email
+                FROM customers
+                WHERE shop_id = ?
+                  AND COALESCE(NULLIF(customer_status, ''), 'active') = 'active'
+                ORDER BY
+                    LOWER(COALESCE(last_name, '')),
+                    LOWER(COALESCE(first_name, '')),
+                    id
+                """,
+                (shop_id,),
+            ).fetchall()
+
+            customers = [dict(row) for row in customer_rows]
+
+            vehicle_rows = conn.execute(
+                """
+                SELECT
+                    id,
+                    customer_id,
+                    year,
+                    make,
+                    model,
+                    engine,
+                    mileage
+                FROM customer_vehicles
+                WHERE shop_id = ?
+                  AND archived_at IS NULL
+                ORDER BY
+                    year DESC,
+                    LOWER(COALESCE(make, '')),
+                    LOWER(COALESCE(model, '')),
+                    id
+                """,
+                (shop_id,),
+            ).fetchall()
+
+            for row in vehicle_rows:
+                vehicle = dict(row)
+                customer_id = str(vehicle["customer_id"])
+
+                vehicles_by_customer.setdefault(
+                    customer_id,
+                    []
+                ).append(vehicle)
+
+    finally:
+        conn.close()
+
     return templates.TemplateResponse(
         "quick_find_page.html",
         {
             "request": request,
             "quick_find_items": build_quick_find_items(),
+            "quick_find_customers": customers,
+            "quick_find_vehicles_by_customer": vehicles_by_customer,
+            "csrf_token": csrf_token(request),
         },
     )
 

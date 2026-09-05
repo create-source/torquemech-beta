@@ -83,5 +83,19 @@
     <script type="application/json" data-quick-find-index>
       {{ quick_find_items | tojson }}
     </script>
+
+    <script type="application/json" data-quick-find-customers>
+      {{ quick_find_customers | tojson }}
+    </script>
+
+    <script type="application/json" data-quick-find-vehicles>
+      {{ quick_find_vehicles_by_customer | tojson }}
+    </script>
+
+    <input
+      type="hidden"
+      data-quick-find-csrf
+      value="{{ csrf_token }}"
+    />
   </div>
 </section>
