@@ -16367,6 +16367,7 @@ def pro_global_search(
     empty_results = {
         "query": search,
         "groups": {
+            "diagnostics": [],
             "customers": [],
             "vehicles": [],
             "appointments": [],
@@ -16390,6 +16391,34 @@ def pro_global_search(
 
         shop_id = required_current_shop_id(conn, request)
         like = f"%{search.lower()}%"
+
+        diagnostics = []
+
+        diagnostic_query = search.strip().upper()
+
+        # Exact / partial OBD-style query such as P0420, P0301, P0171.
+        if re.fullmatch(r"[PBCU][0-9A-F]{1,4}", diagnostic_query):
+            diagnostics.append(
+                {
+                    "id": f"diagnostic-{diagnostic_query}",
+                    "title": diagnostic_query,
+                    "subtitle": "OBD Code • Search TorqueMech diagnostic paths",
+                    "status": "Diagnostic",
+                    "url": f"/quick-find?{urlencode({'q': diagnostic_query})}",
+                }
+            )
+
+        # General diagnostic bridge for symptom / component / repair searches.
+        elif len(search) >= 2:
+            diagnostics.append(
+                {
+                    "id": "diagnostic-search",
+                    "title": f'Search diagnostics for "{search}"',
+                    "subtitle": "Codes • Symptoms • Repair Guides • Diagnostic Paths",
+                    "status": "Diagnostic Search",
+                    "url": f"/quick-find?{urlencode({'q': search})}",
+                }
+            )
 
         customer_rows = conn.execute(
             """
@@ -16949,13 +16978,14 @@ def pro_global_search(
             {
                 "query": search,
                 "groups": {
-                "customers": customers,
-                "vehicles": vehicles,
-                "appointments": appointments,
-                "estimates": estimates,
-                "repairs": repairs,
-                "invoices": invoices,
-            },
+                    "diagnostics": diagnostics,
+                    "customers": customers,
+                    "vehicles": vehicles,
+                    "appointments": appointments,
+                    "estimates": estimates,
+                    "repairs": repairs,
+                    "invoices": invoices,
+                },
             }
         )
 

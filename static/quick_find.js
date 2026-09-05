@@ -530,13 +530,9 @@
       formData.set("csrf_token", csrfToken);
       formData.set("finding", findingTitle(item));
       formData.set("recommendation", findingRecommendation(item));
-      formData.set("severity", "Medium");
+      formData.set("severity", "Low");
       formData.set("status", "Open");
       formData.set("request_type", "finding");
-
-      if (vehicle && vehicle.mileage) {
-        formData.set("mileage", vehicle.mileage);
-      }
 
       submitButton.disabled = true;
       submitButton.textContent = "Adding...";
@@ -715,9 +711,28 @@
         });
       }
     });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQuery = (urlParams.get("q") || "").trim();
+
+    if (initialQuery) {
+      input.value = initialQuery;
+      search(initialQuery);
+
+      if (!resultsNode.hidden) {
+        window.setTimeout(function () {
+          resultsNode.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest"
+          });
+        }, 0);
+      }
+    }
   }
 
   document
     .querySelectorAll("[data-quick-find]")
     .forEach(initQuickFind);
+
+  
 })();

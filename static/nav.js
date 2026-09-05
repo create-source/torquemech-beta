@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     globalSearchResults.innerHTML = `
       <div class="tm-globalSearchPanel__hint">
-        Search by customer, phone, email, vehicle, VIN, plate, appointment, estimate, or invoice.
+        Search customers, vehicles, VINs, plates, appointments, estimates, invoices, OBD codes, symptoms, or repair terms.
       </div>
     `;
   }
@@ -119,6 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!globalSearchResults) return;
 
     const groups = payload?.groups || {};
+    const diagnostics = groups.diagnostics || [];
     const customers = groups.customers || [];
     const vehicles = groups.vehicles || [];
     const appointments = groups.appointments || [];
@@ -127,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const invoices = groups.invoices || [];
 
     const total =
+      diagnostics.length +
       customers.length +
       vehicles.length +
       appointments.length +
@@ -140,6 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     globalSearchResults.innerHTML = [
+      renderGlobalSearchGroup("Diagnostics", diagnostics),
       renderGlobalSearchGroup("Customers", customers),
       renderGlobalSearchGroup("Vehicles", vehicles),
       renderGlobalSearchGroup("Appointments", appointments),
