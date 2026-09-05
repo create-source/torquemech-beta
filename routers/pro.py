@@ -20866,14 +20866,12 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
         conn.commit()
     finally:
         conn.close()
-    status_group = quote(status, safe="")
+    finding_id = int(cur.lastrowid)
+
     return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}"
-        f"?finding_added=1&finding_id={int(cur.lastrowid)}&finding_status={status_group}"
-        "#recommendations-findings",
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
         status_code=303,
     )
-
 
 @router.get(
     "/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
