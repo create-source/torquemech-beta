@@ -7902,8 +7902,16 @@ if (getEstimateHint) {
 
   customServiceToggle?.addEventListener("change", () => {
     if (customServiceToggle.checked && !activeEditingLineId) {
-      if (customServiceNameEl) customServiceNameEl.value = "";
-      if (customPartsSearchTermEl) customPartsSearchTermEl.value = "";
+      const clearFreshCustomService = () => {
+        if (customServiceNameEl) customServiceNameEl.value = "";
+        if (customPartsSearchTermEl) customPartsSearchTermEl.value = "";
+        updateEstimateButtonState();
+        void refreshEstimatorPartsSources();
+      };
+
+      clearFreshCustomService();
+
+      window.setTimeout(clearFreshCustomService, 0);
     }
 
     syncCustomServiceMode();
