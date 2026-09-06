@@ -21324,8 +21324,6 @@ def pro_finding_record_detail(
             customer_id=customer_id,
             vehicle_id=vehicle_id,
         )
-        for record in findings_records:
-            annotate_finding_workflow_state(record)
         customer_review_url = ""
         estimate_doc = latest_estimate_document_for_finding(
             conn,
