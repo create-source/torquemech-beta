@@ -5765,6 +5765,7 @@
     </div>
   </details>
 </section>
+{% if tm_ai_enabled %}
 
   <button class="tm-assistant-backdrop" type="button" aria-label="Close TorqueMech Assistant" data-tm-assistant-close></button>
   <aside class="tm-assistant-panel" role="dialog" aria-modal="true" aria-labelledby="tm-assistant-title">
@@ -5807,6 +5808,7 @@
     </footer>
   </aside>
 </div>
+{% endif %}
 
 <div class="tm-photo-access-modal" data-photo-access-modal hidden>
   <button class="tm-photo-access-backdrop" type="button" aria-label="Close photo access notice" data-photo-access-close></button>
