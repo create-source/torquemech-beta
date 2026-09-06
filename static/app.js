@@ -7872,7 +7872,14 @@ if (getEstimateHint) {
     categoryEl?.focus();
   });
 
-  customServiceToggle?.addEventListener("change", syncCustomServiceMode);
+  customServiceToggle?.addEventListener("change", () => {
+    if (customServiceToggle.checked && !activeEditingLineId) {
+      if (customServiceNameEl) customServiceNameEl.value = "";
+      if (customPartsSearchTermEl) customPartsSearchTermEl.value = "";
+    }
+
+    syncCustomServiceMode();
+  });
   customServiceNameEl?.addEventListener("input", () => {
     updateEstimateButtonState();
     scheduleEstimatorPartsSourcesRefresh();
