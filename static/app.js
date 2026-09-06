@@ -7055,11 +7055,25 @@ if (getEstimateHint) {
         });
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)} added. Add another repair or create the customer quote.`);
 
-        readyForNextService = false;
+        readyForNextService = true;
         isAddingLineItem = false;
+
+        if (customServiceToggle) customServiceToggle.checked = false;
+        if (customServiceNameEl) customServiceNameEl.value = "";
+        if (customPartsSearchTermEl) customPartsSearchTermEl.value = "";
+
+        if (categoryEl) setCategoryValue("", "none");
+        if (serviceEl) serviceEl.value = "";
+        if (serviceSearch) serviceSearch.value = "";
+
+        serviceMeta = null;
+        editingLineItem = null;
+
+        syncCustomServiceMode();
+        updateServiceClearButton();
         updateEstimateButtonState();
-        focusAddAnotherRepair();
         void refreshPairedSuggestions();
+        void refreshEstimatorPartsSources();
         return;
       }
 
@@ -7108,11 +7122,25 @@ if (getEstimateHint) {
       });
       setStatus("ok", `${it.serviceText}: ${money(it.estimate)} added. Add another repair or create the customer quote.`);
 
-      readyForNextService = false;
+      readyForNextService = true;
       isAddingLineItem = false;
+
+      if (customServiceToggle) customServiceToggle.checked = false;
+      if (customServiceNameEl) customServiceNameEl.value = "";
+      if (customPartsSearchTermEl) customPartsSearchTermEl.value = "";
+
+      if (categoryEl) setCategoryValue("", "none");
+      if (serviceEl) serviceEl.value = "";
+      if (serviceSearch) serviceSearch.value = "";
+
+      serviceMeta = null;
+      editingLineItem = null;
+
+      syncCustomServiceMode();
+      updateServiceClearButton();
       updateEstimateButtonState();
-      focusAddAnotherRepair();
       void refreshPairedSuggestions();
+      void refreshEstimatorPartsSources();
     } catch (e) {
       const currentIndex = lineItems.indexOf(it);
       if (currentIndex >= 0) {
