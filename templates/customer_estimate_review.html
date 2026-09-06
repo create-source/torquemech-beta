@@ -270,7 +270,25 @@
       <div class="tm-public-estimate-brand" aria-label="TorqueMech"><span>Torque</span><span>Mech</span></div>
       <div class="tm-public-estimate-kicker">Prepared Estimate Review</div>
       <h1>{{ estimate.related_title or line_items[0].service_name or "Repair Estimate" }}</h1>
+      {% set header_recorded_decision = decision_log.decision_status if decision_log and decision_log.decision_status in ["Approved", "Declined", "Deferred"] else "" %}
+      {% if header_recorded_decision == "Approved" %}
+      <div class="tm-public-decision-result" role="status" aria-live="polite" aria-atomic="true">
+        <h3>Estimate Approved</h3>
+        <p class="tm-public-estimate-copy">Your approval has been recorded. You can still review the estimate details below.</p>
+      </div>
+      {% elif header_recorded_decision == "Declined" %}
+      <div class="tm-public-decision-result" role="status" aria-live="polite" aria-atomic="true">
+        <h3>Estimate Declined</h3>
+        <p class="tm-public-estimate-copy">Your decision has been recorded. You can still review the estimate details below.</p>
+      </div>
+      {% elif header_recorded_decision == "Deferred" %}
+      <div class="tm-public-decision-result" role="status" aria-live="polite" aria-atomic="true">
+        <h3>Decision Saved — Deciding Later</h3>
+        <p class="tm-public-estimate-copy">Your decision has been recorded. You can still review the estimate details below.</p>
+      </div>
+      {% else %}
       <p>Review the prepared estimate below, then approve, decline, or decide later.</p>
+      {% endif %}
       {% if pdf_url %}
       <div class="tm-public-estimate-actions">
         <a class="tm-public-estimate-action" href="{{ pdf_url }}">Open Estimate PDF</a>
