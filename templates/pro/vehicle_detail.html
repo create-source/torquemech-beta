@@ -5173,20 +5173,43 @@
 
       <div class="tm-findings-status-groups" aria-label="Expandable additional finding status groups">
         {% for group in [
-          {"label": "Awaiting Customer Decision", "statuses": ["Open"], "count": findings_summary.open, "empty": "No findings awaiting customer decision."},
-          {"label": "Customer Approved", "statuses": ["Approved"], "count": findings_summary.approved, "empty": "No customer-approved recommended work."},
-          {"label": "Customer Declined / Deferred", "statuses": ["Declined", "Deferred"], "count": findings_summary.declined, "empty": "No declined or deferred findings."}
+          {"label": "Estimate Needed", "statuses": ["Open"], "decision_label": "Estimate Needed", "empty": "No findings need an estimate."},
+          {"label": "Awaiting Customer Decision", "statuses": ["Open"], "decision_label": "Awaiting Customer Decision", "empty": "No findings are awaiting customer decision."},
+          {"label": "Customer Approved", "statuses": ["Approved"], "decision_label": "Customer Approved", "empty": "No customer-approved recommended work."},
+          {"label": "Customer Declined / Deferred", "statuses": ["Declined", "Deferred"], "decision_label": "", "empty": "No declined or deferred findings."}
         ] %}
-        <details class="tm-history-summary-card tm-findings-status-card" data-finding-status-group="{{ group.label }}" {% if (new_finding_status and new_finding_status in group.statuses) or (group.label == "Open" and group.count) %}open{% endif %}>
+
+        {% set ns = namespace(count=0) %}
+
+        {% for item in findings_records %}
+          {% if item.status in group.statuses
+                and (
+                  not group.decision_label
+                  or item.customer_decision_label == group.decision_label
+                ) %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+        {% endfor %}
+
+        <details
+          class="tm-history-summary-card tm-findings-status-card"
+          data-finding-status-group="{{ group.label }}"
+          {% if ns.count and group.label == "Estimate Needed" %}open{% endif %}
+        >
           <summary>
             <span>{{ group.label }}</span>
-            <strong>{{ group.count }}</strong>
+            <strong>{{ ns.count }}</strong>
             <em aria-hidden="true">v</em>
           </summary>
-          {% if group.count %}
+
+          {% if ns.count %}
           <div class="tm-findings-list">
             {% for item in findings_records %}
-            {% if item.status in group.statuses %}
+            {% if item.status in group.statuses
+                  and (
+                    not group.decision_label
+                    or item.customer_decision_label == group.decision_label
+                  ) %}
             <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}" id="finding-{{ item.id }}" data-finding-id="{{ item.id }}" {% if new_finding_id and item.id == new_finding_id %}data-new-finding="true"{% endif %}>
               <div class="tm-history-head">
                 <div class="tm-history-title">{% if item.request_type == "labor" %}Labor Request{% else %}{{ item.finding or "Finding" }}{% endif %}</div>

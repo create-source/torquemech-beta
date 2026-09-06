@@ -10215,14 +10215,20 @@ def append_customer_decision_log_if_needed(
 
 def finding_customer_decision_label(finding: dict[str, Any]) -> str:
     status = str(finding.get("status") or "").strip()
+
     if status == "Approved":
         return "Customer Approved"
+
     if status == "Declined":
         return "Customer Declined"
+
     if status == "Deferred":
         return "Customer Deferred"
-    return "Awaiting Customer Decision"
 
+    if finding.get("estimate_document_id"):
+        return "Awaiting Customer Decision"
+
+    return "Estimate Needed"
 
 def finding_repair_stage_label(finding: dict[str, Any]) -> str:
     if str(finding.get("status") or "").strip() == "Completed":
@@ -11266,6 +11272,10 @@ def vehicle_finding_activity_payload(
         customer_id=customer_id,
         vehicle_id=vehicle_id,
     )
+
+    for record in findings_records:
+        annotate_finding_workflow_state(record)
+
     vehicle_timeline = build_vehicle_timeline(
         customer_id,
         vehicle_id,
@@ -20460,6 +20470,8 @@ def pro_customer_vehicle_detail(
             customer_id=customer_id,
             vehicle_id=vehicle_id,
         )
+        for record in findings_records:
+            annotate_finding_workflow_state(record)
         repair_invoice_map = load_repair_invoice_map(conn, customer_id, vehicle_id)
         annotate_repairs_with_invoice_status(repair_records, repair_invoice_map)
         for record in findings_records:
@@ -21312,6 +21324,8 @@ def pro_finding_record_detail(
             customer_id=customer_id,
             vehicle_id=vehicle_id,
         )
+        for record in findings_records:
+            annotate_finding_workflow_state(record)
         customer_review_url = ""
         estimate_doc = latest_estimate_document_for_finding(
             conn,
