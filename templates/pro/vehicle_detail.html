@@ -1,5 +1,7 @@
 {% extends "layout.html" %}
 
+{% set tm_ai_enabled = false %}
+
 {% block title %}Vehicle Detail | TorqueMech CRM{% endblock %}
 
 {% block page_css %}
@@ -4103,10 +4105,13 @@
     .tm-assistant-panel { width: 100%; }
   }
 </style>
+{% if tm_ai_enabled %}
 {% include "pro/partials/repair_intelligence_styles.html" %}
+{% endif %}
 {% endblock %}
 
 {% block content %}
+
 <section class="tm-pro-shell tm-pro-shell--vehicle">
   {% set workspace_active_repair_items = repair_workspace_groups.active|default([], true)|list %}
   {% set workspace_in_progress_items = repair_workspace_groups.in_progress|default([], true)|list %}
@@ -4573,7 +4578,15 @@
               <button class="tm-btn tm-btn-primary" type="submit">{{ item.primary_action_label }}</button>
             </form>
             {% endif %}
-            {% if item.blueprint %}<button class="tm-btn tm-btn-secondary" type="button" data-blueprint-open="blueprint-{{ item.source_type }}-{{ item.source_id }}">Review Repair Intelligence</button>{% endif %}
+            {% if tm_ai_enabled and item.blueprint %}
+            <button
+              class="tm-btn tm-btn-secondary"
+              type="button"
+              data-blueprint-open="blueprint-{{ item.source_type }}-{{ item.source_id }}"
+            >
+              Review Repair Intelligence
+            </button>
+            {% endif %}
             <a class="tm-btn tm-btn-secondary" href="{{ item.source_action_url or item.url }}">{{ item.source_action_label or "Review Repair" }}</a>
           </div>
         </article>
@@ -5753,12 +5766,6 @@
   </details>
 </section>
 
-
-<button class="tm-assistant-launcher" type="button" data-tm-assistant-open aria-haspopup="dialog" aria-controls="tm-context-assistant">
-  <span aria-hidden="true">✦</span> Ask TorqueMech
-</button>
-
-<div class="tm-assistant-modal" id="tm-context-assistant" data-tm-assistant-modal hidden>
   <button class="tm-assistant-backdrop" type="button" aria-label="Close TorqueMech Assistant" data-tm-assistant-close></button>
   <aside class="tm-assistant-panel" role="dialog" aria-modal="true" aria-labelledby="tm-assistant-title">
     <header class="tm-assistant-head">
@@ -7097,6 +7104,7 @@
 })();
 </script>
 
+{% if tm_ai_enabled %}
 <script>
 (() => {
   const modal = document.querySelector('[data-tm-assistant-modal]');
@@ -7244,4 +7252,5 @@
   });
 })();
 </script>
+{% endif %}
 {% endblock %}
