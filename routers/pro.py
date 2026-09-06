@@ -22931,7 +22931,21 @@ def pro_repair_record_detail(
     conn = crm_db_conn()
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+
+        # QA-05: restore approved estimate pricing on repairs created
+        # from an approved finding, including older repair records that
+        # were created before the labor/parts split was preserved.
+        if sync_repair_pricing_from_approved_estimate(
+            conn,
+            repair_id=repair_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+        ):
+            conn.commit()
+            repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+
         invoice = load_invoice_for_repair(conn, repair_id)
         repair_execution_status = repair_execution_status_context(conn, repair, customer_id, vehicle_id)
         checklist_items = load_repair_checklist_items(conn, repair_id)
@@ -23811,7 +23825,21 @@ def completion_detail_context(
     completion_warnings: list[str] | None = None,
 ) -> dict[str, Any]:
     customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+
     repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+
+    # QA-05: restore approved estimate pricing on repairs created
+    # from an approved finding, including older repair records that
+    # were created before the labor/parts split was preserved.
+    if sync_repair_pricing_from_approved_estimate(
+        conn,
+        repair_id=repair_id,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+    ):
+        conn.commit()
+        repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+
     invoice = load_invoice_for_repair(conn, repair_id)
     repair_execution_status = repair_execution_status_context(conn, repair, customer_id, vehicle_id)
     checklist_items = load_repair_checklist_items(conn, repair_id)
