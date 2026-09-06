@@ -601,7 +601,13 @@
           {% endif %}
           {% if item.tracked_parts %}
           <div class="tm-invoice-parts-detail">
-            <div class="tm-invoice-field"><span>Tracked Parts</span><strong>{{ item.tracked_parts_total|pro_currency }} added to final total</strong></div>
+            <div class="tm-invoice-field">
+              <span>Tracked Parts</span>
+              <strong>Tracked Parts Total: {{ item.tracked_parts_total|pro_currency }}</strong>
+              <div style="margin-top:4px; color:#64748b; font-size:.84rem;">
+                Repair documentation only — does not automatically change the approved invoice price.
+              </div>
+            </div>
             <ul>
               {% for part in item.tracked_parts %}
               <li>
