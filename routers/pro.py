@@ -6522,10 +6522,11 @@ def repair_cost_totals(repair: dict[str, Any]) -> dict[str, Any]:
         stored_total = 0.0
 
     labor_total = round(float(labor["labor_total"] or 0), 2)
-    parts_total = round(
-        max(0.0, parts_total) + max(0.0, tracked_parts_total),
-        2,
-    )
+
+    # Parts Tracking documents the actual parts used during the repair.
+    # It must not automatically increase the customer-approved parts price.
+    parts_total = round(max(0.0, parts_total), 2)
+
     calculated_total = round(labor_total + parts_total, 2)
 
     fallback_total = round(
