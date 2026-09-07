@@ -4465,6 +4465,17 @@
     {% set recently_completed_items = repair_workspace_groups.recently_completed|list %}
     {% set recently_completed_count = repair_workspace_groups.recently_completed_count|default(recently_completed_items|length, true) %}
     {% set ready_invoice_items = repair_workspace_groups.ready_for_invoice|list %}
+
+    {% if not open_repair_items
+      and not approved_repair_items
+      and not in_progress_repair_items
+      and not ready_to_complete_items
+      and not recently_completed_items %}
+    <div class="tm-history-empty" style="margin-bottom:12px;">
+      <strong>No repairs yet.</strong><br>
+      Approved customer work will appear here when you create a repair from an approved finding or estimate.
+    </div>
+    {% endif %}
     
     {% set workspace_sections = [
       {"key": "open", "title": "Open Repairs", "items": open_repair_items, "empty": "No active repairs yet. Create one from a finding, estimate, or manual repair.", "collapsible": false, "default_open": true},
