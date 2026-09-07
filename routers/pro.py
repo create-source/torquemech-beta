@@ -14712,9 +14712,7 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
                 "href": "/pro/calendar",
                 "pending_count": pending_appointment_count,
             },
-            <a class="tm-pro-welcome-action" href="/pro/shop-settings">
-              Set Up My Shop
-            </a>
+            {"label": "Shop Settings", "href": "/pro/shop-settings"},
             {"label": "View Active Jobs", "href": "/pro/active-jobs"},
         ],
     }
