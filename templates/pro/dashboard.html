@@ -1795,7 +1795,42 @@
         {% endif %}
       </div>
   </div>
+  {% if show_welcome %}
+  <section class="tm-pro-welcome" aria-label="Getting started with TorqueMech">
+    <div class="tm-pro-welcome-main">
+      <div class="tm-pro-welcome-copy">
+        <h2>Welcome to TorqueMech</h2>
 
+        <p>
+          Set up your shop and run your first customer through the workflow.
+          Start with your shop information, then add your first customer.
+        </p>
+
+        <div class="tm-pro-flow-row" aria-label="Getting started steps">
+          <span class="tm-pro-flow-step">1. Shop information</span>
+          <span class="tm-pro-flow-step">2. Add customer</span>
+          <span class="tm-pro-flow-step">3. Add vehicle</span>
+          <span class="tm-pro-flow-step">4. Create finding</span>
+          <span class="tm-pro-flow-step">5. Send approval</span>
+        </div>
+
+        <p class="tm-pro-welcome-support">
+          Your first step: add your shop information so estimates, approvals, and invoices are ready for customers.
+        </p>
+
+        <div class="tm-pro-welcome-actions">
+          <a class="tm-pro-welcome-action" href="/pro/shop-settings">
+            Set Up My Shop
+          </a>
+
+          <a class="tm-pro-welcome-secondary" href="/pro/customers">
+            Add First Customer
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
   <section class="tm-quick-actions" aria-label="Quick actions" data-tour-target="pro-quick-actions">
     <h2>Fast Actions</h2>
     <p class="tm-quick-actions__note">The main moves for starting or continuing shop work.</p>

@@ -14712,7 +14712,9 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
                 "href": "/pro/calendar",
                 "pending_count": pending_appointment_count,
             },
-            {"label": "Shop Settings", "href": "/pro/shop-settings"},
+            <a class="tm-pro-welcome-action" href="/pro/shop-settings">
+              Set Up My Shop
+            </a>
             {"label": "View Active Jobs", "href": "/pro/active-jobs"},
         ],
     }
@@ -15884,16 +15886,25 @@ def pro_dashboard(request: Request, welcome: int = 0):
     try:
         shop_id = current_shop_id(conn, request)
         dashboard = build_pro_dashboard_summary(conn, shop_id=shop_id)
+
+        customer_count = 0
+        if shop_id is not None:
+            row = conn.execute(
+                "SELECT COUNT(*) AS count FROM customers WHERE shop_id = ?",
+                (shop_id,),
+            ).fetchone()
+            customer_count = int(row["count"] or 0) if row else 0
+
+        show_welcome = welcome == 1 or customer_count == 0
     finally:
         conn.close()
-
     return templates.TemplateResponse(
         "pro/dashboard.html",
         {
             "request": request,
             "dashboard": dashboard,
             "first_name": first_name,
-            "show_welcome": welcome == 1,
+            "show_welcome": show_welcome,
             "csrf_token": optional_csrf_token(request),
         },
     )
