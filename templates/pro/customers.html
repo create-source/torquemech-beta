@@ -308,7 +308,10 @@
         </a>
         {% endfor %}
       {% else %}
-        <div class="tm-crm-empty">No customers found.</div>
+        <div class="tm-crm-empty">
+          <strong>No customers yet.</strong><br>
+          Add your first customer to start building your shop history.
+        </div>
       {% endif %}
     </div>
 {% if total_pages > 1 %}
