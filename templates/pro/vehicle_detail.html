@@ -5669,7 +5669,10 @@
           {% endfor %}
         </div>
         {% else %}
-        <div class="tm-history-empty" style="margin-top:12px;">No invoices have been created for this vehicle yet.</div>
+        <div class="tm-history-empty" style="margin-top:12px;">
+          <strong>No invoices yet.</strong><br>
+          Complete a repair first, then create the invoice from the completed repair.
+        </div>
         {% endif %}
       </div>
     </details>
