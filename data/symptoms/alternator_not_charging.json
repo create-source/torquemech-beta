@@ -1,0 +1,96 @@
+{
+  "slug": "alternator-not-charging",
+  "title": "Alternator Not Charging",
+  "category": "Starting / Charging",
+  "summary": "Charging-system workflow for low alternator output, battery light, belt drive issues, and voltage-drop faults.",
+  "intro": "An alternator-not-charging complaint should be diagnosed with a known-good battery state, belt-drive inspection, charging output under load, and voltage-drop checks before replacing the alternator.",
+  "common_sounds": [
+    "Battery light on while driving",
+    "Headlights dim at idle or blower slows down",
+    "Vehicle stalls after jump start",
+    "Belt squeal, pulley noise, or burning smell"
+  ],
+  "quick_checks": [
+    "Charge and test the battery before judging alternator output",
+    "Measure charging voltage at idle and raised RPM with electrical loads on",
+    "Inspect belt, tensioner, pulley alignment, alternator clutch pulley, and output cable",
+    "Voltage-drop alternator B+, battery positive, grounds, and engine ground strap under load",
+    "Check generator command, sense wire, fuses, and related P0562/P0620 data"
+  ],
+  "common_causes": [
+    "Failed alternator or internal voltage regulator",
+    "Loose, slipping, broken, or contaminated serpentine belt",
+    "Weak belt tensioner or overrunning alternator pulley fault",
+    "High resistance in alternator output cable, battery terminals, or grounds",
+    "Blown fuse, fusible link, sense wire, or generator control circuit problem"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Output and Belt Path",
+      "summary": "Confirm the alternator is driven correctly and cannot maintain voltage under load.",
+      "checks": [
+        "Inspect belt and tensioner first",
+        "Load test charging output",
+        "Check alternator noise, heat, and pulley behavior"
+      ],
+      "repairs": [
+        {
+          "title": "Alternator Blueprint",
+          "cost_guide_href": "/repair-guides/alternator-replacement"
+        },
+        {
+          "title": "Serpentine Belt Blueprint",
+          "cost_guide_href": "/repair-guides/serpentine-belt-replacement"
+        }
+      ]
+    },
+    {
+      "title": "Cable and Control Path",
+      "summary": "If output is inconsistent, prove the cable, ground, fuse, and control circuits before replacing the alternator.",
+      "checks": [
+        "Voltage-drop B+ and ground circuits",
+        "Check fusible link and charging fuse",
+        "Compare commanded and actual generator output"
+      ],
+      "repairs": [
+        {
+          "title": "Electrical Diagnostic",
+          "estimator_href": "/estimator?service=charging_system_diagnosis"
+        }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    {
+      "code": "P0562",
+      "title": "System Voltage Low",
+      "href": "/obd/p0562"
+    },
+    {
+      "code": "P0563",
+      "title": "System Voltage High",
+      "href": "/obd/p0563"
+    },
+    {
+      "code": "P0620",
+      "title": "Generator Control Circuit",
+      "href": "/obd/p0620"
+    }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Alternator Replacement",
+      "description": "Use when battery state, belt drive, cables, and command checks confirm low alternator output.",
+      "cost_guide_href": "/repair-guides/alternator-replacement",
+      "estimator_href": "/estimator?service=alternator_replacement"
+    },
+    {
+      "title": "Serpentine Belt Replacement",
+      "description": "Use when belt slip or tensioner behavior is the confirmed cause of low output.",
+      "cost_guide_href": "/repair-guides/serpentine-belt-replacement",
+      "estimator_href": "/estimator?service=serpentine_belt_replacement"
+    }
+  ],
+  "estimator_link": "/estimator?service=charging_system_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

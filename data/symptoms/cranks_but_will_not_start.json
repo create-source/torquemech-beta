@@ -1,0 +1,105 @@
+{
+  "slug": "cranks-but-will-not-start",
+  "title": "Cranks But Will Not Start",
+  "category": "Starting / Engine Performance",
+  "summary": "Engine cranks normally but will not fire, separating fuel, spark, compression, security, and engine-position signals.",
+  "intro": "A crank/no-start should be split into what is missing during cranking: fuel pressure, injector pulse, spark, compression, or a valid crank/cam signal. Avoid replacing a fuel pump, starter, or sensor until the missing input is proven.",
+  "common_sounds": [
+    "Starter cranks at normal speed but engine will not fire",
+    "Tachometer does not move while cranking",
+    "Engine briefly fires with added fuel then stalls",
+    "Fuel pump is silent or pressure drops quickly",
+    "Security light flashes during start attempt"
+  ],
+  "quick_checks": [
+    "Scan all modules for P0335, P0340, P0230, security, immobilizer, and low-voltage codes before clearing",
+    "Confirm cranking speed, battery voltage during crank, and RPM signal on the scan tool",
+    "Check fuel pressure, fuel volume, injector pulse, and pump command before quoting a pump",
+    "Check spark output and ignition power/ground during crank",
+    "Use compression or relative-compression testing if fuel and spark are present"
+  ],
+  "common_causes": [
+    "No crankshaft position signal or cam/crank correlation problem",
+    "No fuel pressure from pump, relay, fuse, wiring, or control issue",
+    "No injector pulse due to security, PCM power, sensor input, or wiring issue",
+    "Ignition power, coil control, or spark output failure",
+    "Low compression, jumped timing, flooded engine, or severe mechanical fault"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Signal and Command Path",
+      "summary": "Prove the PCM sees engine speed and commands fuel and spark during cranking.",
+      "checks": [
+        "Watch scan-tool RPM while cranking",
+        "Check injector pulse and coil command",
+        "Inspect CKP/CMP connectors and harness routing"
+      ],
+      "repairs": [
+        {
+          "title": "Crank Sensor Path",
+          "cost_guide_href": "/cost/camshaft-position-sensor-replacement"
+        },
+        {
+          "title": "Electrical Diagnostic",
+          "estimator_href": "/estimator?service=electrical_diagnostic"
+        }
+      ]
+    },
+    {
+      "title": "Fuel, Spark, and Compression Path",
+      "summary": "Once command exists, find whether pressure, spark energy, or mechanical compression is missing.",
+      "checks": [
+        "Measure fuel pressure and leak-down",
+        "Check spark output under load",
+        "Perform relative compression if fuel and spark are present"
+      ],
+      "repairs": [
+        {
+          "title": "Fuel Pump Blueprint",
+          "cost_guide_href": "/repair-guides/fuel-pump-replacement"
+        },
+        {
+          "title": "Ignition Coil Blueprint",
+          "cost_guide_href": "/repair-guides/ignition-coil-replacement"
+        }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    {
+      "code": "P0335",
+      "title": "Crankshaft Position Sensor A Circuit",
+      "href": "/obd/p0335"
+    },
+    {
+      "code": "P0340",
+      "title": "Camshaft Position Sensor Circuit",
+      "href": "/obd/p0340"
+    },
+    {
+      "code": "P0230",
+      "title": "Fuel Pump Primary Circuit",
+      "href": "/obd/p0230"
+    },
+    {
+      "code": "P0562",
+      "title": "System Voltage Low",
+      "href": "/obd/p0562"
+    }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Fuel Pump Replacement",
+      "description": "Use only after fuel pressure, command, and power/ground testing confirm the pump path.",
+      "cost_guide_href": "/repair-guides/fuel-pump-replacement",
+      "estimator_href": "/estimator?service=fuel_pump_replacement"
+    },
+    {
+      "title": "Electrical Diagnostic",
+      "description": "Use when crank/cam signal, relay command, injector pulse, or security data is missing.",
+      "estimator_href": "/estimator?service=electrical_diagnostic"
+    }
+  ],
+  "estimator_link": "/estimator?service=no_start_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

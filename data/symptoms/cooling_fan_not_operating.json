@@ -1,0 +1,100 @@
+{
+  "slug": "cooling-fan-not-operating",
+  "title": "Cooling Fan Not Operating",
+  "category": "Cooling System / Electrical",
+  "summary": "Diagnostic path for radiator fan no-operation, overheating at idle, A/C warm at idle, relays, fuses, fan command, and motor checks.",
+  "intro": "A cooling fan fault should be split into command, power, ground, relay/fuse, motor, sensor input, and airflow problems. Do not replace the fan assembly until command and circuit behavior are confirmed.",
+  "common_sounds": [
+    "Overheats in traffic but cools while driving",
+    "A/C gets warm at idle",
+    "Fan never comes on or only one fan operates",
+    "Fan runs constantly after shutdown"
+  ],
+  "quick_checks": [
+    "Verify coolant level and actual engine temperature before electrical testing",
+    "Command the fan with a scan tool when supported",
+    "Check fan fuses, relays, control module, power feed, and ground under load",
+    "Check ECT data plausibility and A/C pressure request inputs",
+    "Backprobe motor current draw or voltage drop before condemning the fan assembly"
+  ],
+  "common_causes": [
+    "Failed fan motor or high-resistance fan connector",
+    "Blown fuse, failed relay, control module, or missing power feed",
+    "Poor ground or voltage drop in fan circuit",
+    "ECT sensor data, A/C pressure input, or PCM command issue",
+    "Blocked condenser/radiator airflow or damaged fan shroud"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Command Path",
+      "summary": "Find whether the PCM is requesting fan operation and why.",
+      "checks": [
+        "Compare actual temperature to scan-tool ECT",
+        "Check fan command with A/C request",
+        "Review P0117, P0118, P0480, and pressure sensor data"
+      ],
+      "repairs": [
+        {
+          "title": "Coolant Temperature Sensor Path",
+          "cost_guide_href": "/cost/engine-coolant-temperature-sensor-replacement"
+        }
+      ]
+    },
+    {
+      "title": "Power and Motor Path",
+      "summary": "If command exists, prove fuse, relay, feed, ground, and motor behavior under load.",
+      "checks": [
+        "Load test fan power and ground",
+        "Check relay control and fuse voltage",
+        "Measure motor current draw if accessible"
+      ],
+      "repairs": [
+        {
+          "title": "Radiator Fan Blueprint",
+          "cost_guide_href": "/repair-guides/radiator-fan-replacement"
+        },
+        {
+          "title": "Electrical Diagnostic",
+          "estimator_href": "/estimator?service=cooling_fan_diagnosis"
+        }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    {
+      "code": "P0480",
+      "title": "Cooling Fan Control Circuit",
+      "href": "/obd/p0480"
+    },
+    {
+      "code": "P0117",
+      "title": "ECT Circuit Low",
+      "href": "/obd/p0117"
+    },
+    {
+      "code": "P0118",
+      "title": "ECT Circuit High",
+      "href": "/obd/p0118"
+    },
+    {
+      "code": "P0217",
+      "title": "Engine Over Temperature",
+      "href": "/obd/p0217"
+    }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Radiator Fan Replacement",
+      "description": "Use after command, fuse, relay, power, and ground checks confirm the fan motor or assembly.",
+      "cost_guide_href": "/repair-guides/radiator-fan-replacement",
+      "estimator_href": "/estimator?service=radiator_fan_replacement"
+    },
+    {
+      "title": "Cooling Fan Diagnosis",
+      "description": "Use when command or circuit testing is needed before parts are selected.",
+      "estimator_href": "/estimator?service=cooling_fan_diagnosis"
+    }
+  ],
+  "estimator_link": "/estimator?service=cooling_fan_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

@@ -1,0 +1,104 @@
+{
+  "slug": "engine-vibration",
+  "title": "Engine Vibration",
+  "category": "Engine Performance / Mounts",
+  "summary": "Separates engine misfire, mount collapse, drivetrain vibration, and accessory load complaints.",
+  "intro": "Engine vibration can be combustion-related, mount-related, accessory-related, or drivetrain-related. The key is whether it changes with RPM, gear selection, load, road speed, or cylinder contribution.",
+  "common_sounds": [
+    "Shaking at idle in gear",
+    "Vibration changes when A/C turns on",
+    "Engine rocks during reverse/drive engagement",
+    "Vibration follows RPM more than road speed"
+  ],
+  "quick_checks": [
+    "Scan for misfire, fuel-trim, and idle-control codes before inspecting mounts only",
+    "Check misfire counters and cylinder contribution at hot idle",
+    "Inspect engine and transmission mounts for collapse, fluid leaks, separation, or contact",
+    "Disable accessory loads briefly where safe to see whether vibration changes",
+    "Separate road-speed vibration from engine-RPM vibration during road test"
+  ],
+  "common_causes": [
+    "Single-cylinder or random misfire",
+    "Collapsed engine mount or transmission mount",
+    "Dirty throttle body, vacuum leak, or unstable idle control",
+    "Accessory pulley, belt tensioner, or compressor load issue",
+    "Drivetrain vibration mistaken for engine vibration"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Combustion Path",
+      "summary": "Use scan data and cylinder contribution to decide whether the engine is actually misfiring.",
+      "checks": [
+        "Review P0300-family codes and misfire counters",
+        "Compare fuel trims and idle speed control",
+        "Inspect plugs, coils, injectors, and vacuum leaks"
+      ],
+      "repairs": [
+        {
+          "title": "Cylinder Misfire Diagnosis",
+          "cost_guide_href": "/repair-guides/how-to-diagnose-a-cylinder-misfire"
+        },
+        {
+          "title": "Rough Idle Path",
+          "cost_guide_href": "/symptoms/rough-idle"
+        }
+      ]
+    },
+    {
+      "title": "Mount and Load Path",
+      "summary": "If combustion is smooth, inspect mounts and accessory loads under the condition that creates vibration.",
+      "checks": [
+        "Power-brake lightly where safe and inspect mount movement",
+        "Check mount collapse or metal-to-metal contact",
+        "Inspect belt, tensioner, and accessory drag"
+      ],
+      "repairs": [
+        {
+          "title": "Engine Mount Diagnosis",
+          "estimator_href": "/estimator?service=engine_mount_diagnosis"
+        },
+        {
+          "title": "Serpentine Belt Blueprint",
+          "cost_guide_href": "/repair-guides/serpentine-belt-replacement"
+        }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    {
+      "code": "P0300",
+      "title": "Random/Multiple Cylinder Misfire",
+      "href": "/obd/p0300"
+    },
+    {
+      "code": "P0301",
+      "title": "Cylinder 1 Misfire",
+      "href": "/obd/p0301"
+    },
+    {
+      "code": "P0171",
+      "title": "System Too Lean Bank 1",
+      "href": "/obd/p0171"
+    },
+    {
+      "code": "P0507",
+      "title": "Idle RPM Higher Than Expected",
+      "href": "/obd/p0507"
+    }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Ignition Coil Replacement",
+      "description": "Use when misfire testing proves coil breakdown.",
+      "cost_guide_href": "/repair-guides/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement"
+    },
+    {
+      "title": "Engine Mount Diagnosis",
+      "description": "Use when scan data is clean and mount movement or collapse is confirmed.",
+      "estimator_href": "/estimator?service=engine_mount_diagnosis"
+    }
+  ],
+  "estimator_link": "/estimator?service=engine_vibration_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

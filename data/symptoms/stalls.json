@@ -1,0 +1,106 @@
+{
+  "slug": "stalls",
+  "title": "Stalls",
+  "category": "Engine Performance",
+  "summary": "General stalling workflow for idle stalls, decel stalls, hot stalls, starts-then-dies, and intermittent shutdowns.",
+  "intro": "A stalling complaint should be tied to the condition where it happens: hot restart, idle in gear, decel, bumps, fuel level, A/C load, or highway cruise. Testing should capture what drops out first: RPM signal, fuel pressure, spark, throttle/idle control, power feed, or communication.",
+  "common_sounds": [
+    "Engine shuts off at stop lights",
+    "Starts then dies",
+    "Stalls when hot and restarts after cooling",
+    "Stalls when turning on A/C or shifting into gear",
+    "Stalls over bumps or during deceleration"
+  ],
+  "quick_checks": [
+    "Scan all modules and save freeze-frame data for stall-related codes",
+    "Monitor RPM signal, fuel pressure, throttle angle, idle command, battery voltage, and MAF/MAP data during the stall",
+    "Inspect battery terminals, engine grounds, PCM power relay, and harness areas disturbed by engine movement",
+    "Check throttle body cleanliness, idle relearn needs, vacuum leaks, and purge valve leakage for idle stalls",
+    "Use heat, vibration, and wiggle testing only after a safe baseline inspection"
+  ],
+  "common_causes": [
+    "Crankshaft position sensor or RPM signal dropout",
+    "Fuel pump pressure loss, relay issue, or restricted fuel delivery",
+    "Dirty throttle body, idle control issue, or vacuum leak",
+    "EVAP purge valve stuck open causing rich idle or starts-then-stalls",
+    "Poor power, ground, relay, or intermittent connector fault",
+    "MAF/MAP signal error or engine mechanical issue"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Dropout Path",
+      "summary": "Find whether RPM, spark, fuel, PCM power, or communication disappears first.",
+      "checks": [
+        "Watch cranking/running RPM signal",
+        "Check fuel pressure during the stall",
+        "Monitor ignition and injector command"
+      ],
+      "repairs": [
+        {
+          "title": "Fuel Pump Blueprint",
+          "cost_guide_href": "/repair-guides/fuel-pump-replacement"
+        },
+        {
+          "title": "Electrical Diagnostic",
+          "estimator_href": "/estimator?service=intermittent_stall_diagnosis"
+        }
+      ]
+    },
+    {
+      "title": "Idle Air and Load Path",
+      "summary": "For stalls at stops or with A/C load, inspect airflow, throttle, purge, and vacuum leak behavior.",
+      "checks": [
+        "Compare commanded and actual idle",
+        "Check purge valve sealing at idle",
+        "Smoke test intake and PCV leak paths"
+      ],
+      "repairs": [
+        {
+          "title": "Throttle Body Cleaning",
+          "estimator_href": "/estimator?service=throttle_body_cleaning"
+        },
+        {
+          "title": "EVAP Purge Valve Blueprint",
+          "cost_guide_href": "/repair-guides/evap-purge-valve-replacement"
+        }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    {
+      "code": "P0335",
+      "title": "Crankshaft Position Sensor A Circuit",
+      "href": "/obd/p0335"
+    },
+    {
+      "code": "P0101",
+      "title": "MAF Range/Performance",
+      "href": "/obd/p0101"
+    },
+    {
+      "code": "P0505",
+      "title": "Idle Control System",
+      "href": "/obd/p0505"
+    },
+    {
+      "code": "P0441",
+      "title": "EVAP Incorrect Purge Flow",
+      "href": "/obd/p0441"
+    }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Intermittent Stall Diagnosis",
+      "description": "Use when the fault must be captured under heat, vibration, or load.",
+      "estimator_href": "/estimator?service=intermittent_stall_diagnosis"
+    },
+    {
+      "title": "Fuel Pump Replacement",
+      "description": "Use only after pressure, command, and circuit testing confirm fuel delivery loss.",
+      "cost_guide_href": "/repair-guides/fuel-pump-replacement",
+      "estimator_href": "/estimator?service=fuel_pump_replacement"
+    }
+  ],
+  "estimator_link": "/estimator?service=intermittent_stall_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}
