@@ -23,6 +23,29 @@
   .tm-switch-control input:checked + .tm-switch-track { border-color:#0f766e; background:#0f766e; }
   .tm-switch-control input:checked + .tm-switch-track::after { transform:translateX(20px); }
   .tm-switch-control input:focus-visible + .tm-switch-track { outline:3px solid rgba(37,99,235,.3); outline-offset:2px; }
+  .tm-aftercare-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .tm-aftercare-card {
+    border: 1px solid rgba(14, 116, 144, .16);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 14px;
+  }
+  .tm-aftercare-card h3 {
+    margin: 0;
+    color: #0f172a;
+  }
+  .tm-aftercare-card ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    color: #334155;
+  }
+  .tm-aftercare-card li + li {
+    margin-top: 4px;
+  }
   .tm-checklist-panel {
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-left: 5px solid #0f766e;
@@ -756,6 +779,33 @@
     <div class="tm-repair-field" style="margin-top:14px;"><span>Technician Notes</span><strong>{{ completion.technician_notes or "-" }}</strong></div>
     <div class="tm-repair-field" style="margin-top:14px;"><span>Completion Notes</span><strong>{{ completion.completion_notes or "-" }}</strong></div>
     <div class="tm-repair-field" style="margin-top:14px;"><span>Final Inspection Comments</span><strong>{{ completion.final_inspection_notes or "-" }}</strong></div>
+    {% if after_service_care_matches %}
+    <section class="tm-completion-section" aria-label="After-Service Care" style="margin-top:16px;">
+      <div class="tm-crm-kicker">Customer Review</div>
+      <h2 style="margin:0;">After-Service Care</h2>
+      <div class="tm-aftercare-list">
+        {% for care in after_service_care_matches %}
+        <article class="tm-aftercare-card">
+          <h3>{{ care.service_name }}</h3>
+          <div class="tm-repair-field" style="margin-top:8px;"><span>Performed Service</span><strong>{{ care.matched_service }}</strong></div>
+          {% if care.what_to_expect %}
+          <div class="tm-repair-field" style="margin-top:8px;"><span>What to expect</span><strong>{{ care.what_to_expect }}</strong></div>
+          {% endif %}
+          {% if care.warning_signs %}
+          <div class="tm-repair-field" style="margin-top:8px;">
+            <span>Warning signs</span>
+            <ul>
+              {% for warning in care.warning_signs[:4] %}
+              <li>{{ warning }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
     {% if completion_warnings %}
     <div class="tm-completion-warning">
       {% for warning in completion_warnings %}

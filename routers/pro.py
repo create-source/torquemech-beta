@@ -77,6 +77,7 @@ STATIC_DIR = BASE_DIR / "static"
 VISUAL_REFERENCE_SEED_PATH = BASE_DIR / "data" / "visual_reference_seed.json"
 REPAIR_INTELLIGENCE_SEED_PATH = BASE_DIR / "data" / "repair_intelligence_seed.json"
 SERVICE_EDUCATION_PATH = BASE_DIR / "data" / "service_education.json"
+AFTER_SERVICE_CARE_PATH = BASE_DIR / "data" / "after_service_care.json"
 STATE_DIR = Path("/data") if Path("/data").exists() else BASE_DIR / ".localstate"
 DB_PATH = str((STATE_DIR / "app.db").resolve())
 LOCAL_FALLBACK_DB_PATH = str((STATE_DIR / "dev_runtime_app.db").resolve())
@@ -8683,6 +8684,22 @@ def load_service_education_records() -> dict[str, dict[str, Any]]:
     return services if isinstance(services, dict) else {}
 
 
+def load_after_service_care_records() -> dict[str, dict[str, Any]]:
+    if not AFTER_SERVICE_CARE_PATH.exists():
+        return {}
+
+    try:
+        payload = json.loads(
+            AFTER_SERVICE_CARE_PATH.read_text(encoding="utf-8-sig")
+        )
+    except (OSError, json.JSONDecodeError):
+        logger.exception("AFTER_SERVICE_CARE_LOAD_FAILED")
+        return {}
+
+    services = payload.get("services")
+    return services if isinstance(services, dict) else {}
+
+
 def normalize_invoice_service_name(value: Any) -> str:
     text = str(value or "").strip().lower()
     text = text.replace("&", " and ")
@@ -8722,6 +8739,142 @@ def invoice_service_education_match(
 
     aftercare = record.get("aftercare")
     return aftercare if isinstance(aftercare, dict) else {}
+
+
+AFTER_SERVICE_GENERIC_TOKENS = {
+    "a",
+    "an",
+    "and",
+    "for",
+    "front",
+    "rear",
+    "the",
+    "replace",
+    "replacement",
+    "replaced",
+    "replacing",
+    "repair",
+    "repairs",
+    "service",
+    "services",
+    "change",
+    "flush",
+    "job",
+}
+
+
+def normalize_after_service_care_text(value: Any) -> str:
+    text = str(value or "").lower()
+    text = text.replace("&", " and ")
+    text = re.sub(r"\b(replace|replaces|replaced|replacing)\b", "replacement", text)
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def after_service_care_tokens(value: Any) -> list[str]:
+    tokens = normalize_after_service_care_text(value).split()
+    normalized: list[str] = []
+    for token in tokens:
+        if token.endswith("ies") and len(token) > 4:
+            token = f"{token[:-3]}y"
+        elif token.endswith("s") and len(token) > 3:
+            token = token[:-1]
+        normalized.append(token)
+    return normalized
+
+
+def after_service_care_core_tokens(value: Any) -> set[str]:
+    return {
+        token
+        for token in after_service_care_tokens(value)
+        if token not in AFTER_SERVICE_GENERIC_TOKENS
+    }
+
+
+def after_service_care_term_matches(service_description: Any, term: Any) -> bool:
+    description_text = normalize_after_service_care_text(service_description)
+    term_text = normalize_after_service_care_text(term)
+    if not description_text or not term_text:
+        return False
+    if f" {term_text} " in f" {description_text} ":
+        return True
+
+    core_tokens = after_service_care_core_tokens(term)
+    if len(core_tokens) < 2:
+        return False
+    description_tokens = set(after_service_care_tokens(service_description))
+    return core_tokens.issubset(description_tokens)
+
+
+def after_service_care_match_score(service_description: Any, term: Any) -> int:
+    description_text = normalize_after_service_care_text(service_description)
+    term_text = normalize_after_service_care_text(term)
+    if not description_text or not term_text:
+        return 0
+    score = 0
+    if f" {term_text} " in f" {description_text} ":
+        score = 100 + len(after_service_care_core_tokens(term))
+    core_tokens = after_service_care_core_tokens(term)
+    if len(core_tokens) >= 2 and core_tokens.issubset(set(after_service_care_tokens(service_description))):
+        score = max(score, len(core_tokens))
+    return score
+
+
+def match_after_service_care_for_services(
+    service_descriptions: list[Any],
+    records: dict[str, dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    records = records if records is not None else load_after_service_care_records()
+    matches: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for description in service_descriptions:
+        service_description = str(description or "").strip()
+        if not service_description:
+            continue
+        best_match: tuple[int, str, dict[str, Any]] | None = None
+        for service_key, record in records.items():
+            if service_key in seen or not isinstance(record, dict):
+                continue
+            terms = [record.get("service_name"), *(record.get("aliases") or [])]
+            score = max(
+                (after_service_care_match_score(service_description, term) for term in terms),
+                default=0,
+            )
+            if score and (best_match is None or score > best_match[0]):
+                best_match = (score, service_key, record)
+        if best_match:
+            _score, service_key, record = best_match
+            matched = dict(record)
+            matched["service_key"] = service_key
+            matched["matched_service"] = service_description
+            matches.append(matched)
+            seen.add(service_key)
+    return matches
+
+
+def invoice_after_service_care_matches(invoice: dict[str, Any]) -> list[dict[str, Any]]:
+    return match_after_service_care_for_services(
+        [
+            item.get("service_title") or item.get("repair_name")
+            for item in invoice.get("items") or []
+        ]
+    )
+
+
+def repair_after_service_care_matches(repair: dict[str, Any]) -> list[dict[str, Any]]:
+    return match_after_service_care_for_services([repair.get("repair_name")])
+
+
+AFTER_SERVICE_CARE_DISPLAY_FIELDS = [
+    ("what_to_expect", "What to expect"),
+    ("first_24_48_hours", "First 24-48 hours"),
+    ("normal_conditions", "Normal conditions"),
+    ("warning_signs", "Warning signs"),
+    ("customer_recommendations", "Recommendations"),
+    ("recheck_guidance", "Recheck guidance"),
+    ("maintenance_guidance", "Maintenance guidance"),
+]
+
 
 def build_invoice_pdf_bytes(
     *,
@@ -9081,22 +9234,7 @@ def build_invoice_pdf_bytes(
         c.setFillGray(0)
     
     if options.get("include_after_service_education"):
-        education_records = load_service_education_records()
-        aftercare_sections = []
-
-        for item in invoice.get("items") or []:
-            service_title = (
-                item.get("service_title")
-                or item.get("repair_name")
-                or ""
-            )
-            aftercare = invoice_service_education_match(
-                service_title,
-                education_records,
-            )
-
-            if aftercare:
-                aftercare_sections.append(aftercare)
+        aftercare_sections = invoice_after_service_care_matches(invoice)
 
         if aftercare_sections:
             draw_footer()
@@ -9104,7 +9242,7 @@ def build_invoice_pdf_bytes(
             page_no += 1
 
             c.setFont("Helvetica-Bold", 16)
-            c.drawString(left, top_y, "AFTER-SERVICE CARE INSTRUCTIONS")
+            c.drawString(left, top_y, "After-Service Care")
 
             c.setFont("Helvetica", 8.5)
             c.drawRightString(
@@ -9117,74 +9255,54 @@ def build_invoice_pdf_bytes(
             
             for aftercare in aftercare_sections:
                 title = str(
-                    aftercare.get("title")
+                    aftercare.get("service_name")
                     or "After-Service Care"
                 ).strip()
-
-                what_to_expect = str(
-                    aftercare.get("what_to_expect")
-                    or ""
-                ).strip()
-
-                care_tips = [
-                    str(value).strip()
-                    for value in aftercare.get("care_tips") or []
-                    if str(value).strip()
-                ]
-
-                contact_shop_if = [
-                    str(value).strip()
-                    for value in aftercare.get("contact_shop_if") or []
-                    if str(value).strip()
-                ]
+                matched_service = str(aftercare.get("matched_service") or "").strip()
 
                 ensure_space(80)
 
                 c.setFont("Helvetica-Bold", 10)
                 c.drawString(left, y, title)
                 y -= 14
-
-                if what_to_expect:
-                    c.setFont("Helvetica", 8.5)
-                    for line in wrap_text(what_to_expect, max_chars=92):
+                if matched_service:
+                    c.setFont("Helvetica", 8.2)
+                    c.setFillColorRGB(0.38, 0.45, 0.55)
+                    for line in wrap_text(f"Applies to: {matched_service}", max_chars=92):
                         ensure_space(12)
                         c.drawString(left + 8, y, line)
-                        y -= 11
-                    y -= 4
+                        y -= 10
+                    c.setFillGray(0)
+                    y -= 2
 
-                if care_tips:
+                for field_key, field_label in AFTER_SERVICE_CARE_DISPLAY_FIELDS:
+                    raw_value = aftercare.get(field_key)
+                    values = (
+                        [str(item).strip() for item in raw_value if str(item).strip()]
+                        if isinstance(raw_value, list)
+                        else [str(raw_value or "").strip()]
+                    )
+                    values = [value for value in values if value]
+                    if not values:
+                        continue
                     ensure_space(24)
                     c.setFont("Helvetica-Bold", 8.5)
-                    c.drawString(left + 8, y, "Care tips")
+                    c.setFillColorRGB(0.05, 0.09, 0.16)
+                    c.drawString(left + 8, y, field_label)
                     y -= 12
 
                     c.setFont("Helvetica", 8.5)
-                    for tip in care_tips:
+                    c.setFillColorRGB(0.30, 0.36, 0.44)
+                    for value in values:
                         for index, line in enumerate(
-                            wrap_text(tip, max_chars=86)
+                            wrap_text(value, max_chars=86)
                         ):
                             ensure_space(12)
-                            prefix = "• " if index == 0 else "  "
+                            prefix = "- " if index == 0 else "  "
                             c.drawString(left + 16, y, prefix + line)
                             y -= 11
+                    c.setFillGray(0)
                     y -= 4
-
-                if contact_shop_if:
-                    ensure_space(24)
-                    c.setFont("Helvetica-Bold", 8.5)
-                    c.drawString(left + 8, y, "Contact the shop if")
-                    y -= 12
-
-                    c.setFont("Helvetica", 8.5)
-                    for warning in contact_shop_if:
-                        sentence = warning[:1].upper() + warning[1:]
-                        for index, line in enumerate(
-                            wrap_text(sentence, max_chars=86)
-                        ):
-                            ensure_space(12)
-                            prefix = "• " if index == 0 else "  "
-                            c.drawString(left + 16, y, prefix + line)
-                            y -= 11
 
                 y -= 12
 
@@ -22984,6 +23102,7 @@ def pro_repair_record_detail(
             vehicle_id=vehicle_id,
             shop_id=current_shop_id(conn, request),
         )
+        after_service_care_matches = repair_after_service_care_matches(repair)
     finally:
         conn.close()
 
@@ -23012,6 +23131,7 @@ def pro_repair_record_detail(
             "repair_intelligence_records": repair_intelligence_records,
             "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
             "repair_assignment": repair_assignment,
+            "after_service_care_matches": after_service_care_matches,
             "csrf_token": optional_csrf_token(request),
             "repair_saved_success": saved == "1",
         },
@@ -23416,6 +23536,7 @@ def pro_invoice_detail(
             raise HTTPException(status_code=400, detail=completion_warnings[0])
         shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
         shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
+        after_service_care_matches = invoice_after_service_care_matches(invoice)
     finally:
         conn.close()
 
@@ -23428,6 +23549,7 @@ def pro_invoice_detail(
             "invoice": invoice,
             "shop_name": shop_name,
             "shop_profile": shop_profile,
+            "after_service_care_matches": after_service_care_matches,
             "refresh_warning": "",
             "csrf_token": optional_csrf_token(request),
             "invoice_email_notice": {
@@ -23510,6 +23632,7 @@ def pro_invoice_edit(request: Request, customer_id: int, vehicle_id: int, invoic
             raise HTTPException(status_code=400, detail=completion_warnings[0])
         shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
         shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
+        after_service_care_matches = invoice_after_service_care_matches(invoice)
     finally:
         conn.close()
     return templates.TemplateResponse(
@@ -23521,6 +23644,7 @@ def pro_invoice_edit(request: Request, customer_id: int, vehicle_id: int, invoic
             "invoice": invoice,
             "shop_name": shop_name,
             "shop_profile": shop_profile,
+            "after_service_care_matches": after_service_care_matches,
             "locked": invoice_financial_edit_locked(invoice),
             "total_change_warning": None,
             "form_values": {},
@@ -23553,6 +23677,7 @@ async def pro_invoice_update(request: Request, customer_id: int, vehicle_id: int
                     "invoice": invoice,
                     "shop_name": shop_name,
                     "shop_profile": shop_profile,
+                    "after_service_care_matches": invoice_after_service_care_matches(invoice),
                     "locked": True,
                     "total_change_warning": None,
                     "form_values": form,
@@ -23573,6 +23698,7 @@ async def pro_invoice_update(request: Request, customer_id: int, vehicle_id: int
                     "invoice": invoice,
                     "shop_name": shop_name,
                     "shop_profile": shop_profile,
+                    "after_service_care_matches": invoice_after_service_care_matches(invoice),
                     "locked": False,
                     "total_change_warning": {
                         "previous_total": previous_total,

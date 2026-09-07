@@ -8,6 +8,8 @@ from fastapi.testclient import TestClient
 
 import routers.pro as pro_module
 
+AFTER_SERVICE_CARE_PATH = pro_module.BASE_DIR / "data" / "after_service_care.json"
+
 
 class NonClosingConnection(sqlite3.Connection):
     def close(self):
@@ -49,6 +51,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
             """
             CREATE TABLE customers (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
+              shop_id INTEGER,
               first_name TEXT,
               last_name TEXT,
               phone TEXT,
@@ -61,6 +64,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
             CREATE TABLE customer_vehicles (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               customer_id INTEGER NOT NULL,
+              shop_id INTEGER,
               year INTEGER,
               make TEXT,
               model TEXT,
@@ -290,6 +294,17 @@ class MultiServiceInvoiceTests(unittest.TestCase):
             },
             display_options=display_options,
         )
+
+    def invoice_for_repairs(self, repairs):
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=repairs,
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T15:00:00",
+        )
+        self.conn.commit()
+        return invoice
 
     def test_create_invoice_from_multiple_repair_jobs(self):
         self.insert_repair(10, "Front Brake Pads Replacement", 1.2, 125, 115)
@@ -1853,6 +1868,106 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(route_with_hours.status_code, 200)
         self.assertIn(b"Hours", route_with_hours.content)
         self.assertIn(b"2.75", route_with_hours.content)
+
+    def test_after_service_care_file_exists_and_parses(self):
+        data = json.loads(AFTER_SERVICE_CARE_PATH.read_text(encoding="utf-8-sig"))
+
+        self.assertEqual(data["version"], "1.0.0")
+        self.assertIn("engine_oil_and_filter_replacement", data["services"])
+        self.assertIn("brake_pad_and_rotor_replacement", data["services"])
+        self.assertIn("water_pump_replacement", data["services"])
+
+    def test_after_service_care_matches_oil_change(self):
+        matches = pro_module.match_after_service_care_for_services(["Oil change"])
+
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0]["service_key"], "engine_oil_and_filter_replacement")
+        self.assertEqual(matches[0]["matched_service"], "Oil change")
+
+    def test_after_service_care_matches_brake_pads_and_rotors(self):
+        matches = pro_module.match_after_service_care_for_services(["Front brake pads and rotors"])
+
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0]["service_key"], "brake_pad_and_rotor_replacement")
+
+    def test_after_service_care_matches_water_pump_replacement(self):
+        matches = pro_module.match_after_service_care_for_services(["Replace water pump"])
+
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0]["service_key"], "water_pump_replacement")
+
+    def test_unknown_after_service_care_produces_no_match_and_pdf_still_builds(self):
+        self.insert_repair(90, "Custom diagnostic road test", 1.0, 120, 0)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 90)
+        invoice = self.invoice_for_repairs([repair])
+        loaded = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+
+        self.assertEqual(pro_module.invoice_after_service_care_matches(loaded), [])
+
+        pdf = self.final_invoice_pdf(
+            invoice,
+            display_options={"include_after_service_education": True},
+        )
+
+        self.assertIn(b"Final Invoice", pdf)
+        self.assertNotIn(b"After-Service Care", pdf)
+
+    def test_duplicate_repair_lines_do_not_duplicate_after_service_care(self):
+        self.insert_repair(91, "Oil change", 0.4, 120, 35)
+        self.insert_repair(92, "Engine oil service", 0.4, 120, 35)
+        repairs = [
+            pro_module.load_repair_record(self.conn, 1, 1, 91),
+            pro_module.load_repair_record(self.conn, 1, 1, 92),
+        ]
+        invoice = self.invoice_for_repairs(repairs)
+        loaded = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+        matches = pro_module.invoice_after_service_care_matches(loaded)
+
+        self.assertEqual([match["service_key"] for match in matches], ["engine_oil_and_filter_replacement"])
+
+        pdf = self.final_invoice_pdf(
+            invoice,
+            display_options={"include_after_service_education": True},
+        )
+
+        self.assertEqual(pdf.count(b"Engine Oil and Filter Replacement"), 1)
+
+    def test_invoice_pdf_includes_after_service_care_when_enabled(self):
+        self.insert_repair(93, "Front brake pads and rotors", 1.6, 130, 210)
+        self.insert_repair(94, "Water pump replacement", 2.1, 140, 160)
+        repairs = [
+            pro_module.load_repair_record(self.conn, 1, 1, 93),
+            pro_module.load_repair_record(self.conn, 1, 1, 94),
+        ]
+        invoice = self.invoice_for_repairs(repairs)
+        pdf = self.final_invoice_pdf(
+            invoice,
+            display_options={"include_after_service_education": True},
+        )
+
+        self.assertIn(b"After-Service Care", pdf)
+        self.assertIn(b"Brake Pad and Rotor Replacement", pdf)
+        self.assertIn(b"Water Pump Replacement", pdf)
+        self.assertIn(b"Warning signs", pdf)
+
+    def test_invoice_and_repair_detail_show_after_service_care_review(self):
+        self.insert_repair(95, "Oil change", 0.4, 120, 35)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 95)
+        invoice = self.invoice_for_repairs([repair])
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        repair_detail = client.get("/pro/customers/1/vehicles/1/repairs/95")
+        invoice_detail = client.get(f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}")
+
+        self.assertEqual(repair_detail.status_code, 200)
+        self.assertEqual(invoice_detail.status_code, 200)
+        self.assertIn("After-Service Care", repair_detail.text)
+        self.assertIn("Engine Oil and Filter Replacement", repair_detail.text)
+        self.assertIn("After-Service Care", invoice_detail.text)
+        self.assertIn("Engine Oil and Filter Replacement", invoice_detail.text)
+        self.assertIn("Adds reviewed care guidance for 1 matched service", invoice_detail.text)
 
     def test_unpaid_invoice_edit_preserves_number_links_and_updates_pdf(self):
         self.insert_repair(87, "Invoice Editable Repair", 1.0, 120, 80, notes="Original repair note.")

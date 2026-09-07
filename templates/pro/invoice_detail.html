@@ -195,6 +195,29 @@
     font-weight: 650;
     line-height: 1.35;
   }
+  .tm-aftercare-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .tm-aftercare-card {
+    border: 1px solid rgba(14, 116, 144, 0.16);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 14px;
+  }
+  .tm-aftercare-card h3 {
+    margin: 0;
+    color: #0f172a;
+  }
+  .tm-aftercare-card ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    color: #334155;
+  }
+  .tm-aftercare-card li + li {
+    margin-top: 4px;
+  }
   .tm-payment-status-card {
     display: flex;
     align-items: center;
@@ -665,6 +688,34 @@
         <div class="tm-invoice-field"><span>Payment Terms</span><div class="tm-invoice-notes">{{ invoice.payment_terms or "No payment terms configured." }}</div></div>
       </div>
     </section>
+
+    {% if after_service_care_matches %}
+    <section class="tm-invoice-summary" aria-label="After-Service Care">
+      <div class="tm-crm-kicker">Customer Review</div>
+      <h2 style="margin:0;">After-Service Care</h2>
+      <div class="tm-aftercare-list">
+        {% for care in after_service_care_matches %}
+        <article class="tm-aftercare-card">
+          <h3>{{ care.service_name }}</h3>
+          <div class="tm-invoice-field" style="margin-top:8px;"><span>Performed Service</span><strong>{{ care.matched_service }}</strong></div>
+          {% if care.what_to_expect %}
+          <div class="tm-invoice-field" style="margin-top:8px;"><span>What to expect</span><div>{{ care.what_to_expect }}</div></div>
+          {% endif %}
+          {% if care.warning_signs %}
+          <div class="tm-invoice-field" style="margin-top:8px;">
+            <span>Warning signs</span>
+            <ul>
+              {% for warning in care.warning_signs[:4] %}
+              <li>{{ warning }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
   </section>
 
   <section id="customer-pdf-details" class="tm-invoice-panel tm-invoice-pdf-panel" aria-label="Customer PDF Details" style="margin-top:16px;">
@@ -715,10 +766,11 @@
         <label class="tm-invoice-option tm-invoice-option--education">
           <input type="checkbox"
                 name="include_after_service_education"
-                value="1">
+                value="1"
+                {% if invoice.pdf_display_options.include_after_service_education %}checked{% endif %}>
           <span>
             <strong>Include after-service care instructions</strong>
-            <small>Adds customer-friendly maintenance guidance for completed services.</small>
+            <small>{% if after_service_care_matches %}Adds reviewed care guidance for {{ after_service_care_matches|length }} matched service{% if after_service_care_matches|length != 1 %}s{% endif %}.{% else %}No matching care guidance is available for this invoice.{% endif %}</small>
           </span>
         </label>
       </div>
