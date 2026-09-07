@@ -14464,6 +14464,312 @@
     ],
     "title": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit Intermittent"
   },
+  "P0850": {
+    "title": "Park/Neutral Switch Input Circuit",
+    "description": "The control module detected a fault related to park/neutral switch input circuit. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "park/neutral input circuit wiring or connector concern",
+      "park/neutral input component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0851": {
+    "title": "Park/Neutral Switch Input Circuit Low",
+    "description": "The control module detected a fault related to park/neutral switch input circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "park/neutral input circuit wiring or connector concern",
+      "park/neutral input component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0852": {
+    "title": "Park/Neutral Switch Input Circuit High",
+    "description": "The control module detected a fault related to park/neutral switch input circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "park/neutral input circuit wiring or connector concern",
+      "park/neutral input component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0853": {
+    "title": "Drive Switch Input Circuit",
+    "description": "The control module detected a fault related to drive switch input circuit. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "drive switch input circuit wiring or connector concern",
+      "drive switch input component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0854": {
+    "title": "Drive Switch Input Circuit Low",
+    "description": "The control module detected a fault related to drive switch input circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "drive switch input circuit wiring or connector concern",
+      "drive switch input component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0855": {
+    "title": "Drive Switch Input Circuit High",
+    "description": "The control module detected a fault related to drive switch input circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "drive switch input circuit wiring or connector concern",
+      "drive switch input component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0856": {
+    "title": "Traction Control Input Signal",
+    "description": "The control module detected a fault related to traction control input signal. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "traction control input circuit wiring or connector concern",
+      "traction control input component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0857": {
+    "title": "Traction Control Input Signal Range/Performance",
+    "description": "The control module detected a fault related to traction control input signal range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "traction control input circuit wiring or connector concern",
+      "traction control input component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0858": {
+    "title": "Traction Control Input Signal Low",
+    "description": "The control module detected a fault related to traction control input signal low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "traction control input circuit wiring or connector concern",
+      "traction control input component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0859": {
+    "title": "Traction Control Input Signal High",
+    "description": "The control module detected a fault related to traction control input signal high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "traction control input circuit wiring or connector concern",
+      "traction control input component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0860": {
+    "title": "Gear Shift Module Communication Circuit",
+    "description": "The control module detected a fault related to gear shift module communication circuit. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "gear shift module communication circuit wiring or connector concern",
+      "gear shift module communication component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0861": {
+    "title": "Gear Shift Module Communication Circuit Low",
+    "description": "The control module detected a fault related to gear shift module communication circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "gear shift module communication circuit wiring or connector concern",
+      "gear shift module communication component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0862": {
+    "title": "Gear Shift Module Communication Circuit High",
+    "description": "The control module detected a fault related to gear shift module communication circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "gear shift module communication circuit wiring or connector concern",
+      "gear shift module communication component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0863": {
+    "title": "TCM Communication Circuit",
+    "description": "The control module detected a fault related to tcm communication circuit. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module communication circuit wiring or connector concern",
+      "transmission control module communication component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0864": {
+    "title": "TCM Communication Circuit Range/Performance",
+    "description": "The control module detected a fault related to tcm communication circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module communication circuit wiring or connector concern",
+      "transmission control module communication component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0865": {
+    "title": "TCM Communication Circuit Low",
+    "description": "The control module detected a fault related to tcm communication circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module communication circuit wiring or connector concern",
+      "transmission control module communication component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0866": {
+    "title": "TCM Communication Circuit High",
+    "description": "The control module detected a fault related to tcm communication circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module communication circuit wiring or connector concern",
+      "transmission control module communication component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0867": {
+    "title": "Transmission Fluid Pressure",
+    "description": "The control module detected a fault related to transmission fluid pressure. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission fluid pressure circuit wiring or connector concern",
+      "transmission fluid pressure component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
   "P0868": {
     "description": "Transmission fluid pressure low.",
     "possible_causes": [
@@ -14479,6 +14785,533 @@
       "Road test with scan tool if available"
     ],
     "title": "Transmission Fluid Pressure Low"
+  },
+  "P0869": {
+    "title": "Transmission Fluid Pressure High",
+    "description": "The control module detected a fault related to transmission fluid pressure high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission fluid pressure circuit wiring or connector concern",
+      "transmission fluid pressure component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0870": {
+    "title": "Transmission Fluid Pressure Sensor/Switch C Circuit",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch c circuit. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0871": {
+    "title": "Transmission Fluid Pressure Sensor/Switch C Circuit Range/Performance",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch c circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0872": {
+    "title": "Transmission Fluid Pressure Sensor/Switch C Circuit Low",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch c circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0873": {
+    "title": "Transmission Fluid Pressure Sensor/Switch C Circuit High",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch c circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0874": {
+    "title": "Transmission Fluid Pressure Sensor/Switch C Circuit Intermittent",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch c circuit intermittent. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0875": {
+    "title": "Transmission Fluid Pressure Sensor/Switch D Circuit",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch d circuit. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0876": {
+    "title": "Transmission Fluid Pressure Sensor/Switch D Circuit Range/Performance",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch d circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0877": {
+    "title": "Transmission Fluid Pressure Sensor/Switch D Circuit Low",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch d circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0878": {
+    "title": "Transmission Fluid Pressure Sensor/Switch D Circuit High",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch d circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0879": {
+    "title": "Transmission Fluid Pressure Sensor/Switch D Circuit Intermittent",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch d circuit intermittent. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0880": {
+    "title": "TCM Power Input Signal",
+    "description": "The control module detected a fault related to tcm power input signal. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module power circuit wiring or connector concern",
+      "transmission control module power component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0881": {
+    "title": "TCM Power Input Signal Range/Performance",
+    "description": "The control module detected a fault related to tcm power input signal range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module power circuit wiring or connector concern",
+      "transmission control module power component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0882": {
+    "title": "TCM Power Input Signal Low",
+    "description": "The control module detected a fault related to tcm power input signal low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module power circuit wiring or connector concern",
+      "transmission control module power component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0883": {
+    "title": "TCM Power Input Signal High",
+    "description": "The control module detected a fault related to tcm power input signal high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module power circuit wiring or connector concern",
+      "transmission control module power component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0884": {
+    "title": "TCM Power Input Signal Intermittent",
+    "description": "The control module detected a fault related to tcm power input signal intermittent. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module power circuit wiring or connector concern",
+      "transmission control module power component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0885": {
+    "title": "TCM Power Relay Control Circuit/Open",
+    "description": "The control module detected a fault related to tcm power relay control circuit/open. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module relay circuit wiring or connector concern",
+      "transmission control module relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0886": {
+    "title": "TCM Power Relay Control Circuit Low",
+    "description": "The control module detected a fault related to tcm power relay control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module relay circuit wiring or connector concern",
+      "transmission control module relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0887": {
+    "title": "TCM Power Relay Control Circuit High",
+    "description": "The control module detected a fault related to tcm power relay control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module relay circuit wiring or connector concern",
+      "transmission control module relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0888": {
+    "title": "TCM Power Relay Sense Circuit",
+    "description": "The control module detected a fault related to tcm power relay sense circuit. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module relay circuit wiring or connector concern",
+      "transmission control module relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0889": {
+    "title": "TCM Power Relay Sense Circuit Intermittent",
+    "description": "The control module detected a fault related to tcm power relay sense circuit intermittent. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module relay circuit wiring or connector concern",
+      "transmission control module relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0890": {
+    "title": "TCM Power Relay Sense Circuit Low",
+    "description": "The control module detected a fault related to tcm power relay sense circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module relay circuit wiring or connector concern",
+      "transmission control module relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0891": {
+    "title": "TCM Power Relay Sense Circuit High",
+    "description": "The control module detected a fault related to tcm power relay sense circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module relay circuit wiring or connector concern",
+      "transmission control module relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0892": {
+    "title": "TCM Power Relay Sense Circuit Intermittent",
+    "description": "The control module detected a fault related to tcm power relay sense circuit intermittent. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission control module relay circuit wiring or connector concern",
+      "transmission control module relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0893": {
+    "title": "Multiple Gears Engaged",
+    "description": "The control module detected a fault related to multiple gears engaged. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission gear ratio circuit wiring or connector concern",
+      "transmission gear ratio component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0894": {
+    "title": "Transmission Component Slipping",
+    "description": "The control module detected a fault related to transmission component slipping. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission clutch or hydraulic control circuit wiring or connector concern",
+      "transmission clutch or hydraulic control component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0895": {
+    "title": "Shift Time Too Short",
+    "description": "The control module detected a fault related to shift time too short. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission shift timing circuit wiring or connector concern",
+      "transmission shift timing component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0896": {
+    "title": "Shift Time Too Long",
+    "description": "The control module detected a fault related to shift time too long. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission shift timing circuit wiring or connector concern",
+      "transmission shift timing component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0897": {
+    "title": "Transmission Fluid Deteriorated",
+    "description": "The control module detected a fault related to transmission fluid deteriorated. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission fluid condition circuit wiring or connector concern",
+      "transmission fluid condition component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0898": {
+    "title": "Transmission Control System MIL Request Circuit Low",
+    "description": "The control module detected a fault related to transmission control system mil request circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission MIL request circuit wiring or connector concern",
+      "transmission MIL request component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0899": {
+    "title": "Transmission Control System MIL Request Circuit High",
+    "description": "The control module detected a fault related to transmission control system mil request circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission MIL request circuit wiring or connector concern",
+      "transmission MIL request component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
   },
   "P0900": {
     "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
@@ -15087,6 +15920,1859 @@
       "Do not condemn the transmission before verifying power, ground, and reference signals"
     ],
     "title": "Hydraulic Oil Temperature Sensor Circuit"
+  },
+  "P0938": {
+    "title": "Hydraulic Oil Temperature Sensor Range/Performance",
+    "description": "The control module detected a fault related to hydraulic oil temperature sensor range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission hydraulic temperature circuit wiring or connector concern",
+      "transmission hydraulic temperature component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0939": {
+    "title": "Hydraulic Oil Temperature Sensor Circuit Low",
+    "description": "The control module detected a fault related to hydraulic oil temperature sensor circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission hydraulic temperature circuit wiring or connector concern",
+      "transmission hydraulic temperature component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0940": {
+    "title": "Hydraulic Oil Temperature Sensor Circuit High",
+    "description": "The control module detected a fault related to hydraulic oil temperature sensor circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission hydraulic temperature circuit wiring or connector concern",
+      "transmission hydraulic temperature component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0941": {
+    "title": "Hydraulic Oil Temperature Sensor Circuit Intermittent",
+    "description": "The control module detected a fault related to hydraulic oil temperature sensor circuit intermittent. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission hydraulic temperature circuit wiring or connector concern",
+      "transmission hydraulic temperature component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0942": {
+    "title": "Hydraulic Pressure Unit",
+    "description": "The control module detected a fault related to hydraulic pressure unit. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission hydraulic pressure circuit wiring or connector concern",
+      "transmission hydraulic pressure component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0943": {
+    "title": "Hydraulic Pressure Unit Cycling Period Too Short",
+    "description": "The control module detected a fault related to hydraulic pressure unit cycling period too short. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission hydraulic pressure circuit wiring or connector concern",
+      "transmission hydraulic pressure component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0944": {
+    "title": "Hydraulic Pressure Unit Loss of Pressure",
+    "description": "The control module detected a fault related to hydraulic pressure unit loss of pressure. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission hydraulic pressure circuit wiring or connector concern",
+      "transmission hydraulic pressure component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0945": {
+    "title": "Hydraulic Pump Relay Circuit/Open",
+    "description": "The control module detected a fault related to hydraulic pump relay circuit/open. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission hydraulic pump relay circuit wiring or connector concern",
+      "transmission hydraulic pump relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0946": {
+    "title": "Hydraulic Pump Relay Circuit Range/Performance",
+    "description": "The control module detected a fault related to hydraulic pump relay circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission hydraulic pump relay circuit wiring or connector concern",
+      "transmission hydraulic pump relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0947": {
+    "title": "Hydraulic Pump Relay Circuit Low",
+    "description": "The control module detected a fault related to hydraulic pump relay circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission hydraulic pump relay circuit wiring or connector concern",
+      "transmission hydraulic pump relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0948": {
+    "title": "Hydraulic Pump Relay Circuit High",
+    "description": "The control module detected a fault related to hydraulic pump relay circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission hydraulic pump relay circuit wiring or connector concern",
+      "transmission hydraulic pump relay component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0949": {
+    "title": "Auto Shift Manual Adaptive Learning Not Complete",
+    "description": "The control module detected a fault related to auto shift manual adaptive learning not complete. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission adaptive learning circuit wiring or connector concern",
+      "transmission adaptive learning component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0950": {
+    "title": "Auto Shift Manual Control Circuit",
+    "description": "The control module detected a fault related to auto shift manual control circuit. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "manual shift control circuit wiring or connector concern",
+      "manual shift control component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0951": {
+    "title": "Auto Shift Manual Control Circuit Range/Performance",
+    "description": "The control module detected a fault related to auto shift manual control circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "manual shift control circuit wiring or connector concern",
+      "manual shift control component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0952": {
+    "title": "Auto Shift Manual Control Circuit Low",
+    "description": "The control module detected a fault related to auto shift manual control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "manual shift control circuit wiring or connector concern",
+      "manual shift control component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0953": {
+    "title": "Auto Shift Manual Control Circuit High",
+    "description": "The control module detected a fault related to auto shift manual control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "manual shift control circuit wiring or connector concern",
+      "manual shift control component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0954": {
+    "title": "Auto Shift Manual Control Circuit Intermittent",
+    "description": "The control module detected a fault related to auto shift manual control circuit intermittent. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "manual shift control circuit wiring or connector concern",
+      "manual shift control component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0960": {
+    "title": "Pressure Control Solenoid A Control Circuit/Open",
+    "description": "The control module detected a fault related to pressure control solenoid a control circuit/open. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0961": {
+    "title": "Pressure Control Solenoid A Control Circuit Range/Performance",
+    "description": "The control module detected a fault related to pressure control solenoid a control circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0962": {
+    "title": "Pressure Control Solenoid A Control Circuit Low",
+    "description": "The control module detected a fault related to pressure control solenoid a control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0963": {
+    "title": "Pressure Control Solenoid A Control Circuit High",
+    "description": "The control module detected a fault related to pressure control solenoid a control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0964": {
+    "title": "Pressure Control Solenoid B Control Circuit/Open",
+    "description": "The control module detected a fault related to pressure control solenoid b control circuit/open. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0965": {
+    "title": "Pressure Control Solenoid B Control Circuit Range/Performance",
+    "description": "The control module detected a fault related to pressure control solenoid b control circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0966": {
+    "title": "Pressure Control Solenoid B Control Circuit Low",
+    "description": "The control module detected a fault related to pressure control solenoid b control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0967": {
+    "title": "Pressure Control Solenoid B Control Circuit High",
+    "description": "The control module detected a fault related to pressure control solenoid b control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0968": {
+    "title": "Pressure Control Solenoid C Control Circuit/Open",
+    "description": "The control module detected a fault related to pressure control solenoid c control circuit/open. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0969": {
+    "title": "Pressure Control Solenoid C Control Circuit Range/Performance",
+    "description": "The control module detected a fault related to pressure control solenoid c control circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0970": {
+    "title": "Pressure Control Solenoid C Control Circuit Low",
+    "description": "The control module detected a fault related to pressure control solenoid c control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0971": {
+    "title": "Pressure Control Solenoid C Control Circuit High",
+    "description": "The control module detected a fault related to pressure control solenoid c control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "pressure control solenoid circuit wiring or connector concern",
+      "pressure control solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0972": {
+    "title": "Shift Solenoid A Control Circuit Low",
+    "description": "The control module detected a fault related to shift solenoid a control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0973": {
+    "title": "Shift Solenoid A Control Circuit High",
+    "description": "The control module detected a fault related to shift solenoid a control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0974": {
+    "title": "Shift Solenoid B Control Circuit Low",
+    "description": "The control module detected a fault related to shift solenoid b control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0975": {
+    "title": "Shift Solenoid B Control Circuit High",
+    "description": "The control module detected a fault related to shift solenoid b control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0976": {
+    "title": "Shift Solenoid C Control Circuit Low",
+    "description": "The control module detected a fault related to shift solenoid c control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0977": {
+    "title": "Shift Solenoid C Control Circuit High",
+    "description": "The control module detected a fault related to shift solenoid c control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0978": {
+    "title": "Shift Solenoid D Control Circuit Low",
+    "description": "The control module detected a fault related to shift solenoid d control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0979": {
+    "title": "Shift Solenoid D Control Circuit High",
+    "description": "The control module detected a fault related to shift solenoid d control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0980": {
+    "title": "Shift Solenoid E Control Circuit Low",
+    "description": "The control module detected a fault related to shift solenoid e control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0981": {
+    "title": "Shift Solenoid E Control Circuit High",
+    "description": "The control module detected a fault related to shift solenoid e control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0982": {
+    "title": "Shift Solenoid F Control Circuit Low",
+    "description": "The control module detected a fault related to shift solenoid f control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0983": {
+    "title": "Shift Solenoid F Control Circuit High",
+    "description": "The control module detected a fault related to shift solenoid f control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0984": {
+    "title": "Shift Solenoid E Control Circuit Range/Performance",
+    "description": "The control module detected a fault related to shift solenoid e control circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0985": {
+    "title": "Shift Solenoid E Control Circuit Low",
+    "description": "The control module detected a fault related to shift solenoid e control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0986": {
+    "title": "Shift Solenoid E Control Circuit High",
+    "description": "The control module detected a fault related to shift solenoid e control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0987": {
+    "title": "Transmission Fluid Pressure Sensor/Switch E Circuit",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch e circuit. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0988": {
+    "title": "Transmission Fluid Pressure Sensor/Switch E Circuit Range/Performance",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch e circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0989": {
+    "title": "Transmission Fluid Pressure Sensor/Switch E Circuit Low",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch e circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0990": {
+    "title": "Transmission Fluid Pressure Sensor/Switch E Circuit High",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch e circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0991": {
+    "title": "Transmission Fluid Pressure Sensor/Switch E Circuit Intermittent",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch e circuit intermittent. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0992": {
+    "title": "Transmission Fluid Pressure Sensor/Switch F Circuit",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch f circuit. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0993": {
+    "title": "Transmission Fluid Pressure Sensor/Switch F Circuit Range/Performance",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch f circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0994": {
+    "title": "Transmission Fluid Pressure Sensor/Switch F Circuit Low",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch f circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0995": {
+    "title": "Transmission Fluid Pressure Sensor/Switch F Circuit High",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch f circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0996": {
+    "title": "Transmission Fluid Pressure Sensor/Switch F Circuit Intermittent",
+    "description": "The control module detected a fault related to transmission fluid pressure sensor/switch f circuit intermittent. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "transmission pressure sensor circuit wiring or connector concern",
+      "transmission pressure sensor component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0997": {
+    "title": "Shift Solenoid F Control Circuit Range/Performance",
+    "description": "The control module detected a fault related to shift solenoid f control circuit range/performance. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0998": {
+    "title": "Shift Solenoid F Control Circuit Low",
+    "description": "The control module detected a fault related to shift solenoid f control circuit low. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0999": {
+    "title": "Shift Solenoid F Control Circuit High",
+    "description": "The control module detected a fault related to shift solenoid f control circuit high. Diagnose the circuit, command, feedback, and mechanical conditions before replacing parts.",
+    "possible_causes": [
+      "shift solenoid circuit wiring or connector concern",
+      "shift solenoid component fault",
+      "Low system voltage, poor ground, or module communication issue",
+      "Mechanical or hydraulic problem affecting the monitored operation"
+    ],
+    "quick_checks": [
+      "Confirm the code, freeze-frame data, and whether related codes set at the same time",
+      "Inspect fluid level/condition where applicable and check for visible leaks or damage",
+      "Inspect wiring, terminals, grounds, and connectors before replacing the component",
+      "Compare commanded vs. actual scan-tool data and verify power, ground, and control circuits",
+      "Verify mechanical operation before condemning an actuator, module, transmission, or assembly"
+    ]
+  },
+  "P0A00": {
+    "title": "Motor Electronics Coolant Temperature Sensor Circuit",
+    "description": "The hybrid/EV control system detected a fault related to motor electronics coolant temperature sensor circuit. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A01": {
+    "title": "Motor Electronics Coolant Temperature Sensor Circuit Range/Performance",
+    "description": "The hybrid/EV control system detected a fault related to motor electronics coolant temperature sensor circuit range/performance. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A02": {
+    "title": "Motor Electronics Coolant Temperature Sensor Circuit Low",
+    "description": "The hybrid/EV control system detected a fault related to motor electronics coolant temperature sensor circuit low. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A03": {
+    "title": "Motor Electronics Coolant Temperature Sensor Circuit High",
+    "description": "The hybrid/EV control system detected a fault related to motor electronics coolant temperature sensor circuit high. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A04": {
+    "title": "Motor Electronics Coolant Temperature Sensor Circuit Intermittent",
+    "description": "The hybrid/EV control system detected a fault related to motor electronics coolant temperature sensor circuit intermittent. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A05": {
+    "title": "Motor Electronics Coolant Pump Control Circuit/Open",
+    "description": "The hybrid/EV control system detected a fault related to motor electronics coolant pump control circuit/open. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A06": {
+    "title": "Motor Electronics Coolant Pump Control Circuit Low",
+    "description": "The hybrid/EV control system detected a fault related to motor electronics coolant pump control circuit low. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A07": {
+    "title": "Motor Electronics Coolant Pump Control Circuit High",
+    "description": "The hybrid/EV control system detected a fault related to motor electronics coolant pump control circuit high. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A08": {
+    "title": "DC/DC Converter Status Circuit",
+    "description": "The hybrid/EV control system detected a fault related to dc/dc converter status circuit. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A09": {
+    "title": "DC/DC Converter Status Circuit Low",
+    "description": "The hybrid/EV control system detected a fault related to dc/dc converter status circuit low. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A10": {
+    "title": "DC/DC Converter Status Circuit High",
+    "description": "The hybrid/EV control system detected a fault related to dc/dc converter status circuit high. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A11": {
+    "title": "DC/DC Converter Enable Circuit/Open",
+    "description": "The hybrid/EV control system detected a fault related to dc/dc converter enable circuit/open. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A12": {
+    "title": "DC/DC Converter Enable Circuit Low",
+    "description": "The hybrid/EV control system detected a fault related to dc/dc converter enable circuit low. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A13": {
+    "title": "DC/DC Converter Enable Circuit High",
+    "description": "The hybrid/EV control system detected a fault related to dc/dc converter enable circuit high. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A14": {
+    "title": "Engine Mount A Control Circuit/Open",
+    "description": "The hybrid/EV control system detected a fault related to engine mount a control circuit/open. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A15": {
+    "title": "Engine Mount A Control Circuit Low",
+    "description": "The hybrid/EV control system detected a fault related to engine mount a control circuit low. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A16": {
+    "title": "Engine Mount A Control Circuit High",
+    "description": "The hybrid/EV control system detected a fault related to engine mount a control circuit high. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A1A": {
+    "title": "Generator Control Module",
+    "description": "The hybrid/EV control system detected a fault related to generator control module. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A1B": {
+    "title": "Drive Motor A Control Module",
+    "description": "The hybrid/EV control system detected a fault related to drive motor a control module. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A1D": {
+    "title": "Hybrid Powertrain Control Module",
+    "description": "The hybrid/EV control system detected a fault related to hybrid powertrain control module. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A1E": {
+    "title": "Generator Control Module Performance",
+    "description": "The hybrid/EV control system detected a fault related to generator control module performance. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A1F": {
+    "title": "Battery Energy Control Module",
+    "description": "The hybrid/EV control system detected a fault related to battery energy control module. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A24": {
+    "title": "Generator Torque Sensor Circuit",
+    "description": "The hybrid/EV control system detected a fault related to generator torque sensor circuit. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A25": {
+    "title": "Generator Torque Sensor Circuit Range/Performance",
+    "description": "The hybrid/EV control system detected a fault related to generator torque sensor circuit range/performance. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A26": {
+    "title": "Generator Torque Sensor Circuit Low",
+    "description": "The hybrid/EV control system detected a fault related to generator torque sensor circuit low. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A27": {
+    "title": "Generator Torque Sensor Circuit High",
+    "description": "The hybrid/EV control system detected a fault related to generator torque sensor circuit high. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A28": {
+    "title": "Generator Torque Sensor Circuit Intermittent",
+    "description": "The hybrid/EV control system detected a fault related to generator torque sensor circuit intermittent. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A2A": {
+    "title": "Drive Motor A Temperature Sensor Circuit",
+    "description": "The hybrid/EV control system detected a fault related to drive motor a temperature sensor circuit. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A2B": {
+    "title": "Drive Motor A Temperature Sensor Circuit Range/Performance",
+    "description": "The hybrid/EV control system detected a fault related to drive motor a temperature sensor circuit range/performance. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A2C": {
+    "title": "Drive Motor A Temperature Sensor Circuit Low",
+    "description": "The hybrid/EV control system detected a fault related to drive motor a temperature sensor circuit low. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A2D": {
+    "title": "Drive Motor A Temperature Sensor Circuit High",
+    "description": "The hybrid/EV control system detected a fault related to drive motor a temperature sensor circuit high. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A2E": {
+    "title": "Drive Motor A Temperature Sensor Circuit Intermittent",
+    "description": "The hybrid/EV control system detected a fault related to drive motor a temperature sensor circuit intermittent. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A3C": {
+    "title": "Generator Inverter Temperature Sensor Circuit",
+    "description": "The hybrid/EV control system detected a fault related to generator inverter temperature sensor circuit. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A3D": {
+    "title": "Generator Inverter Temperature Sensor Circuit Range/Performance",
+    "description": "The hybrid/EV control system detected a fault related to generator inverter temperature sensor circuit range/performance. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A3E": {
+    "title": "Generator Inverter Temperature Sensor Circuit Low",
+    "description": "The hybrid/EV control system detected a fault related to generator inverter temperature sensor circuit low. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A3F": {
+    "title": "Generator Inverter Temperature Sensor Circuit High",
+    "description": "The hybrid/EV control system detected a fault related to generator inverter temperature sensor circuit high. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A40": {
+    "title": "Generator Inverter Temperature Sensor Circuit Intermittent",
+    "description": "The hybrid/EV control system detected a fault related to generator inverter temperature sensor circuit intermittent. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A7A": {
+    "title": "Generator Inverter Performance",
+    "description": "The hybrid/EV control system detected a fault related to generator inverter performance. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A80": {
+    "title": "Hybrid Battery Pack Deterioration",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery pack deterioration. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A81": {
+    "title": "Hybrid Battery Pack Cooling Fan 1 Control Circuit",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery pack cooling fan 1 control circuit. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A82": {
+    "title": "Hybrid Battery Pack Cooling Fan 1 Performance/Stuck Off",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery pack cooling fan 1 performance/stuck off. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A83": {
+    "title": "Hybrid Battery Pack Cooling Fan 1 Stuck On",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery pack cooling fan 1 stuck on. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A84": {
+    "title": "Hybrid Battery Pack Cooling Fan 1 Control Circuit Low",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery pack cooling fan 1 control circuit low. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A85": {
+    "title": "Hybrid Battery Pack Cooling Fan 1 Control Circuit High",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery pack cooling fan 1 control circuit high. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0A93": {
+    "title": "Inverter Cooling System Performance",
+    "description": "The hybrid/EV control system detected a fault related to inverter cooling system performance. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0AA6": {
+    "title": "Hybrid Battery Voltage System Isolation Fault",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery voltage system isolation fault. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0AC0": {
+    "title": "Hybrid Battery Pack Current Sensor Circuit",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery pack current sensor circuit. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0AC1": {
+    "title": "Hybrid Battery Pack Current Sensor Circuit Range/Performance",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery pack current sensor circuit range/performance. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0AC2": {
+    "title": "Hybrid Battery Pack Current Sensor Circuit Low",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery pack current sensor circuit low. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0AC3": {
+    "title": "Hybrid Battery Pack Current Sensor Circuit High",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery pack current sensor circuit high. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0AC4": {
+    "title": "Hybrid Battery Pack Current Sensor Circuit Intermittent",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery pack current sensor circuit intermittent. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
+  },
+  "P0AFA": {
+    "title": "Hybrid Battery System Voltage Low",
+    "description": "The hybrid/EV control system detected a fault related to hybrid battery system voltage low. High-voltage diagnosis/service requires appropriate training, PPE, isolation procedures, and manufacturer service information.",
+    "possible_causes": [
+      "High-voltage interlock, isolation, cooling, sensor, inverter, converter, or battery-control concern",
+      "Low-voltage supply, ground, connector, or communication fault affecting the hybrid/EV control system",
+      "Cooling airflow or coolant-flow problem where the code involves inverter, motor, or battery temperature",
+      "Internal component fault only after external circuit, safety, and service-information checks support it"
+    ],
+    "quick_checks": [
+      "Confirm all hybrid/EV and low-voltage codes, freeze-frame data, and ready-state symptoms",
+      "Do not open or probe high-voltage battery packs casually; follow manufacturer isolation and verification procedures",
+      "Inspect accessible low-voltage connectors, grounds, service plugs/interlocks, coolant level, airflow paths, and cooling fans as applicable",
+      "Use scan-tool data to compare commanded vs. actual pump, fan, inverter, converter, motor, and battery parameters",
+      "Escalate high-voltage testing to qualified personnel with proper PPE, insulated tools, and current service information"
+    ]
   },
   "P1000": {
     "description": "Readiness monitors not complete (often after codes cleared).",

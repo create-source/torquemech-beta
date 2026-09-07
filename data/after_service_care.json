@@ -1,0 +1,1389 @@
+{
+  "version": "1.0.0",
+  "description": "Customer-facing after-service care guidance for common TorqueMech repairs. This data is intentionally separate from UI and invoice templates.",
+  "services": {
+    "engine_oil_and_filter_replacement": {
+      "service_name": "Engine Oil and Filter Replacement",
+      "aliases": [
+        "oil change",
+        "engine oil service"
+      ],
+      "what_to_expect": "The engine should sound and feel normal after service; a brief residual oil smell can occur if old oil was cleaned from nearby surfaces.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "front_brake_pad_replacement": {
+      "service_name": "Front Brake Pad Replacement",
+      "aliases": [
+        "front pads",
+        "front brake service"
+      ],
+      "what_to_expect": "Pedal feel may be slightly different at first while pad and rotor surfaces establish even contact.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "grinding",
+        "new fluid leaks",
+        "severe vibration",
+        "soft or sinking brake pedal",
+        "strong pulling while braking",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "rear_brake_pad_replacement": {
+      "service_name": "Rear Brake Pad Replacement",
+      "aliases": [
+        "rear pads",
+        "rear brake service"
+      ],
+      "what_to_expect": "Pedal feel and parking-brake feel may be slightly different after rear brake service.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "grinding",
+        "new fluid leaks",
+        "severe vibration",
+        "soft or sinking brake pedal",
+        "strong pulling while braking",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "brake_pad_and_rotor_replacement": {
+      "service_name": "Brake Pad and Rotor Replacement",
+      "aliases": [
+        "pads and rotors",
+        "brake job"
+      ],
+      "what_to_expect": "New pads and rotors may have a mild initial odor and a slightly different pedal feel during normal bedding.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "grinding",
+        "new fluid leaks",
+        "severe vibration",
+        "soft or sinking brake pedal",
+        "strong pulling while braking",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "brake_fluid_flush": {
+      "service_name": "Brake Fluid Flush",
+      "aliases": [
+        "brake fluid exchange"
+      ],
+      "what_to_expect": "The brake pedal should feel consistent; a small change in pedal feel can be normal after fresh fluid and bleeding.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "grinding",
+        "new fluid leaks",
+        "severe vibration",
+        "soft or sinking brake pedal",
+        "strong pulling while braking",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "coolant_service_coolant_flush": {
+      "service_name": "Coolant Service / Coolant Flush",
+      "aliases": [
+        "coolant flush",
+        "cooling system service"
+      ],
+      "what_to_expect": "Heat output and temperature gauge behavior should remain stable after air is fully purged.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "coolant loss",
+        "new fluid leaks",
+        "no cabin heat after service",
+        "overheating",
+        "steam or pressure-related coolant discharge",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment.",
+        "Cooling systems can be hot and pressurized; never remove a pressure cap on a hot engine."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "transmission_fluid_service": {
+      "service_name": "Transmission Fluid Service",
+      "aliases": [
+        "transmission service"
+      ],
+      "what_to_expect": "Shift feel may adapt slightly after fresh fluid, but slipping, harsh engagement, or warning lights are not expected.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "differential_fluid_service": {
+      "service_name": "Differential Fluid Service",
+      "aliases": [
+        "gear oil service"
+      ],
+      "what_to_expect": "Normal operation should be quiet; residual gear-oil odor may linger briefly if fluid contacted exterior surfaces.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "transfer_case_fluid_service": {
+      "service_name": "Transfer Case Fluid Service",
+      "aliases": [
+        "transfer case service"
+      ],
+      "what_to_expect": "Four-wheel-drive operation should remain normal after the correct fluid level and type are verified.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "spark_plug_replacement": {
+      "service_name": "Spark Plug Replacement",
+      "aliases": [
+        "tune up",
+        "plugs"
+      ],
+      "what_to_expect": "The engine should start and idle smoothly once ignition components are seated and any learned fuel trims stabilize.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "battery_replacement": {
+      "service_name": "Battery Replacement",
+      "aliases": [
+        "12 volt battery"
+      ],
+      "what_to_expect": "Some clocks, windows, radios, idle strategy, or driver settings may need relearn after power loss.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "alternator_replacement": {
+      "service_name": "Alternator Replacement",
+      "aliases": [
+        "charging system repair"
+      ],
+      "what_to_expect": "Charging voltage should be stable; a deeply discharged battery may still need charging or follow-up testing.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "starter_replacement": {
+      "service_name": "Starter Replacement",
+      "aliases": [
+        "starter motor"
+      ],
+      "what_to_expect": "Cranking should be prompt and consistent after battery, cable, and command circuits are verified.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "serpentine_belt_replacement": {
+      "service_name": "Serpentine Belt Replacement",
+      "aliases": [
+        "drive belt"
+      ],
+      "what_to_expect": "Belt noise should be reduced, though a brief smell can occur if residue was present on pulleys.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "belt_tensioner_replacement": {
+      "service_name": "Belt Tensioner Replacement",
+      "aliases": [
+        "drive belt tensioner"
+      ],
+      "what_to_expect": "Accessory-drive noise and belt tracking should improve after pulley alignment and tension are verified.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "water_pump_replacement": {
+      "service_name": "Water Pump Replacement",
+      "aliases": [
+        "coolant pump"
+      ],
+      "what_to_expect": "Coolant level may need recheck after trapped air purges from the cooling system.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "coolant loss",
+        "new fluid leaks",
+        "no cabin heat after service",
+        "overheating",
+        "steam or pressure-related coolant discharge",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment.",
+        "Cooling systems can be hot and pressurized; never remove a pressure cap on a hot engine."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "thermostat_replacement": {
+      "service_name": "Thermostat Replacement",
+      "aliases": [
+        "coolant thermostat"
+      ],
+      "what_to_expect": "Warm-up and gauge behavior should become more consistent after bleeding and a full heat cycle.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "coolant loss",
+        "new fluid leaks",
+        "no cabin heat after service",
+        "overheating",
+        "steam or pressure-related coolant discharge",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment.",
+        "Cooling systems can be hot and pressurized; never remove a pressure cap on a hot engine."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "radiator_replacement": {
+      "service_name": "Radiator Replacement",
+      "aliases": [
+        "radiator service"
+      ],
+      "what_to_expect": "Coolant level and fan operation should be rechecked after the first complete heat cycle.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "coolant loss",
+        "new fluid leaks",
+        "no cabin heat after service",
+        "overheating",
+        "steam or pressure-related coolant discharge",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment.",
+        "Cooling systems can be hot and pressurized; never remove a pressure cap on a hot engine."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "valve_cover_gasket_replacement": {
+      "service_name": "Valve Cover Gasket Replacement",
+      "aliases": [
+        "valve cover reseal"
+      ],
+      "what_to_expect": "Residual oil smell may occur briefly if old oil was cleaned from hot surfaces.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "timing_cover_reseal": {
+      "service_name": "Timing Cover Reseal",
+      "aliases": [
+        "front cover reseal"
+      ],
+      "what_to_expect": "A brief residual oil smell may occur, but active dripping or new engine noise should be inspected.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "timing_belt_replacement": {
+      "service_name": "Timing Belt Replacement",
+      "aliases": [
+        "timing belt service"
+      ],
+      "what_to_expect": "Engine operation should be smooth; any new noise, misfire, or timing-related fault needs immediate review.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "wheel_bearing_replacement": {
+      "service_name": "Wheel Bearing Replacement",
+      "aliases": [
+        "hub bearing"
+      ],
+      "what_to_expect": "Road-speed humming should improve; ABS or traction lights should remain off after sensor connections are verified.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "cv_axle_replacement": {
+      "service_name": "CV Axle Replacement",
+      "aliases": [
+        "half shaft",
+        "drive axle"
+      ],
+      "what_to_expect": "Clicking or vibration from the failed axle should improve; axle seal areas should be monitored for leaks.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "strut_shock_replacement": {
+      "service_name": "Strut/Shock Replacement",
+      "aliases": [
+        "struts",
+        "shocks"
+      ],
+      "what_to_expect": "Ride height and handling may feel different as new dampers control suspension movement.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "control_arm_replacement": {
+      "service_name": "Control Arm Replacement",
+      "aliases": [
+        "control arm assembly"
+      ],
+      "what_to_expect": "Steering feel may change and alignment may be needed after suspension geometry is disturbed.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "wheel_alignment": {
+      "service_name": "Wheel Alignment",
+      "aliases": [
+        "alignment"
+      ],
+      "what_to_expect": "The steering wheel should be centered and the vehicle should track straight on a level road when tires and suspension are sound.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "tire_replacement": {
+      "service_name": "Tire Replacement",
+      "aliases": [
+        "new tires"
+      ],
+      "what_to_expect": "New tires may feel different for the first few drives and should hold pressure consistently.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "tire_rotation": {
+      "service_name": "Tire Rotation",
+      "aliases": [
+        "rotate tires"
+      ],
+      "what_to_expect": "Minor road-noise changes can occur as tires move positions, but vibration or pulling should be inspected.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "ac_recharge_or_ac_service": {
+      "service_name": "A/C Recharge or A/C Service",
+      "aliases": [
+        "ac recharge",
+        "air conditioning service"
+      ],
+      "what_to_expect": "Vent temperature should improve if the leak and control issue were correctly addressed.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "fuel_injector_replacement": {
+      "service_name": "Fuel Injector Replacement",
+      "aliases": [
+        "injector service"
+      ],
+      "what_to_expect": "Idle and fuel trims should stabilize after leaks, command, and fuel pressure are verified.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "fuel odor",
+        "hard starting",
+        "new fluid leaks",
+        "stalling",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "visible fuel leakage",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "fuel_pump_replacement": {
+      "service_name": "Fuel Pump Replacement",
+      "aliases": [
+        "fuel delivery repair"
+      ],
+      "what_to_expect": "Starting and load performance should improve once pressure, volume, and electrical supply are verified.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "fuel odor",
+        "hard starting",
+        "new fluid leaks",
+        "stalling",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "visible fuel leakage",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "oxygen_sensor_replacement": {
+      "service_name": "Oxygen Sensor Replacement",
+      "aliases": [
+        "o2 sensor"
+      ],
+      "what_to_expect": "Fuel-trim and readiness monitors may need drive cycles before inspection status updates.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "catalytic_converter_replacement": {
+      "service_name": "Catalytic Converter Replacement",
+      "aliases": [
+        "converter replacement"
+      ],
+      "what_to_expect": "Converter efficiency should improve only if misfire, rich running, oil burning, or exhaust leaks are corrected.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "engine_air_filter_replacement": {
+      "service_name": "Engine Air Filter Replacement",
+      "aliases": [
+        "air filter"
+      ],
+      "what_to_expect": "Airflow should be unrestricted and the airbox should be sealed with the correct filter installed.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    },
+    "cabin_air_filter_replacement": {
+      "service_name": "Cabin Air Filter Replacement",
+      "aliases": [
+        "hvac filter"
+      ],
+      "what_to_expect": "Cabin airflow may improve; debris odor can take time to clear from ducts if contamination remains.",
+      "first_24_48_hours": [
+        "Listen and feel for any new noises, vibration, warning lights, leaks, or odors.",
+        "Recheck the vehicle only when it is parked safely and components are cool where applicable.",
+        "Contact the shop promptly if the repair area shows active leakage or the vehicle feels unsafe."
+      ],
+      "normal_conditions": [
+        "Slightly different feel after new parts or fresh fluid can be normal.",
+        "Minor residual odor can occur if old fluid or cleaner was present on exterior surfaces.",
+        "Electronic monitors, idle strategy, or shift adaptation may take normal driving time to settle on some vehicles."
+      ],
+      "warning_signs": [
+        "new fluid leaks",
+        "the original symptom returns or worsens",
+        "unusual noise, smell, smoke, or vibration",
+        "warning lights"
+      ],
+      "customer_recommendations": [
+        "Avoid severe operation immediately after service when practical, especially with brakes, tires, driveline, or fluid repairs.",
+        "Do not ignore warning lights, fluid loss, overheating, brake-pedal changes, fuel odor, or smoke.",
+        "Use the vehicle manufacturer maintenance schedule and the shop invoice notes for any vehicle-specific follow-up."
+      ],
+      "recheck_guidance": [
+        "A short follow-up inspection is appropriate if a leak, noise, odor, vibration, warning light, or drivability concern appears.",
+        "Fluid-level rechecks should be performed with the correct temperature and procedure when the system requires it.",
+        "For raised-vehicle work, wheel fastener torque and undercarriage safety should be verified using proper equipment."
+      ],
+      "maintenance_guidance": [
+        "Record the mileage and date of service.",
+        "Follow the next service interval based on manufacturer guidance, fluid condition, driving conditions, and inspection findings.",
+        "Plan related inspections before replacing additional parts unless test results support the added repair."
+      ]
+    }
+  }
+}

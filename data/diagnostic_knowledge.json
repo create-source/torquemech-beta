@@ -1,0 +1,1227 @@
+{
+  "version": "1.0.0",
+  "description": "Mechanic-first diagnostic sequences that prioritize verification and next tests before component replacement.",
+  "guides": {
+    "crank_no_start": {
+      "symptom": "Crank/No Start",
+      "aliases": [
+        "cranks but will not start",
+        "engine turns over no start"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0335",
+        "P0340",
+        "P0230",
+        "P0087"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "no_crank_no_start": {
+      "symptom": "No Crank/No Start",
+      "aliases": [
+        "no crank",
+        "click no start"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0562",
+        "P0615",
+        "P0705"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "starts_then_stalls": {
+      "symptom": "Starts Then Stalls",
+      "aliases": [
+        "starts and dies",
+        "stall after start"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0335",
+        "P0101",
+        "P0171",
+        "P0506"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "rough_idle": {
+      "symptom": "Rough Idle",
+      "aliases": [
+        "shaking at idle",
+        "idle surge"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0300",
+        "P0171",
+        "P0507",
+        "P0101"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "cold_start_misfire": {
+      "symptom": "Cold-Start Misfire",
+      "aliases": [
+        "misfire cold",
+        "rough cold start"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the code and freeze-frame conditions, then check misfire counters during the matching operating condition.",
+        "Inspect ignition components and swap coils where appropriate to see whether the misfire follows.",
+        "Inspect and test the spark plug before quoting ignition parts.",
+        "Verify injector command and injector operation.",
+        "Check intake, vacuum, or sealing issues affecting the cylinder or bank.",
+        "Perform compression, leak-down, or mechanical timing checks if ignition and fuel checks pass.",
+        "Investigate valve, head-gasket, timing, or internal-engine problems only when supported by test results."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0300",
+        "P0301",
+        "P0316",
+        "P0171"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "single_cylinder_misfire": {
+      "symptom": "Single-Cylinder Misfire",
+      "aliases": [
+        "p0301 p0302 p0303 p0304",
+        "one cylinder misfire"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the code and freeze-frame conditions, then check misfire counters during the matching operating condition.",
+        "Inspect ignition components and swap coils where appropriate to see whether the misfire follows.",
+        "Inspect and test the spark plug before quoting ignition parts.",
+        "Verify injector command and injector operation.",
+        "Check intake, vacuum, or sealing issues affecting the cylinder or bank.",
+        "Perform compression, leak-down, or mechanical timing checks if ignition and fuel checks pass.",
+        "Investigate valve, head-gasket, timing, or internal-engine problems only when supported by test results."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0301",
+        "P0302",
+        "P0303",
+        "P0304"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "random_multiple_cylinder_misfire": {
+      "symptom": "Random/Multiple-Cylinder Misfire",
+      "aliases": [
+        "random misfire",
+        "multiple misfire"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the code and freeze-frame conditions, then check misfire counters during the matching operating condition.",
+        "Inspect ignition components and swap coils where appropriate to see whether the misfire follows.",
+        "Inspect and test the spark plug before quoting ignition parts.",
+        "Verify injector command and injector operation.",
+        "Check intake, vacuum, or sealing issues affecting the cylinder or bank.",
+        "Perform compression, leak-down, or mechanical timing checks if ignition and fuel checks pass.",
+        "Investigate valve, head-gasket, timing, or internal-engine problems only when supported by test results."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0300",
+        "P0171",
+        "P0174",
+        "P0101"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "overheating": {
+      "symptom": "Overheating",
+      "aliases": [
+        "runs hot",
+        "temperature gauge high"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone.",
+        "Allow the cooling system to cool before opening it, pressure test when appropriate, verify airflow/fan operation, thermostat behavior, coolant flow, and combustion-gas evidence."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0128",
+        "P0217",
+        "P0480"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "coolant_loss_no_obvious_external_leak": {
+      "symptom": "Coolant Loss With No Obvious External Leak",
+      "aliases": [
+        "losing coolant no leak"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone.",
+        "Allow the cooling system to cool before opening it, pressure test when appropriate, verify airflow/fan operation, thermostat behavior, coolant flow, and combustion-gas evidence."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0300",
+        "P0128",
+        "P0217"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "low_oil_pressure_warning": {
+      "symptom": "Low Oil Pressure Warning",
+      "aliases": [
+        "oil pressure light",
+        "low oil pressure"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0520",
+        "P0521",
+        "P0522",
+        "P0523"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "battery_repeatedly_dies": {
+      "symptom": "Battery Repeatedly Dies",
+      "aliases": [
+        "dead battery after sitting",
+        "battery drain"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone.",
+        "Voltage-drop power and ground paths under load, then check parasitic draw or charging output only after battery condition is known."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0562",
+        "P0620"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "no_charge_condition": {
+      "symptom": "No-Charge Condition",
+      "aliases": [
+        "battery light",
+        "alternator not charging"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone.",
+        "Voltage-drop power and ground paths under load, then check parasitic draw or charging output only after battery condition is known."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0562",
+        "P0620",
+        "P0622"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "steering_wheel_vibration": {
+      "symptom": "Steering Wheel Vibration",
+      "aliases": [
+        "shimmy",
+        "vibration at speed"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "vibration_while_braking": {
+      "symptom": "Vibration While Braking",
+      "aliases": [
+        "brake pulsation"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone.",
+        "Support the vehicle correctly before wheel removal, inspect pads, rotors, calipers, hoses, wheel bearings, and suspension play as a system."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "vehicle_pulls_while_braking": {
+      "symptom": "Vehicle Pulls While Braking",
+      "aliases": [
+        "pulls braking"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone.",
+        "Support the vehicle correctly before wheel removal, inspect pads, rotors, calipers, hoses, wheel bearings, and suspension play as a system."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "clunk_over_bumps": {
+      "symptom": "Clunk Over Bumps",
+      "aliases": [
+        "suspension clunk"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "humming_growling_increases_with_road_speed": {
+      "symptom": "Humming/Growling That Increases With Road Speed",
+      "aliases": [
+        "wheel bearing noise",
+        "road speed hum"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "transmission_slipping": {
+      "symptom": "Transmission Slipping",
+      "aliases": [
+        "flare shift",
+        "rpm rises no acceleration"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0730",
+        "P0894",
+        "P0868"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "delayed_transmission_engagement": {
+      "symptom": "Delayed Transmission Engagement",
+      "aliases": [
+        "delayed drive reverse"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0700",
+        "P0868",
+        "P0841"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "transmission_harsh_shifting": {
+      "symptom": "Transmission Harsh Shifting",
+      "aliases": [
+        "bang shift",
+        "hard shift"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0700",
+        "P0715",
+        "P0961"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "ac_cold_driving_warm_idle": {
+      "symptom": "A/C Cold While Driving But Warm At Idle",
+      "aliases": [
+        "ac warm at idle"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0530",
+        "P0480"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "ac_compressor_does_not_engage": {
+      "symptom": "A/C Compressor Does Not Engage",
+      "aliases": [
+        "ac clutch not engaging"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0530",
+        "P0645"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "poor_fuel_economy": {
+      "symptom": "Poor Fuel Economy",
+      "aliases": [
+        "bad mpg"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone.",
+        "Relieve fuel-system pressure according to service information and verify pressure, volume, electrical supply, command, and leak evidence safely."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0171",
+        "P0172",
+        "P0101",
+        "P0420"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "evap_small_leak_fault": {
+      "symptom": "EVAP Small-Leak Fault",
+      "aliases": [
+        "small evap leak",
+        "p0442"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0442",
+        "P0456",
+        "P0455"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "catalyst_efficiency_fault": {
+      "symptom": "Catalyst-Efficiency Fault",
+      "aliases": [
+        "p0420",
+        "p0430"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0420",
+        "P0430"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "lean_condition": {
+      "symptom": "Lean Condition",
+      "aliases": [
+        "system too lean"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0171",
+        "P0174",
+        "P0101",
+        "P0300"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "rich_condition": {
+      "symptom": "Rich Condition",
+      "aliases": [
+        "system too rich"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0172",
+        "P0175",
+        "P0101"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    },
+    "intermittent_electrical_fault": {
+      "symptom": "Intermittent Electrical Fault",
+      "aliases": [
+        "comes and goes electrical",
+        "intermittent no communication"
+      ],
+      "initial_questions": [
+        "When did the concern start and what repair, weather, fuel, or driving condition changed recently?",
+        "Does the symptom happen cold, hot, at idle, under load, while braking, while turning, or after sitting?",
+        "Are there warning lights, stored codes, leaks, smells, noises, recent jump starts, or aftermarket electrical accessories?"
+      ],
+      "quick_checks": [
+        "Scan all relevant modules and save freeze-frame data before clearing anything.",
+        "Inspect basic fluid level/condition, battery/charging state, wiring, connectors, grounds, leaks, and visible damage.",
+        "Verify the customer complaint under safe conditions instead of replacing the most common part first."
+      ],
+      "diagnostic_sequence": [
+        "Confirm the complaint, stored and pending codes, freeze-frame data, warning lights, and exact operating conditions.",
+        "Perform a visual and basic safety inspection before disassembly: fluid levels, battery state, connectors, grounds, leaks, belt condition, and obvious damage.",
+        "Reproduce the symptom when safe and compare scan-tool data, measurements, and customer history with the actual failure.",
+        "Separate electrical command, power/ground, sensor feedback, and mechanical operation before replacing any major component.",
+        "Repair the lowest-cost proven fault first, clear codes, road test or operate under matching conditions, and verify the symptom is gone.",
+        "Voltage-drop power and ground paths under load, then check parasitic draw or charging output only after battery condition is known."
+      ],
+      "common_causes": [
+        "Poor connection, low fluid, air leak, restricted flow, worn service part, sensor bias, actuator fault, or mechanical wear depending on the verified system.",
+        "Previous repair disturbance, corrosion, contamination, heat damage, or intermittent wiring movement.",
+        "Control-module or major assembly failure only after circuit, command, feedback, and mechanical checks support it."
+      ],
+      "commonly_misdiagnosed_as": [
+        "The most visible component near the symptom",
+        "A complete assembly replacement before circuit, fluid, or mechanical verification",
+        "An unrelated code that set as a consequence of the root fault"
+      ],
+      "related_obd_codes": [
+        "P0562",
+        "U0100",
+        "U0121"
+      ],
+      "stop_and_repair_conditions": [
+        "Brake pedal sinks, severe pull, grinding, smoke, fuel leak, overheating, low oil pressure warning, or charging failure while driving.",
+        "High-voltage hybrid/EV warnings require qualified high-voltage service procedures, PPE, isolation, and manufacturer information.",
+        "Do not continue running an engine with severe overheating, low oil pressure, active fuel leakage, or a flashing check-engine light with catalyst-damaging misfire."
+      ]
+    }
+  }
+}
