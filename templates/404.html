@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page Not Found | TorqueMech</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #0b1220;
+      color: #e5e7eb;
+      font-family: Arial, sans-serif;
+    }
+
+    .error-card {
+      width: 100%;
+      max-width: 560px;
+      padding: 36px;
+      text-align: center;
+      background: #111827;
+      border: 1px solid #243041;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    }
+
+    .error-code {
+      margin-bottom: 8px;
+      color: #f97316;
+      font-size: 56px;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 28px;
+    }
+
+    p {
+      margin: 0 0 28px;
+      color: #9ca3af;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    a {
+      display: inline-block;
+      padding: 12px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: #f97316;
+      color: #fff;
+    }
+
+    .secondary {
+      border: 1px solid #374151;
+      color: #e5e7eb;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="error-card">
+    <div class="error-code">404</div>
+
+    <h1>We couldn't find that page.</h1>
+
+    <p>
+      The customer, vehicle, repair, invoice, or page you're looking for
+      may no longer exist or the link may be incorrect.
+    </p>
+
+    <div class="actions">
+      <a class="primary" href="/pro/dashboard">Return to Command Center</a>
+      <a class="secondary" href="javascript:history.back()">Go Back</a>
+    </div>
+  </main>
+</body>
+</html>

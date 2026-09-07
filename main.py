@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, quote, urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import httpx
 import qrcode
@@ -3904,6 +3905,27 @@ async def logout_submit(request: Request):
     response.delete_cookie(SESSION_COOKIE_NAME)
     return response
 
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
+
+    if exc.status_code == 404:
+        return templates.TemplateResponse(
+            "404.html",
+            {
+                "request": request,
+            },
+            status_code=404,
+        )
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
