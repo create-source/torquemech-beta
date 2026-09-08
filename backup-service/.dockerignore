@@ -1,0 +1,6 @@
+.git
+.gitignore
+*.dump
+*.sql
+*.sha256
+README.md
