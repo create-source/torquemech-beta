@@ -41,7 +41,13 @@ CUTOFF="$(( $(date -u +%s) - (RETENTION_DAYS * 86400) ))"
 aws s3api list-objects-v2   --bucket "$AWS_S3_BUCKET_NAME"   --prefix "${REMOTE_PREFIX}/"   --endpoint-url "$AWS_ENDPOINT_URL"   --output json |
 jq -r --argjson cutoff "$CUTOFF" '
   .Contents[]? |
-  select(((.LastModified | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) < $cutoff)) |
+  select(((
+.LastModified
+| sub("\\.[0-9]+\\+00:00$"; "Z")
+| sub("\\+00:00$"; "Z")
+| sub("\\.[0-9]+Z$"; "Z")
+| fromdateiso8601
+) < $cutoff)) |
   .Key
 ' |
 while IFS= read -r KEY; do
