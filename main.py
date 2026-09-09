@@ -113,7 +113,7 @@ from datetime import datetime
 import uuid
 import contextvars
 from fastapi import Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 import smtplib
 from email.mime.text import MIMEText
@@ -4669,6 +4669,8 @@ def how_it_works(request: Request):
 
 @app.get("/parts-center", response_class=HTMLResponse)
 def parts_center(request: Request):
+    if getattr(request.state, "current_user", None):
+        return RedirectResponse("/pro/parts", status_code=303)
     metric_incr("page_parts_center")
     return templates.TemplateResponse("parts_center.html", {"request": request})
 

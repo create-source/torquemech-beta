@@ -155,9 +155,11 @@
       <a class="tm-menu__item" href="/quick-find" data-i18n="nav.diagnostic_search">Diagnostic Search</a>
       <a class="tm-menu__item" href="/repair-guides" data-i18n="nav.repair_library">Repair Library</a>
       <a class="tm-menu__item" href="/estimator" data-i18n="nav.estimator">Estimator</a>
-      <a class="tm-menu__item tm-menu__item--soon" href="/parts-center">
+      <a class="tm-menu__item{% if not request.state.current_user %} tm-menu__item--soon{% endif %}" href="{{ '/pro/parts' if request.state.current_user else '/parts-center' }}">
         <span data-i18n="nav.parts_center">Parts Center</span>
+        {% if not request.state.current_user %}
         <span class="tm-menu__badge" data-i18n="nav.coming_soon">Coming Soon</span>
+        {% endif %}
       </a>
 
       <div class="tm-menu__divider"></div>
