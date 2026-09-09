@@ -6580,6 +6580,33 @@ def ensure_repair_job_parts_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+@postgres_schema_once
+def ensure_shop_parts_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS shop_parts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          part_number TEXT,
+          brand TEXT,
+          quantity REAL NOT NULL DEFAULT 0,
+          cost REAL NOT NULL DEFAULT 0,
+          sell_price REAL NOT NULL DEFAULT 0,
+          vendor TEXT,
+          source_url TEXT,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (shop_id) REFERENCES shop_profile(id)
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_shop_parts_shop_id ON shop_parts (shop_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_shop_parts_shop_name ON shop_parts (shop_id, name)")
+    conn.commit()
+
+
 def normalize_repair_job_part_status(raw_status: Any) -> str:
     value = re.sub(r"\s+", " ", str(raw_status or "").strip()).title()
     aliases = {
@@ -16238,6 +16265,35 @@ def pro_active_jobs(
             "filter_labels": filter_labels,
         },
     )
+
+
+@router.get("/parts", response_class=HTMLResponse)
+def pro_parts_center(request: Request):
+    conn = crm_db_conn()
+    try:
+        ensure_shop_parts_schema(conn)
+        shop_id = required_current_shop_id(conn, request)
+        row = conn.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM shop_parts
+            WHERE shop_id = ?
+            """,
+            (shop_id,),
+        ).fetchone()
+        parts_count = int(row["count"] or 0) if row else 0
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        "pro/parts.html",
+        {
+            "request": request,
+            "parts_count": parts_count,
+            "csrf_token": optional_csrf_token(request),
+        },
+    )
+
 
 @router.get("/invoice-follow-up", response_class=HTMLResponse)
 async def pro_invoice_follow_up(request: Request, queue: str = "ready"):

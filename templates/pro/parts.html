@@ -1,0 +1,114 @@
+{% extends "layout.html" %}
+
+{% block title %}Parts Center | TorqueMech Pro{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-parts-shell {
+    display: grid;
+    gap: 16px;
+  }
+
+  .tm-parts-header,
+  .tm-parts-empty {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 8px;
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(17, 28, 45, 0.94));
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+  }
+
+  .tm-parts-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .tm-parts-title {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 1.8rem;
+    font-weight: 900;
+    line-height: 1.15;
+  }
+
+  .tm-parts-subtitle {
+    margin: 8px 0 0;
+    color: #b8c4d4;
+    font-size: 0.98rem;
+    line-height: 1.5;
+  }
+
+  .tm-parts-add {
+    flex: 0 0 auto;
+    min-height: 42px;
+    border: 1px solid #fb923c;
+    border-radius: 8px;
+    background: #fb923c;
+    color: #08111f;
+    cursor: not-allowed;
+    font: inherit;
+    font-weight: 900;
+    padding: 10px 14px;
+    opacity: 0.72;
+  }
+
+  .tm-parts-empty {
+    display: grid;
+    min-height: 220px;
+    place-items: center;
+    padding: 28px 18px;
+    text-align: center;
+  }
+
+  .tm-parts-empty__content {
+    display: grid;
+    gap: 8px;
+    max-width: 420px;
+  }
+
+  .tm-parts-empty h2 {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 1.18rem;
+    font-weight: 900;
+  }
+
+  .tm-parts-empty p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  @media (max-width: 700px) {
+    .tm-parts-header {
+      display: grid;
+    }
+
+    .tm-parts-add {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-parts-shell" aria-labelledby="partsCenterTitle">
+  <div class="tm-parts-header">
+    <div>
+      <h1 class="tm-parts-title" id="partsCenterTitle">Parts Center</h1>
+      <p class="tm-parts-subtitle">Keep track of parts you use for repairs.</p>
+    </div>
+    <button class="tm-parts-add" type="button" disabled aria-disabled="true">Add Part</button>
+  </div>
+
+  <div class="tm-parts-empty" data-parts-count="{{ parts_count }}">
+    <div class="tm-parts-empty__content">
+      <h2>No parts added yet</h2>
+      <p>Parts you save will appear here.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

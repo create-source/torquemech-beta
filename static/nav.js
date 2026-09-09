@@ -585,6 +585,8 @@ document.addEventListener("DOMContentLoaded", () => {
           key = "schedule";
         } else if (path.startsWith("/pro/customers")) {
           key = "customers";
+        } else if (path.startsWith("/pro/parts")) {
+          key = "more";
         }
 
         if (!key) return;
