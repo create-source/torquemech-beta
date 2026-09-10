@@ -177,6 +177,8 @@ FEEDBACK_EMAIL = os.getenv("FEEDBACK_EMAIL")
 RESEND_API_KEY_ENV = "RESEND_API_KEY"
 VERIFICATION_EMAIL_RESEND_COOLDOWN_SECONDS = 60
 VERIFICATION_EMAIL_SUBJECT = "Verify your TorqueMech account"
+BETA_WELCOME_EMAIL_SUBJECT = "Welcome to TorqueMech"
+BETA_WELCOME_EMAIL_FROM = "support@torquemech.com"
 PASSWORD_RESET_EMAIL_SUBJECT = "Reset your TorqueMech password"
 PASSWORD_RESET_CONFIRMATION_MESSAGE = "If an account exists for this email, we’ve sent password reset instructions."
 PASSWORD_RESET_REQUEST_COOLDOWN_SECONDS = 60
@@ -2255,6 +2257,126 @@ def verification_email_body(verification_url: str) -> str:
     )
 
 
+def beta_welcome_email_text_body() -> str:
+    return (
+        "Hi,\n\n"
+        "Thanks for signing up for TorqueMech and helping us test the platform.\n\n"
+        "TorqueMech was built for mobile mechanics and small independent shops to make it easier to manage customers, "
+        "vehicles, estimates, approvals, repairs, invoices, and scheduling from one place.\n\n"
+        "We’re currently in beta, so your feedback is especially valuable. If you run into something that doesn’t work "
+        "as expected, something is confusing, or there’s a feature that would make TorqueMech more useful for your shop, "
+        "just reply to this email and let us know.\n\n"
+        "Thanks for giving TorqueMech a try.\n\n"
+        "TorqueMech\n"
+        "support@torquemech.com"
+    )
+
+
+def beta_welcome_email_body() -> str:
+    return (
+        "<!doctype html><html><body>"
+        "<p>Hi,</p>"
+        "<p>Thanks for signing up for TorqueMech and helping us test the platform.</p>"
+        "<p>TorqueMech was built for mobile mechanics and small independent shops to make it easier to manage customers, "
+        "vehicles, estimates, approvals, repairs, invoices, and scheduling from one place.</p>"
+        "<p>We&rsquo;re currently in beta, so your feedback is especially valuable. If you run into something that "
+        "doesn&rsquo;t work as expected, something is confusing, or there&rsquo;s a feature that would make TorqueMech "
+        "more useful for your shop, just reply to this email and let us know.</p>"
+        "<p>Thanks for giving TorqueMech a try.</p>"
+        "<p><strong>TorqueMech</strong><br>support@torquemech.com</p>"
+        "</body></html>"
+    )
+
+
+def beta_welcome_email_config() -> email_service.EmailServiceConfig:
+    config = auth_email_service_config()
+    return email_service.EmailServiceConfig(
+        transport=config.transport,
+        smtp_server=config.smtp_server,
+        smtp_port=config.smtp_port,
+        smtp_user=config.smtp_user,
+        smtp_pass=config.smtp_pass,
+        resend_api_key=config.resend_api_key,
+        dev_outbox_path=config.dev_outbox_path,
+        from_address=BETA_WELCOME_EMAIL_FROM,
+        from_display_name="TorqueMech",
+        envelope_sender=BETA_WELCOME_EMAIL_FROM,
+        reply_to_address=BETA_WELCOME_EMAIL_FROM,
+        local_default_outbox_path=config.local_default_outbox_path,
+        max_attachment_bytes=config.max_attachment_bytes,
+    )
+
+
+def send_beta_welcome_email(*, email: str, user_id: int) -> bool:
+    transport = email_service.normalize_transport(os.getenv("TORQUEMECH_EMAIL_TRANSPORT"))
+    sender = BETA_WELCOME_EMAIL_FROM if transport in {"smtp", "resend"} else "local-outbox"
+    verification_email_logger.info(
+        "BETA_WELCOME_EMAIL_TRANSPORT_SELECTED transport=%s sender=%s recipient=%s user_id=%s",
+        transport,
+        sender,
+        email,
+        user_id,
+    )
+    result = email_service.send_email(
+        email_service.EmailMessage(
+            recipients=[email],
+            subject=BETA_WELCOME_EMAIL_SUBJECT,
+            text_body=beta_welcome_email_text_body(),
+            html_body=beta_welcome_email_body(),
+            metadata={"email_kind": "beta_welcome", "user_id": user_id, "sender": BETA_WELCOME_EMAIL_FROM},
+        ),
+        beta_welcome_email_config(),
+        logger=verification_email_logger,
+        resend_client=resend,
+    )
+    if result.success:
+        verification_email_logger.info(
+            "BETA_WELCOME_EMAIL_ACCEPTED transport=%s sender=%s recipient=%s user_id=%s provider_message_id=%s",
+            result.transport,
+            BETA_WELCOME_EMAIL_FROM,
+            email,
+            user_id,
+            result.provider_message_id,
+        )
+    else:
+        verification_email_logger.error(
+            "BETA_WELCOME_EMAIL_FAILED transport=%s sender=%s recipient=%s user_id=%s category=%s",
+            result.transport,
+            BETA_WELCOME_EMAIL_FROM,
+            email,
+            user_id,
+            result.error_category,
+        )
+    return result.success
+
+
+def send_beta_welcome_email_once(conn: sqlite3.Connection, *, email: str, user_id: int) -> None:
+    row = conn.execute(
+        "SELECT beta_welcome_email_sent_at FROM users WHERE id = ? LIMIT 1",
+        (user_id,),
+    ).fetchone()
+    if not row or str(row["beta_welcome_email_sent_at"] or "").strip():
+        return
+    try:
+        delivered = send_beta_welcome_email(email=email, user_id=user_id)
+    except Exception:
+        verification_email_logger.exception(
+            "BETA_WELCOME_EMAIL_UNEXPECTED sender=%s recipient=%s user_id=%s",
+            BETA_WELCOME_EMAIL_FROM,
+            email,
+            user_id,
+        )
+        return
+    if not delivered:
+        return
+    now = datetime.utcnow().isoformat()
+    conn.execute(
+        "UPDATE users SET beta_welcome_email_sent_at = ?, updated_at = ? WHERE id = ? AND beta_welcome_email_sent_at IS NULL",
+        (now, now, user_id),
+    )
+    conn.commit()
+
+
 def send_verification_email_smtp(request: Request, *, email: str, token: str) -> bool:
     verification_email_logger.info(
         "VERIFICATION_EMAIL_DELIVERY_ENTERED transport=smtp host=%s port=%s sender=%s recipient=%s",
@@ -3008,6 +3130,7 @@ def verify_email(request: Request, token: str = ""):
             shop_id = create_shop_profile_for_user(conn, int(user["id"]))
         create_or_ensure_shop_subscription(conn, int(shop_id))
         conn.commit()
+        send_beta_welcome_email_once(conn, email=str(user["email"]), user_id=int(user["id"]))
         login_session(request, int(user["id"]))
     finally:
         conn.close()

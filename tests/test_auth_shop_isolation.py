@@ -140,7 +140,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         ]
 
     def latest_verification_token(self):
-        messages = self.outbox_messages()
+        messages = [message for message in self.outbox_messages() if message.get("verification_url")]
         if not messages:
             raise AssertionError("verification outbox is empty")
         parsed = urlparse(messages[-1]["verification_url"])
@@ -154,11 +154,14 @@ class AuthShopIsolationTests(unittest.TestCase):
         return parse_qs(parsed.query)["token"][0]
 
     def latest_verification_token_for(self, email):
-        messages = [message for message in self.outbox_messages() if message.get("to") == email]
+        messages = [message for message in self.outbox_messages() if message.get("to") == email and message.get("verification_url")]
         if not messages:
             raise AssertionError(f"verification outbox is empty for {email}")
         parsed = urlparse(messages[-1]["verification_url"])
         return parse_qs(parsed.query)["token"][0]
+
+    def beta_welcome_messages(self):
+        return [message for message in self.outbox_messages() if message.get("email_kind") == "beta_welcome"]
 
     def request_password_reset(self, client, email="owner@example.com"):
         page = client.get("/forgot-password")
@@ -514,6 +517,71 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIsNotNone(user["email_verified_at"])
         self.assertIsNone(user["verification_token_hash"])
         self.assertIsNone(user["verification_token_expires_at"])
+
+    def test_successful_verification_sends_beta_welcome_email(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        self.signup(client, email="user@example.com", shop_name="Beta Shop")
+        token = self.latest_verification_token()
+
+        response = client.get(f"/verify-email?token={token}", follow_redirects=False)
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
+        messages = self.beta_welcome_messages()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["to"], "user@example.com")
+        self.assertEqual(messages[0]["subject"], "Welcome to TorqueMech")
+        self.assertEqual(messages[0]["sender"], "support@torquemech.com")
+        self.assertIn("Thanks for signing up for TorqueMech and helping us test the platform.", messages[0]["body"])
+        self.assertIsNotNone(user["beta_welcome_email_sent_at"])
+
+    def test_beta_welcome_email_sends_once_only(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        self.signup(client, email="user@example.com", shop_name="Beta Shop")
+        token = self.latest_verification_token()
+
+        first = client.get(f"/verify-email?token={token}", follow_redirects=False)
+        second = client.get(f"/verify-email?token={token}", follow_redirects=False)
+        login = self.login(client, email="user@example.com")
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 303)
+        self.assertEqual(login.status_code, 303)
+        self.assertEqual(len(self.beta_welcome_messages()), 1)
+
+    def test_unverified_signup_does_not_get_beta_welcome_email(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+
+        response = self.signup(client, email="user@example.com", shop_name="Beta Shop")
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
+
+        self.assertEqual(response.headers["location"], "/check-email")
+        self.assertEqual(self.beta_welcome_messages(), [])
+        self.assertIsNone(user["beta_welcome_email_sent_at"])
+
+    def test_beta_welcome_email_failure_does_not_break_verification(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        self.signup(client, email="user@example.com", shop_name="Beta Shop")
+        token = self.latest_verification_token()
+
+        with patch.object(main, "send_beta_welcome_email", return_value=False):
+            response = client.get(f"/verify-email?token={token}", follow_redirects=False)
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Your email has been verified", response.text)
+        self.assertIsNotNone(user["email_verified_at"])
+        self.assertIsNone(user["verification_token_hash"])
+        self.assertIsNone(user["beta_welcome_email_sent_at"])
+        self.assertEqual(self.beta_welcome_messages(), [])
 
     def test_invalid_verification_token_fails(self):
         client = self.client()

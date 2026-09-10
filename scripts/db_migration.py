@@ -28,6 +28,7 @@ ACCOUNT_COLUMNS = {
     "subscription_cancel_at_period_end": "INTEGER",
     "appearance_preference": "TEXT NOT NULL DEFAULT 'dark'",
     "language_preference": "TEXT NOT NULL DEFAULT 'en-US'",
+    "beta_welcome_email_sent_at": "TEXT",
 }
 
 SHOP_SUBSCRIPTIONS_SCHEMA_SQL = """
@@ -556,6 +557,47 @@ def apply_account_preferences_schema(_args: argparse.Namespace) -> None:
         pg_conn.close()
 
 
+def apply_beta_welcome_email_schema(_args: argparse.Namespace) -> None:
+    if not db.using_postgres():
+        raise SystemExit("DATABASE_URL must be an explicit PostgreSQL URL for PostgreSQL migration commands.")
+
+    pg_conn = pg_connect()
+    try:
+        with pg_conn:
+            with pg_conn.cursor() as cur:
+                cur.execute(
+                    """
+                    ALTER TABLE users
+                    ADD COLUMN IF NOT EXISTS beta_welcome_email_sent_at TEXT
+                    """
+                )
+        print("beta welcome email schema applied successfully for PostgreSQL database")
+    except Exception as exc:
+        pg_conn.rollback()
+        raise SystemExit(f"Failed to apply PostgreSQL beta welcome email schema: {exc}") from exc
+    finally:
+        pg_conn.close()
+
+
+def apply_beta_welcome_email_schema_local(_args: argparse.Namespace) -> None:
+    if db.using_postgres():
+        raise SystemExit("Refusing local SQLite migration because the app is configured for PostgreSQL.")
+    if (os.getenv("DATABASE_URL") or "").strip():
+        raise SystemExit("Refusing local SQLite migration because DATABASE_URL is set.")
+
+    sqlite_path = Path(db.active_app_db_path()).resolve()
+    sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(sqlite_path))
+    try:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+        if "beta_welcome_email_sent_at" not in columns:
+            conn.execute("ALTER TABLE users ADD COLUMN beta_welcome_email_sent_at TEXT")
+        conn.commit()
+        print(f"beta welcome email schema applied successfully for SQLite database at {sqlite_path}")
+    finally:
+        conn.close()
+
+
 def apply_subscriptions_schema_local(_args: argparse.Namespace) -> None:
     if db.using_postgres():
         raise SystemExit("Refusing local SQLite migration because the app is configured for PostgreSQL.")
@@ -996,6 +1038,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     account_preferences_schema = subparsers.add_parser("apply-account-preferences-schema")
     account_preferences_schema.set_defaults(func=apply_account_preferences_schema)
+
+    beta_welcome_schema = subparsers.add_parser("apply-beta-welcome-email-schema")
+    beta_welcome_schema.set_defaults(func=apply_beta_welcome_email_schema)
+
+    beta_welcome_schema_local = subparsers.add_parser("apply-beta-welcome-email-schema-local")
+    beta_welcome_schema_local.set_defaults(func=apply_beta_welcome_email_schema_local)
 
     subscriptions_backfill = subparsers.add_parser("backfill-development-subscriptions")
     subscriptions_backfill.set_defaults(func=backfill_development_subscriptions)
