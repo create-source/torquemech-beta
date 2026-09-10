@@ -113,6 +113,7 @@ AUTH_SESSION_BOOTSTRAP_KEY = "bootstrap_verified"
 PRO_SOLO_PLAN_CODE = "pro_solo"
 PRO_SOLO_PLAN_NAME = "TorqueMech Pro Solo"
 PRO_SOLO_TRIAL_DAYS = 14
+ADMIN_EXTENDED_TRIAL_TOTAL_DAYS = 30
 PASSWORD_HASH_ITERATIONS = 390000
 try:
     SHOP_ZONEINFO = ZoneInfo(DEFAULT_SHOP_TIMEZONE)
@@ -3616,6 +3617,23 @@ def bool_from_admin_value(value: Any) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def admin_extended_trial_target(signup_date: Any) -> datetime | None:
+    signup_at = parse_utc_datetime(signup_date)
+    if not signup_at:
+        return None
+    return signup_at + timedelta(days=ADMIN_EXTENDED_TRIAL_TOTAL_DAYS)
+
+
+def admin_trial_extension_available(account: dict[str, Any]) -> bool:
+    if str(account.get("subscription_status") or "").strip().lower() != "trialing":
+        return False
+    target = admin_extended_trial_target(account.get("signup_date"))
+    if not target:
+        return False
+    trial_end = parse_utc_datetime(account.get("trial_ends_at"))
+    return trial_end is None or trial_end < target
+
+
 def subscription_status_bucket(subscription: dict[str, Any], *, now: datetime | None = None) -> dict[str, str]:
     access = resolve_subscription_access(subscription or None, shop_id=subscription.get("shop_id"), now=now)
     status = str(subscription.get("status") or "").strip().lower()
@@ -3777,8 +3795,58 @@ def owner_admin_account_rows(conn: sqlite3.Connection, *, now: datetime | None =
         )
         account["monthly_amount"] = subscription_monthly_amount(subscription)
         account["is_test_account"] = bool_from_admin_value(account.get("is_test_account"))
+        account["can_extend_trial_to_30_days"] = admin_trial_extension_available(account)
         accounts.append(account)
     return accounts
+
+
+def extend_trial_to_30_days_from_signup(conn: sqlite3.Connection, shop_id: int) -> dict[str, Any]:
+    ensure_auth_schema(conn)
+    ensure_shop_profile_schema(conn)
+    ensure_shop_subscription_schema(conn)
+    row = conn.execute(
+        """
+        SELECT
+          sp.id AS shop_id,
+          COALESCE(u.created_at, ss.created_at, sp.updated_at) AS signup_date,
+          ss.id AS subscription_id,
+          ss.status AS subscription_status,
+          ss.trial_ends_at AS trial_ends_at
+        FROM shop_profile sp
+        LEFT JOIN users u ON u.id = sp.owner_user_id
+        LEFT JOIN shop_subscriptions ss ON ss.shop_id = sp.id
+        WHERE sp.id = ?
+        LIMIT 1
+        """,
+        (shop_id,),
+    ).fetchone()
+    if not row:
+        return {"ok": False, "reason": "not_found", "message": "Account was not found."}
+    account = dict(row)
+    if not account.get("subscription_id") or str(account.get("subscription_status") or "").strip().lower() != "trialing":
+        return {"ok": False, "reason": "not_trial", "message": "Only trial accounts can be extended."}
+    target = admin_extended_trial_target(account.get("signup_date"))
+    if not target:
+        return {"ok": False, "reason": "missing_signup", "message": "A signup date is required before extending this trial."}
+    current_trial_end = parse_utc_datetime(account.get("trial_ends_at"))
+    if current_trial_end and current_trial_end >= target:
+        return {"ok": True, "changed": False, "trial_ends_at": current_trial_end.isoformat()}
+    target_iso = target.isoformat()
+    conn.execute(
+        """
+        UPDATE shop_subscriptions
+        SET trial_ends_at = ?,
+            updated_at = ?
+        WHERE shop_id = ?
+          AND status = 'trialing'
+          AND (
+            trial_ends_at IS NULL
+            OR trial_ends_at < ?
+          )
+        """,
+        (target_iso, utc_now_iso(), shop_id, target_iso),
+    )
+    return {"ok": True, "changed": True, "trial_ends_at": target_iso}
 
 
 def format_admin_date(value: Any) -> str:
@@ -17466,6 +17534,30 @@ async def pro_owner_admin_test_account_update(request: Request, shop_id: int):
     finally:
         conn.close()
     notice = "Account marked as test." if mark else "Account unmarked as test."
+    return RedirectResponse(owner_admin_redirect_url(status_filter, account_filter, notice=notice), status_code=303)
+
+
+@router.post("/admin/accounts/{shop_id}/extend-trial")
+async def pro_owner_admin_extend_trial(request: Request, shop_id: int):
+    require_admin_user(request)
+    form = await read_form_data(request)
+    status_filter = str(form.get("status_filter") or "all")
+    account_filter = str(form.get("account_filter") or "real")
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    conn = crm_db_conn()
+    try:
+        result = extend_trial_to_30_days_from_signup(conn, shop_id)
+        if not result.get("ok"):
+            conn.rollback()
+            return RedirectResponse(
+                owner_admin_redirect_url(status_filter, account_filter, error=str(result.get("message") or "Trial was not updated.")),
+                status_code=303,
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    notice = "Trial end updated." if result.get("changed") else "Trial end was already up to date."
     return RedirectResponse(owner_admin_redirect_url(status_filter, account_filter, notice=notice), status_code=303)
 
 

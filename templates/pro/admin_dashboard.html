@@ -441,6 +441,14 @@
           <td data-label="Trial End">{{ format_admin_date(account.trial_ends_at) }}</td>
           <td data-label="Renewal / Cancellation">{{ format_admin_date(account.renewal_or_cancellation_date) }}</td>
           <td data-label="Admin">
+            {% if account.can_extend_trial_to_30_days %}
+            <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/extend-trial">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">
+              <input type="hidden" name="account_filter" value="{{ dashboard.selected_account_filter }}">
+              <button class="tm-admin-button tm-admin-button--secondary" type="submit">Extend to 30 Days</button>
+            </form>
+            {% endif %}
             <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/test-account">
               <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
               <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">

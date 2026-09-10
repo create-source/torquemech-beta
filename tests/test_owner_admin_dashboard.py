@@ -155,7 +155,7 @@ class OwnerAdminDashboardTests(unittest.TestCase):
             trial_shop,
             "trialing",
             trial_started_at="2026-08-03T12:00:00+00:00",
-            trial_ends_at="2026-08-25T12:00:00+00:00",
+            trial_ends_at="2026-09-25T12:00:00+00:00",
         )
         self.insert_subscription(
             paid_shop,
@@ -354,7 +354,8 @@ class OwnerAdminDashboardTests(unittest.TestCase):
     def test_status_filtering_and_existing_shop_isolation_remain_intact(self):
         seeded = self.seed_dashboard_accounts()
         admin_user, _admin_shop = self.create_user_shop("admin@example.com", "Admin Shop")
-        with patch.dict(os.environ, {"TORQUEMECH_ADMIN_EMAILS": "admin@example.com"}, clear=False):
+        fixture_now = datetime(2026, 8, 21, 12, 0, tzinfo=timezone.utc)
+        with patch.dict(os.environ, {"TORQUEMECH_ADMIN_EMAILS": "admin@example.com"}, clear=False), patch.object(pro_module, "utc_now", return_value=fixture_now):
             client = self.authenticated_client(admin_user)
             admin_response = client.get("/pro/admin?status=expired")
             shop_response = client.get("/pro/shop-settings")
@@ -408,6 +409,101 @@ class OwnerAdminDashboardTests(unittest.TestCase):
         self.assertEqual(row["is_test_account"], 0)
         self.assertEqual([params[0] for params in self.conn.test_account_update_params], [True, False])
         self.assertTrue(all(type(params[0]) is bool for params in self.conn.test_account_update_params))
+
+    def test_extend_trial_requires_admin_and_csrf(self):
+        normal_user, shop_id = self.create_user_shop(
+            "normal@example.com",
+            "Normal Shop",
+            "2026-09-10T12:00:00+00:00",
+        )
+        self.insert_subscription(
+            shop_id,
+            "trialing",
+            trial_started_at="2026-09-10T12:00:00+00:00",
+            trial_ends_at="2026-09-24T12:00:00+00:00",
+        )
+        admin_user, _ = self.create_user_shop("admin@example.com", "Admin Shop")
+        normal_client = self.authenticated_client(normal_user)
+        admin_client = self.authenticated_client(admin_user)
+
+        with patch.dict(os.environ, {"TORQUEMECH_ADMIN_EMAILS": "admin@example.com"}, clear=False):
+            denied = normal_client.post(
+                f"/pro/admin/accounts/{shop_id}/extend-trial",
+                data={"csrf_token": "anything"},
+                follow_redirects=False,
+            )
+            missing_csrf = admin_client.post(
+                f"/pro/admin/accounts/{shop_id}/extend-trial",
+                follow_redirects=False,
+            )
+
+        row = self.conn.execute("SELECT trial_ends_at FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertIn(denied.status_code, {303, 403})
+        self.assertEqual(missing_csrf.status_code, 403)
+        self.assertEqual(row["trial_ends_at"], "2026-09-24T12:00:00+00:00")
+
+    def test_admin_can_extend_trial_to_30_days_from_original_signup_idempotently(self):
+        beta_user, shop_id = self.create_user_shop(
+            "trial-extension@example.com",
+            "Trial Extension Shop",
+            "2026-09-10T12:00:00+00:00",
+        )
+        self.insert_subscription(
+            shop_id,
+            "trialing",
+            trial_started_at="2026-09-10T12:00:00+00:00",
+            trial_ends_at="2026-09-24T12:00:00+00:00",
+        )
+        admin_user, _ = self.create_user_shop("admin@example.com", "Admin Shop")
+
+        with patch.dict(os.environ, {"TORQUEMECH_ADMIN_EMAILS": "admin@example.com"}, clear=False):
+            client = self.authenticated_client(admin_user)
+            page = client.get("/pro/admin?account_type=all")
+            self.assertIn("Extend to 30 Days", page.text)
+            first = client.post(
+                f"/pro/admin/accounts/{shop_id}/extend-trial",
+                data={"csrf_token": csrf_from(page.text), "account_filter": "all"},
+                follow_redirects=False,
+            )
+            refreshed = client.get("/pro/admin?account_type=all")
+            second = client.post(
+                f"/pro/admin/accounts/{shop_id}/extend-trial",
+                data={"csrf_token": csrf_from(refreshed.text), "account_filter": "all"},
+                follow_redirects=False,
+            )
+            final_page = client.get("/pro/admin?account_type=all")
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        access = pro_module.resolve_shop_access(
+            dict(row),
+            shop_id=shop_id,
+            now=datetime(2026, 9, 25, 12, 0, tzinfo=timezone.utc),
+        )
+        self.assertGreater(beta_user, 0)
+        self.assertEqual(first.status_code, 303)
+        self.assertEqual(second.status_code, 303)
+        self.assertEqual(row["trial_ends_at"], "2026-10-10T12:00:00+00:00")
+        self.assertTrue(access["has_full_access"])
+        self.assertIn("Oct 10, 2026", final_page.text)
+        self.assertIn("Trial+end+was+already+up+to+date", second.headers["location"])
+
+    def test_paid_accounts_do_not_show_trial_extension_control(self):
+        admin_user, shop_id = self.create_user_shop("admin@example.com", "Admin Shop")
+        self.insert_subscription(
+            shop_id,
+            "active",
+            trial_started_at="2026-09-10T12:00:00+00:00",
+            trial_ends_at="2026-09-24T12:00:00+00:00",
+            current_period_ends_at="2026-10-24T12:00:00+00:00",
+            stripe_customer_id="cus_paid",
+            stripe_subscription_id="sub_paid",
+        )
+
+        with patch.dict(os.environ, {"TORQUEMECH_ADMIN_EMAILS": "admin@example.com"}, clear=False):
+            page = self.authenticated_client(admin_user).get("/pro/admin?account_type=all")
+
+        self.assertEqual(page.status_code, 200)
+        self.assertNotIn("Extend to 30 Days", page.text)
 
     def test_test_accounts_are_labeled_and_filtered(self):
         self.seed_dashboard_accounts()
