@@ -178,7 +178,10 @@ RESEND_API_KEY_ENV = "RESEND_API_KEY"
 VERIFICATION_EMAIL_RESEND_COOLDOWN_SECONDS = 60
 VERIFICATION_EMAIL_SUBJECT = "Verify your TorqueMech account"
 BETA_WELCOME_EMAIL_SUBJECT = "Welcome to TorqueMech"
-BETA_WELCOME_EMAIL_FROM = "support@torquemech.com"
+BETA_WELCOME_EMAIL_FROM_ADDRESS = "support@updates.torquemech.com"
+BETA_WELCOME_EMAIL_FROM_DISPLAY = "TorqueMech Support"
+BETA_WELCOME_EMAIL_FROM_HEADER = "TorqueMech Support <support@updates.torquemech.com>"
+BETA_WELCOME_EMAIL_REPLY_TO = "support@torquemech.com"
 PASSWORD_RESET_EMAIL_SUBJECT = "Reset your TorqueMech password"
 PASSWORD_RESET_CONFIRMATION_MESSAGE = "If an account exists for this email, we’ve sent password reset instructions."
 PASSWORD_RESET_REQUEST_COOLDOWN_SECONDS = 60
@@ -2298,10 +2301,10 @@ def beta_welcome_email_config() -> email_service.EmailServiceConfig:
         smtp_pass=config.smtp_pass,
         resend_api_key=config.resend_api_key,
         dev_outbox_path=config.dev_outbox_path,
-        from_address=BETA_WELCOME_EMAIL_FROM,
-        from_display_name="TorqueMech",
-        envelope_sender=BETA_WELCOME_EMAIL_FROM,
-        reply_to_address=BETA_WELCOME_EMAIL_FROM,
+        from_address=BETA_WELCOME_EMAIL_FROM_ADDRESS,
+        from_display_name=BETA_WELCOME_EMAIL_FROM_DISPLAY,
+        envelope_sender=BETA_WELCOME_EMAIL_FROM_ADDRESS,
+        reply_to_address=BETA_WELCOME_EMAIL_REPLY_TO,
         local_default_outbox_path=config.local_default_outbox_path,
         max_attachment_bytes=config.max_attachment_bytes,
     )
@@ -2309,7 +2312,7 @@ def beta_welcome_email_config() -> email_service.EmailServiceConfig:
 
 def send_beta_welcome_email(*, email: str, user_id: int) -> bool:
     transport = email_service.normalize_transport(os.getenv("TORQUEMECH_EMAIL_TRANSPORT"))
-    sender = BETA_WELCOME_EMAIL_FROM if transport in {"smtp", "resend"} else "local-outbox"
+    sender = BETA_WELCOME_EMAIL_FROM_ADDRESS if transport in {"smtp", "resend"} else "local-outbox"
     verification_email_logger.info(
         "BETA_WELCOME_EMAIL_TRANSPORT_SELECTED transport=%s sender=%s recipient=%s user_id=%s",
         transport,
@@ -2323,7 +2326,15 @@ def send_beta_welcome_email(*, email: str, user_id: int) -> bool:
             subject=BETA_WELCOME_EMAIL_SUBJECT,
             text_body=beta_welcome_email_text_body(),
             html_body=beta_welcome_email_body(),
-            metadata={"email_kind": "beta_welcome", "user_id": user_id, "sender": BETA_WELCOME_EMAIL_FROM},
+            reply_to=BETA_WELCOME_EMAIL_REPLY_TO,
+            metadata={
+                "email_kind": "beta_welcome",
+                "user_id": user_id,
+                "sender": BETA_WELCOME_EMAIL_FROM_ADDRESS,
+                "from": BETA_WELCOME_EMAIL_FROM_ADDRESS,
+                "from_header": BETA_WELCOME_EMAIL_FROM_HEADER,
+                "reply_to": BETA_WELCOME_EMAIL_REPLY_TO,
+            },
         ),
         beta_welcome_email_config(),
         logger=verification_email_logger,
@@ -2333,7 +2344,7 @@ def send_beta_welcome_email(*, email: str, user_id: int) -> bool:
         verification_email_logger.info(
             "BETA_WELCOME_EMAIL_ACCEPTED transport=%s sender=%s recipient=%s user_id=%s provider_message_id=%s",
             result.transport,
-            BETA_WELCOME_EMAIL_FROM,
+            BETA_WELCOME_EMAIL_FROM_ADDRESS,
             email,
             user_id,
             result.provider_message_id,
@@ -2342,7 +2353,7 @@ def send_beta_welcome_email(*, email: str, user_id: int) -> bool:
         verification_email_logger.error(
             "BETA_WELCOME_EMAIL_FAILED transport=%s sender=%s recipient=%s user_id=%s category=%s",
             result.transport,
-            BETA_WELCOME_EMAIL_FROM,
+            BETA_WELCOME_EMAIL_FROM_ADDRESS,
             email,
             user_id,
             result.error_category,
@@ -2362,7 +2373,7 @@ def send_beta_welcome_email_once(conn: sqlite3.Connection, *, email: str, user_i
     except Exception:
         verification_email_logger.exception(
             "BETA_WELCOME_EMAIL_UNEXPECTED sender=%s recipient=%s user_id=%s",
-            BETA_WELCOME_EMAIL_FROM,
+            BETA_WELCOME_EMAIL_FROM_ADDRESS,
             email,
             user_id,
         )

@@ -533,9 +533,34 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0]["to"], "user@example.com")
         self.assertEqual(messages[0]["subject"], "Welcome to TorqueMech")
-        self.assertEqual(messages[0]["sender"], "support@torquemech.com")
+        self.assertEqual(messages[0]["sender"], "support@updates.torquemech.com")
+        self.assertEqual(messages[0]["from"], "support@updates.torquemech.com")
+        self.assertEqual(messages[0]["from_header"], "TorqueMech Support <support@updates.torquemech.com>")
+        self.assertEqual(messages[0]["reply_to"], "support@torquemech.com")
         self.assertIn("Thanks for signing up for TorqueMech and helping us test the platform.", messages[0]["body"])
         self.assertIsNotNone(user["beta_welcome_email_sent_at"])
+
+    def test_beta_welcome_email_uses_temporary_updates_domain_sender_and_root_reply_to(self):
+        captured = {}
+
+        def fake_send_email(message, config, **kwargs):
+            captured["message"] = message
+            captured["config"] = config
+            return main.email_service.EmailSendResult(success=True, transport="resend")
+
+        with patch.dict("os.environ", {"TORQUEMECH_EMAIL_TRANSPORT": "resend", "RESEND_API_KEY": "re_test_key"}), \
+             patch.object(main.email_service, "send_email", side_effect=fake_send_email):
+            sent = main.send_beta_welcome_email(email="user@example.com", user_id=42)
+
+        self.assertTrue(sent)
+        self.assertEqual(captured["config"].from_address, "support@updates.torquemech.com")
+        self.assertEqual(captured["config"].from_display_name, "TorqueMech Support")
+        self.assertEqual(captured["config"].envelope_sender, "support@updates.torquemech.com")
+        self.assertEqual(captured["config"].reply_to_address, "support@torquemech.com")
+        self.assertEqual(captured["message"].metadata["sender"], "support@updates.torquemech.com")
+        self.assertEqual(captured["message"].metadata["from"], "support@updates.torquemech.com")
+        self.assertEqual(captured["message"].metadata["from_header"], "TorqueMech Support <support@updates.torquemech.com>")
+        self.assertEqual(captured["message"].reply_to, "support@torquemech.com")
 
     def test_beta_welcome_email_sends_once_only(self):
         client = self.client()

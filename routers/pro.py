@@ -467,6 +467,7 @@ def ensure_auth_schema(conn: sqlite3.Connection) -> None:
         "verification_token_hash": "verification_token_hash TEXT",
         "verification_token_expires_at": "verification_token_expires_at TEXT",
         "verification_email_last_sent_at": "verification_email_last_sent_at TEXT",
+        "beta_welcome_email_sent_at": "beta_welcome_email_sent_at TEXT",
         "pending_email": "pending_email TEXT",
         "pending_email_token_hash": "pending_email_token_hash TEXT",
         "pending_email_token_expires_at": "pending_email_token_expires_at TEXT",
