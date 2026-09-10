@@ -1746,6 +1746,7 @@ async def pro_private_access_middleware(request: Request, call_next):
         return await call_next(request)
     if (
         path == "/pro/home-preview"
+        or path == "/pro/plan"
         or path == "/pro/demo"
         or path.startswith("/pro/demo/")
     ):
