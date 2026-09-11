@@ -139,29 +139,89 @@
     color: #111827;
   }
 
-  .tm-admin-table {
-    width: 100%;
-    border-collapse: collapse;
+  .tm-admin-account-list {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
   }
 
-  .tm-admin-table th,
-  .tm-admin-table td {
-    padding: 12px 10px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-    text-align: left;
-    vertical-align: top;
+  .tm-admin-account-card {
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 10px;
+    background: rgba(9, 20, 35, 0.7);
+    padding: 14px;
   }
 
-  .tm-admin-table th {
+  .tm-admin-account-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .tm-admin-account-title {
+    min-width: 0;
+  }
+
+  .tm-admin-account-title h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .tm-admin-account-title p {
+    margin: 4px 0 0;
+    color: #b9c8dc;
+    font-size: 0.86rem;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-admin-account-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 7px;
+  }
+
+  .tm-admin-account-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .tm-admin-account-field {
+    min-width: 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    padding-top: 10px;
+  }
+
+  .tm-admin-account-field > span {
+    display: block;
+    margin-bottom: 5px;
     color: #aebdd0;
-    font-size: 0.74rem;
-    letter-spacing: 0.06em;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
   }
 
-  .tm-admin-table td {
+  .tm-admin-account-field > strong,
+  .tm-admin-account-field > div {
     color: #f8fafc;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-admin-account-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
   }
 
   .tm-admin-muted {
@@ -214,7 +274,6 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(54px, 1fr));
     gap: 4px 10px;
-    min-width: 150px;
   }
 
   .tm-admin-usage span {
@@ -230,7 +289,6 @@
   .tm-admin-subscription {
     display: grid;
     gap: 4px;
-    min-width: 150px;
   }
 
   .tm-admin-subscription strong {
@@ -310,26 +368,15 @@
     font-weight: 900;
   }
 
-  .tm-admin-shop-actions {
-    display: grid;
-    gap: 6px;
-    margin-top: 10px;
-    justify-items: start;
-  }
-
-  .tm-admin-shop-actions .tm-admin-inline-form {
-    display: block;
-  }
-
-  .tm-admin-shop-actions .tm-admin-button {
-    min-height: 30px;
-    padding: 5px 8px;
-    font-size: 0.74rem;
-  }
-
   @media (max-width: 960px) {
     .tm-admin-metrics {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 1080px) {
+    .tm-admin-account-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
@@ -338,38 +385,16 @@
       display: grid;
     }
 
-    .tm-admin-table,
-    .tm-admin-table tbody,
-    .tm-admin-table tr,
-    .tm-admin-table td {
-      display: block;
-    }
-
-    .tm-admin-table thead {
-      display: none;
-    }
-
-    .tm-admin-table tr {
-      padding: 12px 14px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-    }
-
-    .tm-admin-table td {
+    .tm-admin-account-top {
       display: grid;
-      grid-template-columns: 116px minmax(0, 1fr);
-      gap: 10px;
-      padding: 6px 0;
-      border: 0;
-      overflow-wrap: anywhere;
     }
 
-    .tm-admin-table td::before {
-      content: attr(data-label);
-      color: #aebdd0;
-      font-size: 0.72rem;
-      font-weight: 900;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
+    .tm-admin-account-badges {
+      justify-content: flex-start;
+    }
+
+    .tm-admin-account-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -476,47 +501,39 @@
       </nav>
     </div>
 
-    <table class="tm-admin-table">
-      <thead>
-        <tr>
-          <th>Shop</th>
-          <th>Owner Email</th>
-          <th>Signup</th>
-          <th>Usage</th>
-          <th>Last Login</th>
-          <th>Last Active</th>
-          <th>Activity</th>
-          <th>Status</th>
-          <th>Subscription</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for account in dashboard.accounts %}
-        <tr>
-          <td data-label="Shop">
-            {{ account.shop_name or "Not available" }}
+    <div class="tm-admin-account-list">
+      {% for account in dashboard.accounts %}
+      <article class="tm-admin-account-card">
+        <div class="tm-admin-account-top">
+          <div class="tm-admin-account-title">
+            <h3>{{ account.shop_name or "Not available" }}</h3>
+            <p>{{ account.display_email or "Not available" }}</p>
             {% if account.is_test_account %}<span class="tm-admin-chip">Test account</span>{% endif %}
-            <div class="tm-admin-shop-actions">
-              {% if account.can_extend_trial_to_30_days %}
-              <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/extend-trial">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">
-                <input type="hidden" name="account_filter" value="{{ dashboard.selected_account_filter }}">
-                <button class="tm-admin-button tm-admin-button--secondary" type="submit">Extend to 30 Days</button>
-              </form>
-              {% endif %}
-              <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/test-account">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">
-                <input type="hidden" name="account_filter" value="{{ dashboard.selected_account_filter }}">
-                <input type="hidden" name="is_test_account" value="{% if account.is_test_account %}0{% else %}1{% endif %}">
-                <button class="tm-admin-button tm-admin-button--secondary" type="submit">{% if account.is_test_account %}Unmark test{% else %}Mark test{% endif %}</button>
-              </form>
-            </div>
-          </td>
-          <td data-label="Owner Email">{{ account.display_email or "Not available" }}</td>
-          <td data-label="Signup">{{ format_admin_date(account.signup_date) }}</td>
-          <td data-label="Usage">
+          </div>
+          <div class="tm-admin-account-badges">
+            <span class="tm-admin-status tm-admin-status--{{ account.activity_tone }}">{{ account.activity_label }}</span>
+            <span class="tm-admin-status tm-admin-status--{{ account.status_tone }}">{{ account.status_label }}</span>
+          </div>
+        </div>
+
+        <div class="tm-admin-account-grid">
+          <div class="tm-admin-account-field">
+            <span>Signup</span>
+            <strong>{{ format_admin_date(account.signup_date) }}</strong>
+          </div>
+
+          <div class="tm-admin-account-field">
+            <span>Last Login</span>
+            <strong>{{ format_admin_datetime(account.last_login_at) }}</strong>
+          </div>
+
+          <div class="tm-admin-account-field">
+            <span>Last Active</span>
+            <strong>{{ format_admin_datetime(account.last_active_at) }}</strong>
+          </div>
+
+          <div class="tm-admin-account-field">
+            <span>Usage</span>
             <div class="tm-admin-usage">
               <span>Customers</span><strong>{{ account.customer_count }}</strong>
               <span>Estimates</span><strong>{{ account.estimate_count }}</strong>
@@ -524,12 +541,10 @@
               <span>Invoices</span><strong>{{ account.invoice_count }}</strong>
               <span>Bookings</span><strong>{{ account.booking_count }}</strong>
             </div>
-          </td>
-          <td data-label="Last Login">{{ format_admin_datetime(account.last_login_at) }}</td>
-          <td data-label="Last Active">{{ format_admin_datetime(account.last_active_at) }}</td>
-          <td data-label="Activity"><span class="tm-admin-status tm-admin-status--{{ account.activity_tone }}">{{ account.activity_label }}</span></td>
-          <td data-label="Status"><span class="tm-admin-status tm-admin-status--{{ account.status_tone }}">{{ account.status_label }}</span></td>
-          <td data-label="Subscription">
+          </div>
+
+          <div class="tm-admin-account-field">
+            <span>Subscription</span>
             <div class="tm-admin-subscription">
               <strong>{{ account.plan_label }}</strong>
               {% if account.trial_ends_at %}
@@ -539,15 +554,31 @@
               <span>Renewal / cancellation: {{ format_admin_date(account.renewal_or_cancellation_date) }}</span>
               {% endif %}
             </div>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="9" class="tm-admin-muted">No accounts match this filter.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+          </div>
+        </div>
+
+        <div class="tm-admin-account-actions">
+          {% if account.can_extend_trial_to_30_days %}
+          <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/extend-trial">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">
+            <input type="hidden" name="account_filter" value="{{ dashboard.selected_account_filter }}">
+            <button class="tm-admin-button tm-admin-button--secondary" type="submit">Extend to 30 Days</button>
+          </form>
+          {% endif %}
+          <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/test-account">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">
+            <input type="hidden" name="account_filter" value="{{ dashboard.selected_account_filter }}">
+            <input type="hidden" name="is_test_account" value="{% if account.is_test_account %}0{% else %}1{% endif %}">
+            <button class="tm-admin-button tm-admin-button--secondary" type="submit">{% if account.is_test_account %}Unmark test{% else %}Mark test{% endif %}</button>
+          </form>
+        </div>
+      </article>
+      {% else %}
+      <div class="tm-admin-muted">No accounts match this filter.</div>
+      {% endfor %}
+    </div>
   </section>
 </section>
 {% endblock %}
