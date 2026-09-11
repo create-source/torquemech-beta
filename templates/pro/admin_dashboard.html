@@ -139,8 +139,15 @@
     color: #111827;
   }
 
+  .tm-admin-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .tm-admin-table {
     width: 100%;
+    min-width: 1500px;
     border-collapse: collapse;
   }
 
@@ -304,6 +311,10 @@
       display: grid;
     }
 
+    .tm-admin-table {
+      min-width: 0;
+    }
+
     .tm-admin-table,
     .tm-admin-table tbody,
     .tm-admin-table tr,
@@ -442,6 +453,7 @@
       </nav>
     </div>
 
+    <div class="tm-admin-table-wrap">
     <table class="tm-admin-table">
       <thead>
         <tr>
@@ -509,6 +521,7 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </section>
 </section>
 {% endblock %}
