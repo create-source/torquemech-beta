@@ -139,21 +139,14 @@
     color: #111827;
   }
 
-  .tm-admin-table-wrap {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
   .tm-admin-table {
     width: 100%;
-    min-width: 1500px;
     border-collapse: collapse;
   }
 
   .tm-admin-table th,
   .tm-admin-table td {
-    padding: 12px 14px;
+    padding: 12px 10px;
     border-bottom: 1px solid rgba(148, 163, 184, 0.14);
     text-align: left;
     vertical-align: top;
@@ -234,6 +227,23 @@
     font-size: 0.86rem;
   }
 
+  .tm-admin-subscription {
+    display: grid;
+    gap: 4px;
+    min-width: 150px;
+  }
+
+  .tm-admin-subscription strong {
+    color: #f8fafc;
+    font-size: 0.86rem;
+  }
+
+  .tm-admin-subscription span {
+    color: #aebdd0;
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
   .tm-admin-note {
     display: grid;
     gap: 8px;
@@ -309,10 +319,6 @@
   @media (max-width: 720px) {
     .tm-admin-panel-head {
       display: grid;
-    }
-
-    .tm-admin-table {
-      min-width: 0;
     }
 
     .tm-admin-table,
@@ -453,7 +459,6 @@
       </nav>
     </div>
 
-    <div class="tm-admin-table-wrap">
     <table class="tm-admin-table">
       <thead>
         <tr>
@@ -465,9 +470,7 @@
           <th>Last Active</th>
           <th>Activity</th>
           <th>Status</th>
-          <th>Plan</th>
-          <th>Trial End</th>
-          <th>Renewal / Cancellation</th>
+          <th>Subscription</th>
           <th>Admin</th>
         </tr>
       </thead>
@@ -493,9 +496,17 @@
           <td data-label="Last Active">{{ format_admin_datetime(account.last_active_at) }}</td>
           <td data-label="Activity"><span class="tm-admin-status tm-admin-status--{{ account.activity_tone }}">{{ account.activity_label }}</span></td>
           <td data-label="Status"><span class="tm-admin-status tm-admin-status--{{ account.status_tone }}">{{ account.status_label }}</span></td>
-          <td data-label="Plan">{{ account.plan_label }}</td>
-          <td data-label="Trial End">{{ format_admin_date(account.trial_ends_at) }}</td>
-          <td data-label="Renewal / Cancellation">{{ format_admin_date(account.renewal_or_cancellation_date) }}</td>
+          <td data-label="Subscription">
+            <div class="tm-admin-subscription">
+              <strong>{{ account.plan_label }}</strong>
+              {% if account.trial_ends_at %}
+              <span>Trial ends: {{ format_admin_date(account.trial_ends_at) }}</span>
+              {% endif %}
+              {% if account.renewal_or_cancellation_date %}
+              <span>Renewal / cancellation: {{ format_admin_date(account.renewal_or_cancellation_date) }}</span>
+              {% endif %}
+            </div>
+          </td>
           <td data-label="Admin">
             {% if account.can_extend_trial_to_30_days %}
             <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/extend-trial">
@@ -516,12 +527,11 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="12" class="tm-admin-muted">No accounts match this filter.</td>
+          <td colspan="9" class="tm-admin-muted">No accounts match this filter.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-    </div>
   </section>
 </section>
 {% endblock %}
