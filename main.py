@@ -45,6 +45,8 @@ from routers.pro import (
     hash_password,
     load_user_by_email,
     login_session,
+    record_user_login,
+    touch_user_activity,
     logout_session,
     normalize_email,
     public_router as booking_router,
@@ -1731,6 +1733,7 @@ async def auth_context_middleware(request: Request, call_next):
             user = request.state.current_user or current_user(conn, request)
             request.state.current_user = user
             if user:
+                touch_user_activity(conn, user, throttle_minutes=5)
                 request.state.current_shop = current_shop_context(conn, request)
                 shop_id = int(request.state.current_shop.get("id") or 0) or None
                 request.state.subscription_access = shop_subscription_access_context(conn, shop_id)
@@ -3143,6 +3146,7 @@ def verify_email(request: Request, token: str = ""):
         conn.commit()
         send_beta_welcome_email_once(conn, email=str(user["email"]), user_id=int(user["id"]))
         login_session(request, int(user["id"]))
+        record_user_login(conn, int(user["id"]))
     finally:
         conn.close()
     return templates.TemplateResponse(

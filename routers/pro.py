@@ -468,6 +468,8 @@ def ensure_auth_schema(conn: sqlite3.Connection) -> None:
         "verification_token_expires_at": "verification_token_expires_at TEXT",
         "verification_email_last_sent_at": "verification_email_last_sent_at TEXT",
         "beta_welcome_email_sent_at": "beta_welcome_email_sent_at TEXT",
+        "last_login_at": "last_login_at TEXT",
+        "last_active_at": "last_active_at TEXT",
         "pending_email": "pending_email TEXT",
         "pending_email_token_hash": "pending_email_token_hash TEXT",
         "pending_email_token_expires_at": "pending_email_token_expires_at TEXT",
@@ -560,6 +562,47 @@ def login_session(request: Request, user_id: int) -> None:
     request.session[AUTH_SESSION_USER_KEY] = int(user_id)
     request.scope["rotate_session_id"] = True
     csrf_token(request)
+
+
+def record_user_login(conn: sqlite3.Connection, user_id: int, *, now: datetime | None = None) -> None:
+    ensure_auth_schema(conn)
+    timestamp = (now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat()
+    conn.execute(
+        "UPDATE users SET last_login_at = ?, last_active_at = ? WHERE id = ?",
+        (timestamp, timestamp, int(user_id)),
+    )
+    conn.commit()
+
+
+def touch_user_activity(
+    conn: sqlite3.Connection,
+    user: dict[str, Any] | sqlite3.Row | None,
+    *,
+    now: datetime | None = None,
+    throttle_minutes: int = 5,
+) -> bool:
+    if not user:
+        return False
+    try:
+        user_id = int(record_value(user, "id") or 0)
+        previous_raw = record_value(user, "last_active_at")
+    except (TypeError, ValueError):
+        return False
+    if not user_id:
+        return False
+
+    current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    previous = parse_utc_datetime(previous_raw)
+    if previous and current - previous < timedelta(minutes=max(1, throttle_minutes)):
+        return False
+
+    ensure_auth_schema(conn)
+    conn.execute(
+        "UPDATE users SET last_active_at = ? WHERE id = ?",
+        (current.isoformat(), user_id),
+    )
+    conn.commit()
+    return True
 
 
 def logout_session(request: Request) -> None:
@@ -3715,6 +3758,11 @@ def owner_admin_account_rows(conn: sqlite3.Connection, *, now: datetime | None =
     ensure_auth_schema(conn)
     ensure_shop_profile_schema(conn)
     ensure_shop_subscription_schema(conn)
+    ensure_customer_status_schema(conn)
+    ensure_repair_estimate_documents_schema(conn)
+    ensure_repair_records_schema(conn)
+    ensure_invoices_schema(conn)
+    ensure_calendar_schema(conn)
     rows = conn.execute(
         """
         SELECT
@@ -3727,6 +3775,28 @@ def owner_admin_account_rows(conn: sqlite3.Connection, *, now: datetime | None =
           u.id AS user_id,
           u.email AS owner_email,
           u.created_at AS user_created_at,
+          u.last_login_at AS last_login_at,
+          u.last_active_at AS last_active_at,
+          (SELECT COUNT(*) FROM customers c WHERE c.shop_id = sp.id) AS customer_count,
+          (
+            SELECT COUNT(*)
+            FROM repair_estimate_documents red
+            JOIN customers ec ON ec.id = red.customer_id
+            WHERE ec.shop_id = sp.id
+          ) AS estimate_count,
+          (
+            SELECT COUNT(*)
+            FROM repair_records rr
+            JOIN customers rc ON rc.id = rr.customer_id
+            WHERE rc.shop_id = sp.id
+          ) AS repair_count,
+          (
+            SELECT COUNT(*)
+            FROM invoices i
+            JOIN customers ic ON ic.id = i.customer_id
+            WHERE ic.shop_id = sp.id
+          ) AS invoice_count,
+          (SELECT COUNT(*) FROM service_appointments sa WHERE sa.shop_id = sp.id) AS booking_count,
           ss.id AS subscription_id,
           ss.plan_code AS plan_code,
           ss.status AS subscription_status,
@@ -3797,6 +3867,26 @@ def owner_admin_account_rows(conn: sqlite3.Connection, *, now: datetime | None =
         account["monthly_amount"] = subscription_monthly_amount(subscription)
         account["is_test_account"] = bool_from_admin_value(account.get("is_test_account"))
         account["can_extend_trial_to_30_days"] = admin_trial_extension_available(account)
+        activity_now = (now or utc_now()).astimezone(timezone.utc)
+        last_active = parse_utc_datetime(account.get("last_active_at"))
+        if not last_active:
+            account["activity_key"] = "never"
+            account["activity_label"] = "Never used"
+            account["activity_tone"] = "muted"
+        else:
+            age = activity_now - last_active
+            if age < timedelta(days=1):
+                account["activity_key"] = "today"
+                account["activity_label"] = "Active today"
+                account["activity_tone"] = "success"
+            elif age < timedelta(days=7):
+                account["activity_key"] = "week"
+                account["activity_label"] = "Active this week"
+                account["activity_tone"] = "info"
+            else:
+                account["activity_key"] = "inactive"
+                account["activity_label"] = "Inactive 7+ days"
+                account["activity_tone"] = "warning"
         accounts.append(account)
     return accounts
 
@@ -3855,6 +3945,16 @@ def format_admin_date(value: Any) -> str:
     return parsed.strftime("%b %-d, %Y") if parsed and os.name != "nt" else parsed.strftime("%b %#d, %Y") if parsed else "Not available"
 
 
+def format_admin_datetime(value: Any) -> str:
+    parsed = parse_utc_datetime(value)
+    if not parsed:
+        return "Not available"
+    local_value = parsed.astimezone(SHOP_ZONEINFO)
+    if os.name != "nt":
+        return local_value.strftime("%b %-d, %Y %-I:%M %p")
+    return local_value.strftime("%b %#d, %Y %#I:%M %p")
+
+
 def format_admin_money(value: float | None) -> str:
     if value is None:
         return "Not available"
@@ -3903,6 +4003,11 @@ def owner_admin_metrics(accounts: list[dict[str, Any]], users: list[dict[str, An
         account for account in real_accounts
         if (parse_utc_datetime(account.get("signup_date")) or datetime.min.replace(tzinfo=timezone.utc)) >= month_start
     ]
+    active_last_7_days = [
+        account for account in real_accounts
+        if (parse_utc_datetime(account.get("last_active_at")) or datetime.min.replace(tzinfo=timezone.utc)) >= current - timedelta(days=7)
+    ]
+    never_active = [account for account in real_accounts if not parse_utc_datetime(account.get("last_active_at"))]
     missing: list[str] = []
     if mrr is None:
         missing.append("MRR needs stored recurring unit amount, billing interval, interval count, and quantity for every active paid real account. Use Sync Stripe Data to backfill existing Stripe subscriptions.")
@@ -3913,6 +4018,8 @@ def owner_admin_metrics(accounts: list[dict[str, Any]], users: list[dict[str, An
         "real_accounts": len(real_accounts),
         "test_accounts": len([account for account in accounts if account.get("is_test_account")]),
         "new_signups_month": len(new_signups),
+        "active_last_7_days": len(active_last_7_days),
+        "never_active": len(never_active),
         "active_trials": len(active_trials),
         "active_paid": len(active_paid),
         "canceled": len(canceled),
@@ -17492,6 +17599,7 @@ def pro_owner_admin_dashboard(request: Request, status: str = "all", account_typ
             "request": request,
             "dashboard": dashboard,
             "format_admin_date": format_admin_date,
+            "format_admin_datetime": format_admin_datetime,
             "csrf_token": optional_csrf_token(request),
         },
     )

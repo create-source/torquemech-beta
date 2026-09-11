@@ -204,6 +204,29 @@
     background: rgba(248, 113, 113, 0.12);
   }
 
+  .tm-admin-status--muted {
+    border-color: rgba(148, 163, 184, 0.3);
+    color: #cbd5e1;
+    background: rgba(148, 163, 184, 0.1);
+  }
+
+  .tm-admin-usage {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(54px, 1fr));
+    gap: 4px 10px;
+    min-width: 150px;
+  }
+
+  .tm-admin-usage span {
+    color: #aebdd0;
+    font-size: 0.75rem;
+  }
+
+  .tm-admin-usage strong {
+    color: #f8fafc;
+    font-size: 0.86rem;
+  }
+
   .tm-admin-note {
     display: grid;
     gap: 8px;
@@ -353,6 +376,11 @@
       <small>{{ dashboard.metrics.test_accounts }} marked test account{% if dashboard.metrics.test_accounts != 1 %}s{% endif %} excluded by default</small>
     </article>
     <article class="tm-admin-card">
+      <span>Active in last 7 days</span>
+      <strong>{{ dashboard.metrics.active_last_7_days }}</strong>
+      <small>{{ dashboard.metrics.never_active }} real account{% if dashboard.metrics.never_active != 1 %}s{% endif %} never used after signup</small>
+    </article>
+    <article class="tm-admin-card">
       <span>Active trials</span>
       <strong>{{ dashboard.metrics.active_trials }}</strong>
       <small>{{ dashboard.metrics.expired_trials }} expired trial{% if dashboard.metrics.expired_trials != 1 %}s{% endif %}</small>
@@ -420,6 +448,10 @@
           <th>Shop</th>
           <th>Owner Email</th>
           <th>Signup</th>
+          <th>Usage</th>
+          <th>Last Login</th>
+          <th>Last Active</th>
+          <th>Activity</th>
           <th>Status</th>
           <th>Plan</th>
           <th>Trial End</th>
@@ -436,6 +468,18 @@
           </td>
           <td data-label="Owner Email">{{ account.display_email or "Not available" }}</td>
           <td data-label="Signup">{{ format_admin_date(account.signup_date) }}</td>
+          <td data-label="Usage">
+            <div class="tm-admin-usage">
+              <span>Customers</span><strong>{{ account.customer_count }}</strong>
+              <span>Estimates</span><strong>{{ account.estimate_count }}</strong>
+              <span>Repairs</span><strong>{{ account.repair_count }}</strong>
+              <span>Invoices</span><strong>{{ account.invoice_count }}</strong>
+              <span>Bookings</span><strong>{{ account.booking_count }}</strong>
+            </div>
+          </td>
+          <td data-label="Last Login">{{ format_admin_datetime(account.last_login_at) }}</td>
+          <td data-label="Last Active">{{ format_admin_datetime(account.last_active_at) }}</td>
+          <td data-label="Activity"><span class="tm-admin-status tm-admin-status--{{ account.activity_tone }}">{{ account.activity_label }}</span></td>
           <td data-label="Status"><span class="tm-admin-status tm-admin-status--{{ account.status_tone }}">{{ account.status_label }}</span></td>
           <td data-label="Plan">{{ account.plan_label }}</td>
           <td data-label="Trial End">{{ format_admin_date(account.trial_ends_at) }}</td>
@@ -460,7 +504,7 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="8" class="tm-admin-muted">No accounts match this filter.</td>
+          <td colspan="12" class="tm-admin-muted">No accounts match this filter.</td>
         </tr>
         {% endfor %}
       </tbody>
