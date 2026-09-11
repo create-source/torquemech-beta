@@ -310,6 +310,23 @@
     font-weight: 900;
   }
 
+  .tm-admin-shop-actions {
+    display: grid;
+    gap: 6px;
+    margin-top: 10px;
+    justify-items: start;
+  }
+
+  .tm-admin-shop-actions .tm-admin-inline-form {
+    display: block;
+  }
+
+  .tm-admin-shop-actions .tm-admin-button {
+    min-height: 30px;
+    padding: 5px 8px;
+    font-size: 0.74rem;
+  }
+
   @media (max-width: 960px) {
     .tm-admin-metrics {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -471,7 +488,6 @@
           <th>Activity</th>
           <th>Status</th>
           <th>Subscription</th>
-          <th>Admin</th>
         </tr>
       </thead>
       <tbody>
@@ -480,6 +496,23 @@
           <td data-label="Shop">
             {{ account.shop_name or "Not available" }}
             {% if account.is_test_account %}<span class="tm-admin-chip">Test account</span>{% endif %}
+            <div class="tm-admin-shop-actions">
+              {% if account.can_extend_trial_to_30_days %}
+              <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/extend-trial">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">
+                <input type="hidden" name="account_filter" value="{{ dashboard.selected_account_filter }}">
+                <button class="tm-admin-button tm-admin-button--secondary" type="submit">Extend to 30 Days</button>
+              </form>
+              {% endif %}
+              <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/test-account">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">
+                <input type="hidden" name="account_filter" value="{{ dashboard.selected_account_filter }}">
+                <input type="hidden" name="is_test_account" value="{% if account.is_test_account %}0{% else %}1{% endif %}">
+                <button class="tm-admin-button tm-admin-button--secondary" type="submit">{% if account.is_test_account %}Unmark test{% else %}Mark test{% endif %}</button>
+              </form>
+            </div>
           </td>
           <td data-label="Owner Email">{{ account.display_email or "Not available" }}</td>
           <td data-label="Signup">{{ format_admin_date(account.signup_date) }}</td>
@@ -506,23 +539,6 @@
               <span>Renewal / cancellation: {{ format_admin_date(account.renewal_or_cancellation_date) }}</span>
               {% endif %}
             </div>
-          </td>
-          <td data-label="Admin">
-            {% if account.can_extend_trial_to_30_days %}
-            <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/extend-trial">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-              <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">
-              <input type="hidden" name="account_filter" value="{{ dashboard.selected_account_filter }}">
-              <button class="tm-admin-button tm-admin-button--secondary" type="submit">Extend to 30 Days</button>
-            </form>
-            {% endif %}
-            <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/test-account">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-              <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">
-              <input type="hidden" name="account_filter" value="{{ dashboard.selected_account_filter }}">
-              <input type="hidden" name="is_test_account" value="{% if account.is_test_account %}0{% else %}1{% endif %}">
-              <button class="tm-admin-button tm-admin-button--secondary" type="submit">{% if account.is_test_account %}Unmark test{% else %}Mark test{% endif %}</button>
-            </form>
           </td>
         </tr>
         {% else %}
