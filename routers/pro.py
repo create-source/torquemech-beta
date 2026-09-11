@@ -3870,9 +3870,24 @@ def owner_admin_account_rows(conn: sqlite3.Connection, *, now: datetime | None =
         activity_now = (now or utc_now()).astimezone(timezone.utc)
         last_active = parse_utc_datetime(account.get("last_active_at"))
         if not last_active:
-            account["activity_key"] = "never"
-            account["activity_label"] = "Never used"
-            account["activity_tone"] = "muted"
+            historical_usage = sum(
+                int(account.get(key) or 0)
+                for key in (
+                    "customer_count",
+                    "estimate_count",
+                    "repair_count",
+                    "invoice_count",
+                    "booking_count",
+                )
+            )
+            if historical_usage > 0:
+                account["activity_key"] = "pre_tracking"
+                account["activity_label"] = "Used before tracking"
+                account["activity_tone"] = "info"
+            else:
+                account["activity_key"] = "never"
+                account["activity_label"] = "Never used"
+                account["activity_tone"] = "muted"
         else:
             age = activity_now - last_active
             if age < timedelta(days=1):
