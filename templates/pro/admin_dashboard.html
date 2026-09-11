@@ -146,10 +146,17 @@
   }
 
   .tm-admin-account-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
     border: 1px solid rgba(148, 163, 184, 0.16);
     border-radius: 10px;
     background: rgba(9, 20, 35, 0.7);
     padding: 14px;
+  }
+
+  .tm-admin-account-main {
+    min-width: 0;
   }
 
   .tm-admin-account-top {
@@ -216,12 +223,18 @@
   }
 
   .tm-admin-account-actions {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     gap: 8px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    align-content: center;
+    justify-items: stretch;
+    min-width: 150px;
+    padding-left: 18px;
+    border-left: 1px solid rgba(148, 163, 184, 0.12);
+  }
+
+  .tm-admin-account-actions .tm-admin-inline-form,
+  .tm-admin-account-actions .tm-admin-button {
+    width: 100%;
   }
 
   .tm-admin-muted {
@@ -375,8 +388,22 @@
   }
 
   @media (max-width: 1080px) {
+    .tm-admin-account-card {
+      grid-template-columns: 1fr;
+    }
+
     .tm-admin-account-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .tm-admin-account-actions {
+      grid-template-columns: repeat(2, minmax(0, 180px));
+      justify-content: start;
+      min-width: 0;
+      padding-left: 0;
+      padding-top: 12px;
+      border-left: 0;
+      border-top: 1px solid rgba(148, 163, 184, 0.12);
     }
   }
 
@@ -395,6 +422,10 @@
 
     .tm-admin-account-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tm-admin-account-actions {
+      grid-template-columns: 1fr;
     }
   }
 
@@ -504,6 +535,7 @@
     <div class="tm-admin-account-list">
       {% for account in dashboard.accounts %}
       <article class="tm-admin-account-card">
+        <div class="tm-admin-account-main">
         <div class="tm-admin-account-top">
           <div class="tm-admin-account-title">
             <h3>{{ account.shop_name or "Not available" }}</h3>
@@ -557,6 +589,7 @@
           </div>
         </div>
 
+        </div>
         <div class="tm-admin-account-actions">
           {% if account.can_extend_trial_to_30_days %}
           <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/extend-trial">
