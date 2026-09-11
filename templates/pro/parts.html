@@ -98,6 +98,189 @@
     font-weight: 900;
   }
 
+  .tm-parts-panel__head {
+    display: grid;
+    gap: 10px;
+  }
+
+  .tm-parts-action,
+  .tm-parts-button {
+    appearance: none;
+    border: 1px solid rgba(96, 165, 250, 0.38);
+    border-radius: 8px;
+    background: rgba(37, 99, 235, 0.16);
+    color: #dbeafe;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 900;
+    line-height: 1;
+    padding: 10px 12px;
+  }
+
+  .tm-parts-button--danger {
+    border-color: rgba(248, 113, 113, 0.34);
+    background: rgba(127, 29, 29, 0.2);
+    color: #fecaca;
+  }
+
+  .tm-parts-supplier-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .tm-parts-supplier-form[open] {
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    padding-top: 14px;
+  }
+
+  .tm-parts-supplier-form[open] .tm-parts-action {
+    margin-bottom: 2px;
+  }
+
+  .tm-parts-action {
+    display: inline-flex;
+    list-style: none;
+    width: fit-content;
+  }
+
+  .tm-parts-action::-webkit-details-marker {
+    display: none;
+  }
+
+  .tm-parts-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .tm-parts-form-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tm-parts-field {
+    display: grid;
+    gap: 6px;
+  }
+
+  .tm-parts-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .tm-parts-field label,
+  .tm-parts-check {
+    color: #cbd5e1;
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .tm-parts-field input,
+  .tm-parts-field textarea {
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 8px;
+    background: rgba(2, 6, 23, 0.42);
+    color: #f8fafc;
+    font: inherit;
+    padding: 10px 11px;
+    width: 100%;
+  }
+
+  .tm-parts-field textarea {
+    min-height: 82px;
+    resize: vertical;
+  }
+
+  .tm-parts-check {
+    align-items: center;
+    display: inline-flex;
+    gap: 8px;
+  }
+
+  .tm-parts-check input {
+    accent-color: #60a5fa;
+    height: 16px;
+    width: 16px;
+  }
+
+  .tm-parts-form-actions,
+  .tm-parts-row-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tm-parts-supplier-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .tm-parts-supplier-card {
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.44);
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .tm-parts-supplier-card__head {
+    align-items: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .tm-parts-supplier-name {
+    color: #f8fafc;
+    font-size: 1rem;
+    font-weight: 900;
+  }
+
+  .tm-parts-badge {
+    border: 1px solid rgba(34, 197, 94, 0.34);
+    border-radius: 999px;
+    background: rgba(22, 101, 52, 0.22);
+    color: #bbf7d0;
+    font-size: 0.74rem;
+    font-weight: 900;
+    padding: 5px 8px;
+    white-space: nowrap;
+  }
+
+  .tm-parts-supplier-meta {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tm-parts-supplier-notes {
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    padding-top: 10px;
+  }
+
+  .tm-parts-meta-label {
+    color: #93c5fd;
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 900;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+
+  .tm-parts-meta-value {
+    color: #d5dfec;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-parts-edit {
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    flex: 1 1 100%;
+    padding-top: 10px;
+  }
+
   .tm-parts-table-wrap {
     overflow-x: auto;
   }
@@ -136,6 +319,11 @@
     .tm-parts-stats {
       justify-content: flex-start;
     }
+
+    .tm-parts-form-grid,
+    .tm-parts-supplier-meta {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 {% endblock %}
@@ -153,7 +341,6 @@
     </div>
   </div>
 
-  {% if parts or suppliers %}
   <div class="tm-parts-panel" data-parts-count="{{ parts_count }}">
     <h2>Parts</h2>
     {% if parts %}
@@ -191,43 +378,119 @@
   </div>
 
   <div class="tm-parts-panel" data-suppliers-count="{{ suppliers_count }}">
-    <h2>Suppliers</h2>
+    <div class="tm-parts-panel__head">
+      <h2>Suppliers</h2>
+      <details class="tm-parts-supplier-form">
+        <summary class="tm-parts-action">Add Supplier</summary>
+        <form class="tm-parts-form" method="post" action="/pro/parts/suppliers">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="tm-parts-form-grid">
+            <div class="tm-parts-field">
+              <label for="supplierName">Supplier Name</label>
+              <input id="supplierName" name="name" required>
+            </div>
+            <div class="tm-parts-field">
+              <label for="supplierWebsite">Website</label>
+              <input id="supplierWebsite" name="website">
+            </div>
+            <div class="tm-parts-field">
+              <label for="supplierPhone">Phone</label>
+              <input id="supplierPhone" name="phone">
+            </div>
+            <div class="tm-parts-field">
+              <label for="supplierAccount">Account/Customer Number</label>
+              <input id="supplierAccount" name="account_number">
+            </div>
+            <div class="tm-parts-field tm-parts-field--full">
+              <label for="supplierNotes">Notes</label>
+              <textarea id="supplierNotes" name="notes"></textarea>
+            </div>
+          </div>
+          <div class="tm-parts-form-actions">
+            <label class="tm-parts-check">
+              <input type="checkbox" name="is_preferred" value="1">
+              Preferred Supplier
+            </label>
+            <button class="tm-parts-button" type="submit">Save Supplier</button>
+          </div>
+        </form>
+      </details>
+    </div>
     {% if suppliers %}
-    <div class="tm-parts-table-wrap">
-      <table class="tm-parts-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Website</th>
-            <th>Phone</th>
-            <th>Account</th>
-            <th>Preferred</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for supplier in suppliers %}
-          <tr>
-            <td>{{ supplier.name }}</td>
-            <td>{{ supplier.website or "-" }}</td>
-            <td>{{ supplier.phone or "-" }}</td>
-            <td>{{ supplier.account_number or "-" }}</td>
-            <td>{% if supplier.is_preferred %}Yes{% else %}No{% endif %}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="tm-parts-supplier-list">
+      {% for supplier in suppliers %}
+      <article class="tm-parts-supplier-card">
+        <div class="tm-parts-supplier-card__head">
+          <div class="tm-parts-supplier-name">{{ supplier.name }}</div>
+          {% if supplier.is_preferred %}
+          <span class="tm-parts-badge">Preferred</span>
+          {% endif %}
+        </div>
+        <div class="tm-parts-supplier-meta">
+          <div>
+            <span class="tm-parts-meta-label">Website</span>
+            <span class="tm-parts-meta-value">{{ supplier.website or "-" }}</span>
+          </div>
+          <div>
+            <span class="tm-parts-meta-label">Phone</span>
+            <span class="tm-parts-meta-value">{{ supplier.phone or "-" }}</span>
+          </div>
+          <div>
+            <span class="tm-parts-meta-label">Account</span>
+            <span class="tm-parts-meta-value">{{ supplier.account_number or "-" }}</span>
+          </div>
+        </div>
+        <div class="tm-parts-supplier-notes">
+          <span class="tm-parts-meta-label">Notes</span>
+          <span class="tm-parts-meta-value">{{ supplier.notes or "-" }}</span>
+        </div>
+        <div class="tm-parts-row-actions">
+          <details class="tm-parts-edit">
+            <summary class="tm-parts-action">Edit</summary>
+            <form class="tm-parts-form" method="post" action="/pro/parts/suppliers/{{ supplier.id }}/edit">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <div class="tm-parts-form-grid">
+                <div class="tm-parts-field">
+                  <label for="supplierName{{ supplier.id }}">Supplier Name</label>
+                  <input id="supplierName{{ supplier.id }}" name="name" value="{{ supplier.name }}" required>
+                </div>
+                <div class="tm-parts-field">
+                  <label for="supplierWebsite{{ supplier.id }}">Website</label>
+                  <input id="supplierWebsite{{ supplier.id }}" name="website" value="{{ supplier.website or '' }}">
+                </div>
+                <div class="tm-parts-field">
+                  <label for="supplierPhone{{ supplier.id }}">Phone</label>
+                  <input id="supplierPhone{{ supplier.id }}" name="phone" value="{{ supplier.phone or '' }}">
+                </div>
+                <div class="tm-parts-field">
+                  <label for="supplierAccount{{ supplier.id }}">Account/Customer Number</label>
+                  <input id="supplierAccount{{ supplier.id }}" name="account_number" value="{{ supplier.account_number or '' }}">
+                </div>
+                <div class="tm-parts-field tm-parts-field--full">
+                  <label for="supplierNotes{{ supplier.id }}">Notes</label>
+                  <textarea id="supplierNotes{{ supplier.id }}" name="notes">{{ supplier.notes or '' }}</textarea>
+                </div>
+              </div>
+              <div class="tm-parts-form-actions">
+                <label class="tm-parts-check">
+                  <input type="checkbox" name="is_preferred" value="1"{% if supplier.is_preferred %} checked{% endif %}>
+                  Preferred Supplier
+                </label>
+                <button class="tm-parts-button" type="submit">Save Changes</button>
+              </div>
+            </form>
+          </details>
+          <form method="post" action="/pro/parts/suppliers/{{ supplier.id }}/delete">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="tm-parts-button tm-parts-button--danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </article>
+      {% endfor %}
     </div>
     {% else %}
     <p class="tm-parts-muted">No suppliers added yet.</p>
     {% endif %}
   </div>
-  {% else %}
-  <div class="tm-parts-empty" data-parts-count="{{ parts_count }}" data-suppliers-count="{{ suppliers_count }}">
-    <div class="tm-parts-empty__content">
-      <h2>No parts added yet</h2>
-      <p>Parts you save will appear here.</p>
-    </div>
-  </div>
-  {% endif %}
 </section>
 {% endblock %}

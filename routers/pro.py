@@ -16598,6 +16598,131 @@ def pro_parts_center(request: Request):
     )
 
 
+def parts_center_redirect() -> RedirectResponse:
+    return RedirectResponse("/pro/parts", status_code=303)
+
+
+def supplier_form_payload(form: dict[str, str]) -> dict[str, Any]:
+    name = str(form.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Supplier name is required")
+    return {
+        "name": name,
+        "website": str(form.get("website") or "").strip(),
+        "phone": str(form.get("phone") or "").strip(),
+        "account_number": str(form.get("account_number") or "").strip(),
+        "notes": str(form.get("notes") or "").strip(),
+        "is_preferred": 1 if str(form.get("is_preferred") or "").strip().lower() in {"1", "true", "yes", "on"} else 0,
+    }
+
+
+@router.post("/parts/suppliers")
+async def pro_parts_supplier_create(request: Request):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    supplier = supplier_form_payload(form)
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        ensure_suppliers_schema(conn)
+        now = utc_now_iso()
+        conn.execute(
+            """
+            INSERT INTO suppliers (
+              shop_id, name, website, phone, account_number, notes,
+              is_preferred, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                shop_id,
+                supplier["name"],
+                supplier["website"],
+                supplier["phone"],
+                supplier["account_number"],
+                supplier["notes"],
+                supplier["is_preferred"],
+                now,
+                now,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return parts_center_redirect()
+
+
+@router.post("/parts/suppliers/{supplier_id}/edit")
+async def pro_parts_supplier_edit(request: Request, supplier_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    supplier = supplier_form_payload(form)
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        ensure_suppliers_schema(conn)
+        conn.execute(
+            """
+            UPDATE suppliers
+            SET name = ?,
+                website = ?,
+                phone = ?,
+                account_number = ?,
+                notes = ?,
+                is_preferred = ?,
+                updated_at = ?
+            WHERE id = ?
+              AND shop_id = ?
+            """,
+            (
+                supplier["name"],
+                supplier["website"],
+                supplier["phone"],
+                supplier["account_number"],
+                supplier["notes"],
+                supplier["is_preferred"],
+                utc_now_iso(),
+                supplier_id,
+                shop_id,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return parts_center_redirect()
+
+
+@router.post("/parts/suppliers/{supplier_id}/delete")
+async def pro_parts_supplier_delete(request: Request, supplier_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        ensure_parts_center_schema(conn)
+        conn.execute(
+            """
+            UPDATE parts
+            SET supplier_id = NULL,
+                updated_at = ?
+            WHERE supplier_id = ?
+              AND shop_id = ?
+            """,
+            (utc_now_iso(), supplier_id, shop_id),
+        )
+        conn.execute(
+            "DELETE FROM suppliers WHERE id = ? AND shop_id = ?",
+            (supplier_id, shop_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return parts_center_redirect()
+
+
 @router.get("/invoice-follow-up", response_class=HTMLResponse)
 async def pro_invoice_follow_up(request: Request, queue: str = "ready"):
     queue = str(queue or "ready").strip().lower()

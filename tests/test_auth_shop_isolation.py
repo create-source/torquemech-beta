@@ -1109,7 +1109,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn('data-parts-count="0"', response.text)
         self.assertIn('data-suppliers-count="0"', response.text)
         self.assertNotIn("Add Part", response.text)
-        self.assertNotIn("Add Supplier", response.text)
+        self.assertIn("Add Supplier", response.text)
 
     def test_parts_center_suppliers_are_shop_isolated(self):
         client_one = self.client()
@@ -1159,6 +1159,201 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertNotIn("Beta Supplier", alpha_page.text)
         self.assertIn("Beta Supplier", beta_page.text)
         self.assertNotIn("Alpha Supplier", beta_page.text)
+
+    def test_parts_center_supplier_create_requires_csrf_and_name(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="parts-create@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("parts-create@example.com")
+
+        no_csrf = client.post(
+            "/pro/parts/suppliers",
+            data={"name": "No CSRF Supplier"},
+            follow_redirects=False,
+        )
+        self.assertEqual(no_csrf.status_code, 403)
+
+        page = client.get("/pro/parts")
+        token = csrf_from(page.text)
+        missing_name = client.post(
+            "/pro/parts/suppliers",
+            data={"csrf_token": token, "name": "   "},
+            follow_redirects=False,
+        )
+        self.assertEqual(missing_name.status_code, 400)
+
+        created = client.post(
+            "/pro/parts/suppliers",
+            data={
+                "csrf_token": token,
+                "name": "Preferred Parts House",
+                "website": "https://parts.example",
+                "phone": "555-0101",
+                "account_number": "ACCT-100",
+                "notes": "Counter closes at 5.",
+                "is_preferred": "1",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(created.status_code, 303)
+        self.assertEqual(created.headers["location"], "/pro/parts")
+        supplier = self.conn.execute(
+            "SELECT * FROM suppliers WHERE shop_id = ? AND name = ?",
+            (shop_id, "Preferred Parts House"),
+        ).fetchone()
+        self.assertIsNotNone(supplier)
+        self.assertEqual(supplier["website"], "https://parts.example")
+        self.assertEqual(supplier["phone"], "555-0101")
+        self.assertEqual(supplier["account_number"], "ACCT-100")
+        self.assertEqual(supplier["notes"], "Counter closes at 5.")
+        self.assertEqual(supplier["is_preferred"], 1)
+
+    def test_parts_center_supplier_edit_is_scoped_to_current_shop(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="parts-edit-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("parts-edit-alpha@example.com")
+
+        client_two = self.client()
+        self.signup(client_two, email="parts-edit-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("parts-edit-beta@example.com")
+        self.login(client_two, email="parts-edit-beta@example.com")
+        beta_shop = self.shop_id_for_email("parts-edit-beta@example.com")
+
+        pro_module.ensure_parts_center_schema(self.conn)
+        now = "2026-09-11T12:00:00"
+        alpha_supplier_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO suppliers (shop_id, name, website, phone, account_number, notes, is_preferred, created_at, updated_at)
+                VALUES (?, 'Alpha Supplier', '', '', '', '', 0, ?, ?)
+                """,
+                (alpha_shop, now, now),
+            ).lastrowid
+        )
+        self.conn.execute(
+            """
+            INSERT INTO suppliers (shop_id, name, website, phone, account_number, notes, is_preferred, created_at, updated_at)
+            VALUES (?, 'Beta Supplier', '', '', '', '', 0, ?, ?)
+            """,
+            (beta_shop, now, now),
+        )
+        self.conn.commit()
+
+        beta_token = csrf_from(client_two.get("/pro/parts").text)
+        cross_shop = client_two.post(
+            f"/pro/parts/suppliers/{alpha_supplier_id}/edit",
+            data={
+                "csrf_token": beta_token,
+                "name": "Hijacked Supplier",
+                "website": "https://beta.example",
+                "phone": "555-9999",
+                "account_number": "BETA",
+                "notes": "Should not write.",
+                "is_preferred": "1",
+            },
+            follow_redirects=False,
+        )
+        self.assertEqual(cross_shop.status_code, 303)
+
+        alpha_supplier = self.conn.execute(
+            "SELECT * FROM suppliers WHERE id = ? AND shop_id = ?",
+            (alpha_supplier_id, alpha_shop),
+        ).fetchone()
+        self.assertEqual(alpha_supplier["name"], "Alpha Supplier")
+        self.assertEqual(alpha_supplier["is_preferred"], 0)
+
+        alpha_token = csrf_from(client_one.get("/pro/parts").text)
+        edited = client_one.post(
+            f"/pro/parts/suppliers/{alpha_supplier_id}/edit",
+            data={
+                "csrf_token": alpha_token,
+                "name": "Alpha Supplier Updated",
+                "website": "https://alpha.example",
+                "phone": "555-1111",
+                "account_number": "ALPHA",
+                "notes": "Local delivery.",
+                "is_preferred": "1",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(edited.status_code, 303)
+        updated = self.conn.execute(
+            "SELECT * FROM suppliers WHERE id = ? AND shop_id = ?",
+            (alpha_supplier_id, alpha_shop),
+        ).fetchone()
+        self.assertEqual(updated["name"], "Alpha Supplier Updated")
+        self.assertEqual(updated["website"], "https://alpha.example")
+        self.assertEqual(updated["phone"], "555-1111")
+        self.assertEqual(updated["account_number"], "ALPHA")
+        self.assertEqual(updated["notes"], "Local delivery.")
+        self.assertEqual(updated["is_preferred"], 1)
+
+    def test_parts_center_supplier_delete_is_scoped_and_nulls_part_references(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="parts-delete-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("parts-delete-alpha@example.com")
+
+        client_two = self.client()
+        self.signup(client_two, email="parts-delete-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("parts-delete-beta@example.com")
+        self.login(client_two, email="parts-delete-beta@example.com")
+
+        pro_module.ensure_parts_center_schema(self.conn)
+        now = "2026-09-11T12:00:00"
+        alpha_supplier_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO suppliers (shop_id, name, is_preferred, created_at, updated_at)
+                VALUES (?, 'Alpha Supplier', 0, ?, ?)
+                """,
+                (alpha_shop, now, now),
+            ).lastrowid
+        )
+        alpha_part_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO parts (
+                  shop_id, repair_id, supplier_id, description, part_number,
+                  quantity, cost, sell_price, order_status, notes, created_at, updated_at
+                )
+                VALUES (?, NULL, ?, 'Alpha Filter', 'FLT-A',
+                        1, 12.50, 25.00, 'Needed', '', ?, ?)
+                """,
+                (alpha_shop, alpha_supplier_id, now, now),
+            ).lastrowid
+        )
+        self.conn.commit()
+
+        beta_token = csrf_from(client_two.get("/pro/parts").text)
+        cross_delete = client_two.post(
+            f"/pro/parts/suppliers/{alpha_supplier_id}/delete",
+            data={"csrf_token": beta_token},
+            follow_redirects=False,
+        )
+        self.assertEqual(cross_delete.status_code, 303)
+        self.assertIsNotNone(
+            self.conn.execute("SELECT id FROM suppliers WHERE id = ?", (alpha_supplier_id,)).fetchone()
+        )
+        self.assertEqual(
+            self.conn.execute("SELECT supplier_id FROM parts WHERE id = ?", (alpha_part_id,)).fetchone()["supplier_id"],
+            alpha_supplier_id,
+        )
+
+        alpha_token = csrf_from(client_one.get("/pro/parts").text)
+        deleted = client_one.post(
+            f"/pro/parts/suppliers/{alpha_supplier_id}/delete",
+            data={"csrf_token": alpha_token},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(deleted.status_code, 303)
+        self.assertIsNone(
+            self.conn.execute("SELECT id FROM suppliers WHERE id = ?", (alpha_supplier_id,)).fetchone()
+        )
+        self.assertIsNone(
+            self.conn.execute("SELECT supplier_id FROM parts WHERE id = ?", (alpha_part_id,)).fetchone()["supplier_id"]
+        )
 
     def test_parts_center_parts_are_shop_isolated(self):
         client_one = self.client()
