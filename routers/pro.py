@@ -5335,6 +5335,7 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
         """
         CREATE TABLE IF NOT EXISTS customer_vehicles (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER,
           customer_id INTEGER NOT NULL,
           year INTEGER,
           make TEXT,
@@ -5351,14 +5352,19 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
         """
     )
 
-    if not using_postgres():
-        vehicle_columns = {
-            row[1]
-            for row in conn.execute(
-                "PRAGMA table_info(customer_vehicles)"
-            ).fetchall()
-        }
+    vehicle_columns = {
+        row[1]
+        for row in conn.execute(
+            "PRAGMA table_info(customer_vehicles)"
+        ).fetchall()
+    }
 
+    if "shop_id" not in vehicle_columns:
+        conn.execute(
+            "ALTER TABLE customer_vehicles ADD COLUMN shop_id INTEGER"
+        )
+
+    if not using_postgres():
         if "archived_at" not in vehicle_columns:
             conn.execute(
                 "ALTER TABLE customer_vehicles ADD COLUMN archived_at TEXT"
@@ -5380,18 +5386,6 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
             conn.execute(
                 "ALTER TABLE customers "
                 "ADD COLUMN customer_status TEXT NOT NULL DEFAULT 'active'"
-            )
-
-        vehicle_columns = {
-            row[1]
-            for row in conn.execute(
-                "PRAGMA table_info(customer_vehicles)"
-            ).fetchall()
-        }
-
-        if "shop_id" not in vehicle_columns:
-            conn.execute(
-                "ALTER TABLE customer_vehicles ADD COLUMN shop_id INTEGER"
             )
 
         if "archived_at" not in vehicle_columns:
@@ -6796,6 +6790,128 @@ def ensure_shop_parts_schema(conn: sqlite3.Connection) -> None:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_shop_parts_shop_id ON shop_parts (shop_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_shop_parts_shop_name ON shop_parts (shop_id, name)")
     conn.commit()
+
+
+@postgres_schema_once
+def ensure_suppliers_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS suppliers (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          website TEXT,
+          phone TEXT,
+          account_number TEXT,
+          notes TEXT,
+          is_preferred INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (shop_id) REFERENCES shop_profile(id)
+        )
+        """
+    )
+    for column_name, column_sql in {
+        "shop_id": "shop_id INTEGER",
+        "name": "name TEXT",
+        "website": "website TEXT",
+        "phone": "phone TEXT",
+        "account_number": "account_number TEXT",
+        "notes": "notes TEXT",
+        "is_preferred": "is_preferred INTEGER NOT NULL DEFAULT 0",
+        "created_at": "created_at TEXT",
+        "updated_at": "updated_at TEXT",
+    }.items():
+        add_column_if_missing(conn, "suppliers", column_name, column_sql)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_suppliers_shop_name ON suppliers (shop_id, name)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_suppliers_shop_preferred ON suppliers (shop_id, is_preferred, name)")
+    conn.commit()
+
+
+@postgres_schema_once
+def ensure_parts_schema(conn: sqlite3.Connection) -> None:
+    ensure_suppliers_schema(conn)
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS parts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER NOT NULL,
+          repair_id INTEGER,
+          supplier_id INTEGER,
+          description TEXT NOT NULL,
+          part_number TEXT,
+          quantity REAL NOT NULL DEFAULT 1,
+          cost REAL NOT NULL DEFAULT 0,
+          sell_price REAL NOT NULL DEFAULT 0,
+          order_status TEXT NOT NULL DEFAULT 'Needed',
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (shop_id) REFERENCES shop_profile(id),
+          FOREIGN KEY (repair_id) REFERENCES repair_records(id),
+          FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+        )
+        """
+    )
+    for column_name, column_sql in {
+        "shop_id": "shop_id INTEGER",
+        "repair_id": "repair_id INTEGER",
+        "supplier_id": "supplier_id INTEGER",
+        "description": "description TEXT",
+        "part_number": "part_number TEXT",
+        "quantity": "quantity REAL NOT NULL DEFAULT 1",
+        "cost": "cost REAL NOT NULL DEFAULT 0",
+        "sell_price": "sell_price REAL NOT NULL DEFAULT 0",
+        "order_status": "order_status TEXT NOT NULL DEFAULT 'Needed'",
+        "notes": "notes TEXT",
+        "created_at": "created_at TEXT",
+        "updated_at": "updated_at TEXT",
+    }.items():
+        add_column_if_missing(conn, "parts", column_name, column_sql)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_parts_shop_status ON parts (shop_id, order_status)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_parts_shop_supplier ON parts (shop_id, supplier_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_parts_shop_repair ON parts (shop_id, repair_id)")
+    conn.commit()
+
+
+def ensure_parts_center_schema(conn: sqlite3.Connection) -> None:
+    ensure_suppliers_schema(conn)
+    ensure_parts_schema(conn)
+
+
+def load_shop_suppliers(conn: sqlite3.Connection, shop_id: int) -> list[dict[str, Any]]:
+    ensure_suppliers_schema(conn)
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM suppliers
+            WHERE shop_id = ?
+            ORDER BY is_preferred DESC, LOWER(name) ASC, id ASC
+            """,
+            (shop_id,),
+        ).fetchall()
+    ]
+
+
+def load_shop_parts(conn: sqlite3.Connection, shop_id: int) -> list[dict[str, Any]]:
+    ensure_parts_schema(conn)
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT p.*, s.name AS supplier_name
+            FROM parts p
+            LEFT JOIN suppliers s
+              ON s.id = p.supplier_id
+             AND s.shop_id = p.shop_id
+            WHERE p.shop_id = ?
+            ORDER BY p.updated_at DESC, p.id DESC
+            """,
+            (shop_id,),
+        ).fetchall()
+    ]
 
 
 def normalize_repair_job_part_status(raw_status: Any) -> str:
@@ -16462,17 +16578,10 @@ def pro_active_jobs(
 def pro_parts_center(request: Request):
     conn = crm_db_conn()
     try:
-        ensure_shop_parts_schema(conn)
         shop_id = required_current_shop_id(conn, request)
-        row = conn.execute(
-            """
-            SELECT COUNT(*) AS count
-            FROM shop_parts
-            WHERE shop_id = ?
-            """,
-            (shop_id,),
-        ).fetchone()
-        parts_count = int(row["count"] or 0) if row else 0
+        ensure_parts_center_schema(conn)
+        suppliers = load_shop_suppliers(conn, shop_id)
+        parts = load_shop_parts(conn, shop_id)
     finally:
         conn.close()
 
@@ -16480,7 +16589,10 @@ def pro_parts_center(request: Request):
         "pro/parts.html",
         {
             "request": request,
-            "parts_count": parts_count,
+            "suppliers": suppliers,
+            "parts": parts,
+            "suppliers_count": len(suppliers),
+            "parts_count": len(parts),
             "csrf_token": optional_csrf_token(request),
         },
     )

@@ -1087,6 +1087,164 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(response.status_code, 303)
         self.assertEqual(response.headers["location"], "/login?next=%2Faccount%2Fsettings")
 
+    def test_parts_center_unauthenticated_access_is_blocked(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="parts-auth@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+
+        response = client.get("/pro/parts", follow_redirects=False)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/login?next=%2Fpro%2Fparts")
+
+    def test_empty_parts_center_renders_for_authenticated_shop(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="parts-empty@example.com", shop_name="Alpha Shop")
+
+        response = client.get("/pro/parts")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Parts Center", response.text)
+        self.assertIn("No parts added yet", response.text)
+        self.assertIn('data-parts-count="0"', response.text)
+        self.assertIn('data-suppliers-count="0"', response.text)
+        self.assertNotIn("Add Part", response.text)
+        self.assertNotIn("Add Supplier", response.text)
+
+    def test_parts_center_suppliers_are_shop_isolated(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="parts-supplier-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("parts-supplier-alpha@example.com")
+
+        client_two = self.client()
+        self.signup(client_two, email="parts-supplier-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("parts-supplier-beta@example.com")
+        self.login(client_two, email="parts-supplier-beta@example.com")
+        beta_shop = self.shop_id_for_email("parts-supplier-beta@example.com")
+
+        pro_module.ensure_parts_center_schema(self.conn)
+        now = "2026-09-11T12:00:00"
+        self.conn.execute(
+            """
+            INSERT INTO suppliers (
+              shop_id, name, website, phone, account_number, notes,
+              is_preferred, created_at, updated_at
+            )
+            VALUES (?, 'Alpha Supplier', 'https://alpha.example', '555-0101',
+                    'ALPHA-1', '', 1, ?, ?)
+            """,
+            (alpha_shop, now, now),
+        )
+        self.conn.execute(
+            """
+            INSERT INTO suppliers (
+              shop_id, name, website, phone, account_number, notes,
+              is_preferred, created_at, updated_at
+            )
+            VALUES (?, 'Beta Supplier', 'https://beta.example', '555-0202',
+                    'BETA-1', '', 0, ?, ?)
+            """,
+            (beta_shop, now, now),
+        )
+        self.conn.commit()
+
+        alpha_suppliers = pro_module.load_shop_suppliers(self.conn, alpha_shop)
+        beta_suppliers = pro_module.load_shop_suppliers(self.conn, beta_shop)
+        alpha_page = client_one.get("/pro/parts")
+        beta_page = client_two.get("/pro/parts")
+
+        self.assertEqual([supplier["name"] for supplier in alpha_suppliers], ["Alpha Supplier"])
+        self.assertEqual([supplier["name"] for supplier in beta_suppliers], ["Beta Supplier"])
+        self.assertIn("Alpha Supplier", alpha_page.text)
+        self.assertNotIn("Beta Supplier", alpha_page.text)
+        self.assertIn("Beta Supplier", beta_page.text)
+        self.assertNotIn("Alpha Supplier", beta_page.text)
+
+    def test_parts_center_parts_are_shop_isolated(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="parts-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("parts-alpha@example.com")
+
+        client_two = self.client()
+        self.signup(client_two, email="parts-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("parts-beta@example.com")
+        self.login(client_two, email="parts-beta@example.com")
+        beta_shop = self.shop_id_for_email("parts-beta@example.com")
+
+        pro_module.ensure_parts_center_schema(self.conn)
+        now = "2026-09-11T12:00:00"
+        alpha_supplier_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO suppliers (shop_id, name, is_preferred, created_at, updated_at)
+                VALUES (?, 'Alpha Supplier', 1, ?, ?)
+                """,
+                (alpha_shop, now, now),
+            ).lastrowid
+        )
+        beta_supplier_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO suppliers (shop_id, name, is_preferred, created_at, updated_at)
+                VALUES (?, 'Beta Supplier', 1, ?, ?)
+                """,
+                (beta_shop, now, now),
+            ).lastrowid
+        )
+        self.conn.execute(
+            """
+            INSERT INTO parts (
+              shop_id, repair_id, supplier_id, description, part_number,
+              quantity, cost, sell_price, order_status, notes, created_at, updated_at
+            )
+            VALUES (?, NULL, ?, 'Alpha Brake Pads', 'PAD-A',
+                    1, 32.50, 65.00, 'Needed', '', ?, ?)
+            """,
+            (alpha_shop, alpha_supplier_id, now, now),
+        )
+        self.conn.execute(
+            """
+            INSERT INTO parts (
+              shop_id, repair_id, supplier_id, description, part_number,
+              quantity, cost, sell_price, order_status, notes, created_at, updated_at
+            )
+            VALUES (?, NULL, ?, 'Beta Water Pump', 'PUMP-B',
+                    1, 72.00, 144.00, 'Ordered', '', ?, ?)
+            """,
+            (beta_shop, beta_supplier_id, now, now),
+        )
+        self.conn.commit()
+
+        alpha_parts = pro_module.load_shop_parts(self.conn, alpha_shop)
+        beta_parts = pro_module.load_shop_parts(self.conn, beta_shop)
+        alpha_page = client_one.get("/pro/parts")
+        beta_page = client_two.get("/pro/parts")
+
+        self.assertEqual([part["description"] for part in alpha_parts], ["Alpha Brake Pads"])
+        self.assertEqual(alpha_parts[0]["supplier_name"], "Alpha Supplier")
+        self.assertEqual([part["description"] for part in beta_parts], ["Beta Water Pump"])
+        self.assertEqual(beta_parts[0]["supplier_name"], "Beta Supplier")
+        self.assertIn("Alpha Brake Pads", alpha_page.text)
+        self.assertNotIn("Beta Water Pump", alpha_page.text)
+        self.assertIn("Beta Water Pump", beta_page.text)
+        self.assertNotIn("Alpha Brake Pads", beta_page.text)
+
+    def test_parts_center_schema_does_not_regress_invoice_detail_workflow(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="parts-invoice@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("parts-invoice@example.com")
+        pro_module.ensure_parts_center_schema(self.conn)
+        ids = self.seed_invoice_estimate_records_for_shop(shop_id)
+
+        response = client.get(
+            f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}/invoices/{ids['invoice_id']}"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Invoice", response.text)
+        self.assertIn("Brake Pad Replacement", response.text)
+        self.assertIn("$200.00", response.text)
+
     def test_account_settings_page_shows_email_and_nav_link(self):
         client = self.client()
         self.bootstrap_owner(client)
@@ -4698,7 +4856,10 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Ready for Repair", vehicle_page_before_start.text)
         self.assertIn("Estimate prepared", vehicle_page_before_start.text)
         self.assertIn("Open Finding", vehicle_page_before_start.text)
-        self.assertNotIn("Open Repair Workspace</a>", vehicle_page_before_start.text)
+        self.assertNotRegex(
+            vehicle_page_before_start.text,
+            rf'href="/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/\d+"',
+        )
         missing_csrf_start = client.post(start_url, data={}, follow_redirects=False)
         self.assertEqual(missing_csrf_start.status_code, 403)
         token = csrf_from(approved_page.text)

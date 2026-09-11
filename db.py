@@ -68,6 +68,8 @@ POSTGRES_RUNTIME_SCHEMA_TABLE_ALLOWLIST = {
     "staff_notifications",
     "customer_decision_follow_ups",
     "shop_parts",
+    "suppliers",
+    "parts",
 }
 
 _POSTGRES_POOL = None

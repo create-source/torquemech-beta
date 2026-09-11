@@ -10,6 +10,7 @@
   }
 
   .tm-parts-header,
+  .tm-parts-panel,
   .tm-parts-empty {
     border: 1px solid rgba(148, 163, 184, 0.22);
     border-radius: 8px;
@@ -40,18 +41,20 @@
     line-height: 1.5;
   }
 
-  .tm-parts-add {
-    flex: 0 0 auto;
-    min-height: 42px;
-    border: 1px solid #fb923c;
+  .tm-parts-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .tm-parts-stat {
+    border: 1px solid rgba(148, 163, 184, 0.24);
     border-radius: 8px;
-    background: #fb923c;
-    color: #08111f;
-    cursor: not-allowed;
-    font: inherit;
-    font-weight: 900;
-    padding: 10px 14px;
-    opacity: 0.72;
+    color: #dbeafe;
+    font-size: 0.84rem;
+    font-weight: 800;
+    padding: 8px 10px;
   }
 
   .tm-parts-empty {
@@ -82,13 +85,56 @@
     line-height: 1.45;
   }
 
+  .tm-parts-panel {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .tm-parts-panel h2 {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 1.08rem;
+    font-weight: 900;
+  }
+
+  .tm-parts-table-wrap {
+    overflow-x: auto;
+  }
+
+  .tm-parts-table {
+    border-collapse: collapse;
+    min-width: 760px;
+    width: 100%;
+  }
+
+  .tm-parts-table th,
+  .tm-parts-table td {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    color: #d5dfec;
+    padding: 10px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .tm-parts-table th {
+    color: #93c5fd;
+    font-size: 0.78rem;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .tm-parts-muted {
+    color: #94a3b8;
+  }
+
   @media (max-width: 700px) {
     .tm-parts-header {
       display: grid;
     }
 
-    .tm-parts-add {
-      width: 100%;
+    .tm-parts-stats {
+      justify-content: flex-start;
     }
   }
 </style>
@@ -101,14 +147,87 @@
       <h1 class="tm-parts-title" id="partsCenterTitle">Parts Center</h1>
       <p class="tm-parts-subtitle">Keep track of parts you use for repairs.</p>
     </div>
-    <button class="tm-parts-add" type="button" disabled aria-disabled="true">Add Part</button>
+    <div class="tm-parts-stats" aria-label="Parts Center totals">
+      <span class="tm-parts-stat">{{ parts_count }} Parts</span>
+      <span class="tm-parts-stat">{{ suppliers_count }} Suppliers</span>
+    </div>
   </div>
 
-  <div class="tm-parts-empty" data-parts-count="{{ parts_count }}">
+  {% if parts or suppliers %}
+  <div class="tm-parts-panel" data-parts-count="{{ parts_count }}">
+    <h2>Parts</h2>
+    {% if parts %}
+    <div class="tm-parts-table-wrap">
+      <table class="tm-parts-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Part Number</th>
+            <th>Supplier</th>
+            <th>Qty</th>
+            <th>Cost</th>
+            <th>Sell</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for part in parts %}
+          <tr>
+            <td>{{ part.description }}</td>
+            <td>{{ part.part_number or "-" }}</td>
+            <td>{{ part.supplier_name or "-" }}</td>
+            <td>{{ part.quantity }}</td>
+            <td>{{ part.cost|pro_currency }}</td>
+            <td>{{ part.sell_price|pro_currency }}</td>
+            <td>{{ part.order_status or "Needed" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="tm-parts-muted">No parts added yet.</p>
+    {% endif %}
+  </div>
+
+  <div class="tm-parts-panel" data-suppliers-count="{{ suppliers_count }}">
+    <h2>Suppliers</h2>
+    {% if suppliers %}
+    <div class="tm-parts-table-wrap">
+      <table class="tm-parts-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Website</th>
+            <th>Phone</th>
+            <th>Account</th>
+            <th>Preferred</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for supplier in suppliers %}
+          <tr>
+            <td>{{ supplier.name }}</td>
+            <td>{{ supplier.website or "-" }}</td>
+            <td>{{ supplier.phone or "-" }}</td>
+            <td>{{ supplier.account_number or "-" }}</td>
+            <td>{% if supplier.is_preferred %}Yes{% else %}No{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="tm-parts-muted">No suppliers added yet.</p>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="tm-parts-empty" data-parts-count="{{ parts_count }}" data-suppliers-count="{{ suppliers_count }}">
     <div class="tm-parts-empty__content">
       <h2>No parts added yet</h2>
       <p>Parts you save will appear here.</p>
     </div>
   </div>
+  {% endif %}
 </section>
 {% endblock %}
