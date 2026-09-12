@@ -333,6 +333,17 @@
     text-transform: uppercase;
   }
 
+  .tm-parts-repair-link {
+    color: #bfdbfe;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .tm-parts-repair-link:hover {
+    color: #ffffff;
+    text-decoration: underline;
+  }
+
   .tm-parts-muted {
     color: #94a3b8;
   }
@@ -375,6 +386,7 @@
         <thead>
           <tr>
             <th>Description</th>
+            <th>Repair</th>
             <th>Part Number</th>
             <th>Supplier</th>
             <th>Qty</th>
@@ -387,6 +399,13 @@
           {% for part in parts %}
           <tr>
             <td>{{ part.description }}</td>
+            <td>
+              {% if part.repair_id and part.repair_customer_id and part.repair_vehicle_id %}
+              <a class="tm-parts-repair-link" href="/pro/customers/{{ part.repair_customer_id }}/vehicles/{{ part.repair_vehicle_id }}/repairs/{{ part.repair_id }}">{{ part.repair_name or ("Repair #" ~ part.repair_id) }}</a>
+              {% else %}
+              -
+              {% endif %}
+            </td>
             <td>{{ part.part_number or "-" }}</td>
             <td>{{ part.supplier_name or "-" }}</td>
             <td>{{ part.quantity }}</td>

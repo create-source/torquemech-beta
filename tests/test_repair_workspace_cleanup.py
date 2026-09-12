@@ -1835,6 +1835,97 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(after[0]["sell_price"], 32.25)
         self.assertEqual(repair_part["parts_center_part_id"], after[0]["id"])
 
+    def test_repair_part_delete_removes_matching_parts_center_row_only(self):
+        conn = self.repair_parts_supplier_conn()
+        now = "2026-06-29T10:01:00"
+        part_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {"part_name": "Engine Coolant", "supplier_id": "100", "qty": "2", "unit_cost": "18.50"},
+            now,
+            shop_id=10,
+        )
+        center_part_id = conn.execute(
+            "SELECT parts_center_part_id FROM repair_job_parts WHERE id = ?",
+            (part_id,),
+        ).fetchone()["parts_center_part_id"]
+        cross_shop_part_id = int(
+            conn.execute(
+                """
+                INSERT INTO parts (
+                  shop_id, repair_id, supplier_id, description, part_number,
+                  quantity, cost, sell_price, order_status, notes, created_at, updated_at
+                )
+                VALUES (20, 44, NULL, 'Other Shop Coolant', 'OS-1',
+                        1, 1, 1, 'Needed', '', ?, ?)
+                """,
+                (now, now),
+            ).lastrowid
+        )
+
+        pro_module.delete_repair_job_part(conn, 44, part_id, shop_id=10)
+
+        self.assertIsNone(conn.execute("SELECT id FROM repair_job_parts WHERE id = ?", (part_id,)).fetchone())
+        self.assertIsNone(conn.execute("SELECT id FROM parts WHERE id = ?", (center_part_id,)).fetchone())
+        self.assertIsNotNone(conn.execute("SELECT id FROM parts WHERE id = ?", (cross_shop_part_id,)).fetchone())
+
+    def test_repair_part_delete_preserves_unmatched_parts_center_link(self):
+        conn = self.repair_parts_supplier_conn()
+        now = "2026-06-29T10:01:00"
+        protected_part_id = int(
+            conn.execute(
+                """
+                INSERT INTO parts (
+                  shop_id, repair_id, supplier_id, description, part_number,
+                  quantity, cost, sell_price, order_status, notes, created_at, updated_at
+                )
+                VALUES (10, 55, NULL, 'Protected Part', 'SAFE-1',
+                        1, 1, 1, 'Needed', '', ?, ?)
+                """,
+                (now, now),
+            ).lastrowid
+        )
+        repair_part_id = int(
+            conn.execute(
+                """
+                INSERT INTO repair_job_parts (
+                  repair_record_id, part_name, qty, unit_cost, subtotal,
+                  status, parts_center_part_id, created_at, updated_at
+                )
+                VALUES (44, 'Bad Link', 1, 1, 1, 'Needed', ?, ?, ?)
+                """,
+                (protected_part_id, now, now),
+            ).lastrowid
+        )
+
+        pro_module.delete_repair_job_part(conn, 44, repair_part_id, shop_id=10)
+
+        self.assertIsNone(conn.execute("SELECT id FROM repair_job_parts WHERE id = ?", (repair_part_id,)).fetchone())
+        self.assertIsNotNone(conn.execute("SELECT id FROM parts WHERE id = ?", (protected_part_id,)).fetchone())
+
+    def test_parts_center_parts_include_repair_context_for_current_shop(self):
+        conn = self.repair_parts_supplier_conn()
+        now = "2026-06-29T10:01:00"
+        part_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {"part_name": "Engine Coolant", "supplier_id": "100", "qty": "2", "unit_cost": "18.50"},
+            now,
+            shop_id=10,
+        )
+
+        parts = pro_module.load_shop_parts(conn, 10)
+
+        self.assertEqual([part["description"] for part in parts], ["Engine Coolant"])
+        self.assertEqual(parts[0]["repair_id"], 44)
+        self.assertEqual(parts[0]["repair_name"], "Coolant Drain & Refill")
+        self.assertEqual(parts[0]["repair_customer_id"], 1)
+        self.assertEqual(parts[0]["repair_vehicle_id"], 1)
+        self.assertEqual(
+            conn.execute("SELECT parts_center_part_id FROM repair_job_parts WHERE id = ?", (part_id,)).fetchone()[0],
+            parts[0]["id"],
+        )
+
     def test_existing_repair_parts_without_supplier_id_still_work(self):
         conn = self.repair_parts_supplier_conn()
         now = "2026-06-29T10:01:00"

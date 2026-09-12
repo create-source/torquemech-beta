@@ -6948,17 +6948,41 @@ def normalize_repair_job_part_supplier_id(
 
 
 def load_shop_parts(conn: sqlite3.Connection, shop_id: int) -> list[dict[str, Any]]:
+    ensure_customer_status_schema(conn)
     ensure_parts_schema(conn)
+    ensure_repair_records_schema(conn)
     return [
         dict(row)
         for row in conn.execute(
             """
-            SELECT p.*, s.name AS supplier_name
+            SELECT
+              p.*,
+              s.name AS supplier_name,
+              rr.repair_name AS repair_name,
+              rr.customer_id AS repair_customer_id,
+              rr.vehicle_id AS repair_vehicle_id
             FROM parts p
             LEFT JOIN suppliers s
               ON s.id = p.supplier_id
              AND s.shop_id = p.shop_id
+            LEFT JOIN repair_records rr
+              ON rr.id = p.repair_id
+            LEFT JOIN customers c
+              ON c.id = rr.customer_id
+             AND c.shop_id = p.shop_id
+            LEFT JOIN customer_vehicles v
+              ON v.id = rr.vehicle_id
+             AND v.customer_id = rr.customer_id
+             AND v.shop_id = p.shop_id
             WHERE p.shop_id = ?
+              AND (
+                p.repair_id IS NULL
+                OR (
+                  rr.id IS NOT NULL
+                  AND c.id IS NOT NULL
+                  AND v.id IS NOT NULL
+                )
+              )
             ORDER BY p.updated_at DESC, p.id DESC
             """,
             (shop_id,),
@@ -7289,8 +7313,36 @@ def update_repair_job_part(
         )
 
 
-def delete_repair_job_part(conn: sqlite3.Connection, repair_record_id: int, part_id: int) -> None:
+def delete_repair_job_part(
+    conn: sqlite3.Connection,
+    repair_record_id: int,
+    part_id: int,
+    *,
+    shop_id: int | None = None,
+) -> None:
     ensure_repair_job_parts_schema(conn)
+    part = row_to_dict(
+        conn.execute(
+            "SELECT parts_center_part_id FROM repair_job_parts WHERE id = ? AND repair_record_id = ?",
+            (part_id, repair_record_id),
+        ).fetchone()
+    )
+    if not part:
+        raise HTTPException(status_code=404, detail="Tracked part not found")
+
+    parts_center_part_id = optional_int_value(part.get("parts_center_part_id"))
+    if shop_id is not None and parts_center_part_id:
+        ensure_parts_schema(conn)
+        conn.execute(
+            """
+            DELETE FROM parts
+            WHERE id = ?
+              AND shop_id = ?
+              AND repair_id = ?
+            """,
+            (parts_center_part_id, shop_id, repair_record_id),
+        )
+
     cur = conn.execute(
         "DELETE FROM repair_job_parts WHERE id = ? AND repair_record_id = ?",
         (part_id, repair_record_id),
@@ -23971,7 +24023,7 @@ async def pro_repair_job_part_delete(request: Request, customer_id: int, vehicle
         shop_id = current_shop_id(conn, request)
         load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         load_repair_record(conn, customer_id, vehicle_id, repair_id)
-        delete_repair_job_part(conn, repair_id, part_id)
+        delete_repair_job_part(conn, repair_id, part_id, shop_id=shop_id)
         conn.commit()
     finally:
         conn.close()

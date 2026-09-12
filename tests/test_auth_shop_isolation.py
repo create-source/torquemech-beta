@@ -1111,6 +1111,67 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertNotIn("Add Part", response.text)
         self.assertIn("Add Supplier", response.text)
 
+    def test_parts_center_shows_repair_context_link_for_repair_part(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="parts-repair-link@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("parts-repair-link@example.com")
+        now = "2026-09-11T12:00:00"
+        pro_module.ensure_customer_status_schema(self.conn)
+        pro_module.ensure_parts_center_schema(self.conn)
+        pro_module.ensure_repair_records_schema(self.conn)
+        customer_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO customers (
+                  shop_id, first_name, last_name, customer_status, created_at, updated_at
+                )
+                VALUES (?, 'Ada', 'Lovelace', 'active', ?, ?)
+                """,
+                (shop_id, now, now),
+            ).lastrowid
+        )
+        vehicle_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO customer_vehicles (
+                  shop_id, customer_id, year, make, model, created_at, updated_at
+                )
+                VALUES (?, ?, 2016, 'Honda', 'Accord', ?, ?)
+                """,
+                (shop_id, customer_id, now, now),
+            ).lastrowid
+        )
+        repair_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO repair_records (
+                  vehicle_id, customer_id, repair_name, status, created_at
+                )
+                VALUES (?, ?, 'Coolant Service', 'Open', ?)
+                """,
+                (vehicle_id, customer_id, now),
+            ).lastrowid
+        )
+        pro_module.create_repair_job_part(
+            self.conn,
+            repair_id,
+            {"part_name": "Engine Coolant", "qty": "2", "unit_cost": "18.50"},
+            now,
+            shop_id=shop_id,
+        )
+        self.conn.commit()
+
+        response = client.get("/pro/parts")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("<th>Repair</th>", response.text)
+        self.assertIn("Engine Coolant", response.text)
+        self.assertIn("Coolant Service", response.text)
+        self.assertIn(
+            f'href="/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}"',
+            response.text,
+        )
+
     def test_parts_center_suppliers_are_shop_isolated(self):
         client_one = self.client()
         self.bootstrap_owner(client_one, email="parts-supplier-alpha@example.com", shop_name="Alpha Shop")
