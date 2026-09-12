@@ -1,5 +1,6 @@
 {% set tracked_parts = item.tracked_parts or [] %}
 {% set linked_repair_id = item.linked_repair_record_id or item.id %}
+{% set supplier_options = repair_part_suppliers|default([]) %}
 <section class="tm-blueprint-summary-card tm-parts-tracking" id="parts-tracking" aria-label="Parts tracking for {{ item.title or item.repair_name or 'repair' }}">
   <div class="tm-blueprint-summary-head">
     <div>
@@ -19,14 +20,17 @@
       </div>
       <div class="tm-repair-card-meta">
         <span class="tm-crm-chip">Qty {{ part.qty|pro_quantity }}</span>
+        {% if part.supplier_name %}<span class="tm-crm-chip">{{ part.supplier_name }}</span>{% endif %}
         {% if part.vendor %}<span class="tm-crm-chip">{{ part.vendor }}</span>{% endif %}
         {% if part.part_number %}<span class="tm-crm-chip">Part # {{ part.part_number }}</span>{% endif %}
         <span class="tm-crm-chip">Unit {{ part.unit_cost|pro_currency }}</span>
+        <span class="tm-crm-chip">Sell {{ part.sell_price|pro_currency }}</span>
         <span class="tm-crm-chip">Subtotal {{ part.subtotal|pro_currency }}</span>
       </div>
       {% if part.notes %}<div style="color:#475569; white-space:pre-wrap;">{{ part.notes }}</div>{% endif %}
       <div class="tm-repair-card-actions">
         <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts/{{ part.id }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <select class="tm-input" name="status" aria-label="Update status for {{ part.part_name }}" onchange="this.form.submit()">
             {% for option in repair_job_part_status_options %}
             <option value="{{ option }}" {% if part.status == option %}selected{% endif %}>{{ option }}</option>
@@ -36,13 +40,26 @@
         <details>
           <summary class="tm-btn tm-btn-secondary">Edit</summary>
           <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts/{{ part.id }}" style="display:grid; gap:10px; margin-top:10px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="tm-crm-row">
               <div><label class="tm-label">Part Name</label><input class="tm-input" name="part_name" type="text" maxlength="180" value="{{ part.part_name }}"></div>
               <div><label class="tm-label">Qty</label><input class="tm-input" name="qty" type="number" min="0" step="0.01" value="{{ part.qty|pro_quantity }}"></div>
             </div>
             <div class="tm-crm-row">
+              <div>
+                <label class="tm-label">Supplier</label>
+                <select class="tm-input" name="supplier_id">
+                  <option value="">Manual / none</option>
+                  {% for supplier in supplier_options %}
+                  <option value="{{ supplier.id }}" {% if part.supplier_id == supplier.id %}selected{% endif %}>{{ supplier.name }}{% if supplier.is_preferred %} (Preferred){% endif %}</option>
+                  {% endfor %}
+                </select>
+              </div>
               <div><label class="tm-label">Vendor / Source</label><input class="tm-input" name="vendor" type="text" maxlength="180" value="{{ part.vendor or '' }}"></div>
+            </div>
+            <div class="tm-crm-row">
               <div><label class="tm-label">Part Number</label><input class="tm-input" name="part_number" type="text" maxlength="180" value="{{ part.part_number or '' }}"></div>
+              <div><label class="tm-label">Sell Price</label><input class="tm-input" name="sell_price" type="text" inputmode="decimal" value="{{ part.sell_price }}"></div>
             </div>
             <div class="tm-crm-row">
               <div><label class="tm-label">Unit Cost</label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" value="{{ part.unit_cost }}"></div>
@@ -60,6 +77,7 @@
           </form>
         </details>
         <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts/{{ part.id }}/delete">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <button class="tm-btn tm-btn-secondary" type="submit">Delete</button>
         </form>
       </div>
@@ -74,13 +92,26 @@
   <details style="margin-top:12px;">
     <summary class="tm-btn tm-btn-primary">Add Part</summary>
     <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts" style="display:grid; gap:10px; margin-top:12px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="tm-crm-row">
         <div><label class="tm-label">Part Name</label><input class="tm-input" name="part_name" type="text" maxlength="180" value="{{ item.default_part_name or '' }}" required></div>
         <div><label class="tm-label">Qty</label><input class="tm-input" name="qty" type="number" min="0" step="0.01" value="1"></div>
       </div>
       <div class="tm-crm-row">
+        <div>
+          <label class="tm-label">Supplier</label>
+          <select class="tm-input" name="supplier_id">
+            <option value="">Manual / none</option>
+            {% for supplier in supplier_options %}
+            <option value="{{ supplier.id }}">{{ supplier.name }}{% if supplier.is_preferred %} (Preferred){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
         <div><label class="tm-label">Vendor / Source</label><input class="tm-input" name="vendor" type="text" maxlength="180"></div>
+      </div>
+      <div class="tm-crm-row">
         <div><label class="tm-label">Part Number</label><input class="tm-input" name="part_number" type="text" maxlength="180"></div>
+        <div><label class="tm-label">Sell Price</label><input class="tm-input" name="sell_price" type="text" inputmode="decimal" placeholder="0"></div>
       </div>
       <div class="tm-crm-row">
         <div><label class="tm-label">Unit Cost</label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" placeholder="0"></div>

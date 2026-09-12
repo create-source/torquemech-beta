@@ -277,8 +277,12 @@
 
   .tm-parts-edit {
     border-top: 1px solid rgba(148, 163, 184, 0.14);
-    flex: 1 1 100%;
+    flex: 0 0 auto;
     padding-top: 10px;
+  }
+
+  .tm-parts-edit[open] {
+    flex-basis: 100%;
   }
 
   .tm-parts-table-wrap {
@@ -480,7 +484,7 @@
               </div>
             </form>
           </details>
-          <form method="post" action="/pro/parts/suppliers/{{ supplier.id }}/delete">
+          <form method="post" action="/pro/parts/suppliers/{{ supplier.id }}/delete" onsubmit="return confirm('Are you sure you want to delete this supplier? Existing parts remain, but the supplier association is removed.');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <button class="tm-parts-button tm-parts-button--danger" type="submit">Delete</button>
           </form>

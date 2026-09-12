@@ -1697,6 +1697,192 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(summary["tracked_parts_total"], 37)
         self.assertIn(not_needed_id, [part["id"] for part in summary["parts"]])
 
+    def repair_parts_supplier_conn(self):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        self.addCleanup(conn.close)
+        pro_module.ensure_customer_status_schema(conn)
+        pro_module.ensure_repair_records_schema(conn)
+        pro_module.ensure_parts_center_schema(conn)
+        pro_module.ensure_repair_job_parts_schema(conn)
+        now = "2026-06-29T10:00:00"
+        conn.execute(
+            """
+            INSERT INTO customers (id, shop_id, first_name, created_at, updated_at)
+            VALUES (1, 10, 'Ada', ?, ?), (2, 20, 'Ben', ?, ?)
+            """,
+            (now, now, now, now),
+        )
+        conn.execute(
+            """
+            INSERT INTO customer_vehicles (id, customer_id, shop_id, year, make, model, created_at, updated_at)
+            VALUES (1, 1, 10, 2016, 'Honda', 'Accord', ?, ?),
+                   (2, 2, 20, 2017, 'Toyota', 'Camry', ?, ?)
+            """,
+            (now, now, now, now),
+        )
+        conn.execute(
+            """
+            INSERT INTO repair_records (id, customer_id, vehicle_id, repair_name, status, created_at)
+            VALUES (44, 1, 1, 'Coolant Drain & Refill', 'Open', ?),
+                   (55, 2, 2, 'Brake Pads', 'Open', ?)
+            """,
+            (now, now),
+        )
+        conn.execute(
+            """
+            INSERT INTO suppliers (id, shop_id, name, is_preferred, created_at, updated_at)
+            VALUES (100, 10, 'Preferred Parts', 1, ?, ?),
+                   (101, 10, 'Budget Parts', 0, ?, ?),
+                   (200, 20, 'Other Shop Parts', 1, ?, ?)
+            """,
+            (now, now, now, now, now, now),
+        )
+        conn.commit()
+        return conn
+
+    def test_repair_part_supplier_choices_belong_to_current_shop_and_preferred_first(self):
+        conn = self.repair_parts_supplier_conn()
+
+        suppliers = pro_module.load_shop_suppliers(conn, 10)
+        supplier_ids = [supplier["id"] for supplier in suppliers]
+
+        self.assertEqual(supplier_ids, [100, 101])
+        self.assertNotIn(200, supplier_ids)
+
+    def test_cross_shop_supplier_id_cannot_be_attached_to_repair_part(self):
+        conn = self.repair_parts_supplier_conn()
+
+        with self.assertRaises(pro_module.HTTPException) as raised:
+            pro_module.create_repair_job_part(
+                conn,
+                44,
+                {"part_name": "Coolant", "supplier_id": "200", "qty": "1"},
+                "2026-06-29T10:01:00",
+                shop_id=10,
+            )
+
+        self.assertEqual(raised.exception.status_code, 400)
+
+    def test_repair_part_save_persists_supplier_and_sell_price(self):
+        conn = self.repair_parts_supplier_conn()
+
+        part_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {
+                "part_name": "Engine Coolant",
+                "supplier_id": "100",
+                "vendor": "Legacy vendor text",
+                "part_number": "AF-50",
+                "qty": "2",
+                "unit_cost": "18.50",
+                "sell_price": "29.99",
+                "status": "Ordered",
+            },
+            "2026-06-29T10:01:00",
+            shop_id=10,
+        )
+
+        part = pro_module.load_repair_job_parts(conn, 44)[0]
+        center_part = conn.execute("SELECT * FROM parts WHERE repair_id = 44").fetchone()
+
+        self.assertEqual(part["id"], part_id)
+        self.assertEqual(part["supplier_id"], 100)
+        self.assertEqual(part["supplier_name"], "Preferred Parts")
+        self.assertEqual(part["vendor"], "Legacy vendor text")
+        self.assertEqual(part["sell_price"], 29.99)
+        self.assertEqual(center_part["supplier_id"], 100)
+        self.assertEqual(center_part["sell_price"], 29.99)
+        self.assertEqual(center_part["description"], "Engine Coolant")
+
+    def test_repair_part_edit_does_not_create_duplicate_parts_center_rows(self):
+        conn = self.repair_parts_supplier_conn()
+        now = "2026-06-29T10:01:00"
+        part_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {"part_name": "Engine Coolant", "supplier_id": "100", "qty": "2", "unit_cost": "18.50"},
+            now,
+            shop_id=10,
+        )
+        before_count = conn.execute("SELECT COUNT(*) AS count FROM parts WHERE repair_id = 44").fetchone()["count"]
+
+        pro_module.update_repair_job_part(
+            conn,
+            44,
+            part_id,
+            {"part_name": "Engine Coolant XL", "supplier_id": "101", "sell_price": "31.25"},
+            "2026-06-29T10:02:00",
+            shop_id=10,
+        )
+        pro_module.update_repair_job_part(
+            conn,
+            44,
+            part_id,
+            {"part_number": "AF-50XL", "sell_price": "32.25"},
+            "2026-06-29T10:03:00",
+            shop_id=10,
+        )
+
+        after = conn.execute("SELECT * FROM parts WHERE repair_id = 44").fetchall()
+        repair_part = conn.execute("SELECT * FROM repair_job_parts WHERE id = ?", (part_id,)).fetchone()
+
+        self.assertEqual(before_count, 1)
+        self.assertEqual(len(after), 1)
+        self.assertEqual(after[0]["description"], "Engine Coolant XL")
+        self.assertEqual(after[0]["part_number"], "AF-50XL")
+        self.assertEqual(after[0]["sell_price"], 32.25)
+        self.assertEqual(repair_part["parts_center_part_id"], after[0]["id"])
+
+    def test_existing_repair_parts_without_supplier_id_still_work(self):
+        conn = self.repair_parts_supplier_conn()
+        now = "2026-06-29T10:01:00"
+        conn.execute(
+            """
+            INSERT INTO repair_job_parts (
+              repair_record_id, part_name, qty, vendor, part_number,
+              unit_cost, subtotal, status, notes, created_at, updated_at
+            )
+            VALUES (44, 'Legacy Hose', 1, 'Counter sale', 'H-1', 12, 12, 'Needed', 'old record', ?, ?)
+            """,
+            (now, now),
+        )
+
+        part = pro_module.load_repair_job_parts(conn, 44)[0]
+
+        self.assertEqual(part["part_name"], "Legacy Hose")
+        self.assertIsNone(part["supplier_id"])
+        self.assertEqual(part["supplier_name"], None)
+        self.assertEqual(part["vendor"], "Counter sale")
+        self.assertEqual(part["sell_price"], 0)
+
+    def test_delete_supplier_leaves_part_records_intact(self):
+        conn = self.repair_parts_supplier_conn()
+        part_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {"part_name": "Engine Coolant", "supplier_id": "100", "qty": "2", "unit_cost": "18.50"},
+            "2026-06-29T10:01:00",
+            shop_id=10,
+        )
+        center_part_id = conn.execute("SELECT id FROM parts WHERE repair_id = 44").fetchone()["id"]
+
+        pro_module.delete_supplier_for_shop(
+            conn,
+            supplier_id=100,
+            shop_id=10,
+            now="2026-06-29T10:02:00",
+        )
+
+        repair_part = conn.execute("SELECT * FROM repair_job_parts WHERE id = ?", (part_id,)).fetchone()
+        center_part = conn.execute("SELECT * FROM parts WHERE id = ?", (center_part_id,)).fetchone()
+
+        self.assertIsNotNone(repair_part)
+        self.assertIsNotNone(center_part)
+        self.assertIsNone(repair_part["supplier_id"])
+        self.assertIsNone(center_part["supplier_id"])
+
     def test_parts_tracking_ui_is_available_on_workspace_and_repair_detail(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
         repair_detail = (ROOT / "templates" / "pro" / "repair_detail.html").read_text(encoding="utf-8")
@@ -1707,7 +1893,9 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Parts Tracking", partial)
         self.assertIn("No parts tracked yet.", partial)
         self.assertIn("Vendor / Source", partial)
+        self.assertIn("Supplier", partial)
         self.assertIn("Part Number", partial)
+        self.assertIn("Sell Price", partial)
         self.assertIn("repair_job_part_status_options", partial)
 
     def test_repair_workspace_collapsible_sections_and_track_parts_actions_render(self):

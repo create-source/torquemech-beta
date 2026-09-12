@@ -6709,8 +6709,11 @@ def repair_cost_totals(repair: dict[str, Any]) -> dict[str, Any]:
 
     labor_total = round(float(labor["labor_total"] or 0), 2)
 
-    # Parts Tracking documents the actual parts used during the repair.
-    # It must not automatically increase the customer-approved parts price.
+    # Parts Tracking documents additional actual parts used during the repair.
+    # Existing invoice behavior includes those tracked actuals on top of any
+    # saved repair parts price.
+    if tracked_parts_total > 0:
+        parts_total += tracked_parts_total
     parts_total = round(max(0.0, parts_total), 2)
 
     calculated_total = round(labor_total + parts_total, 2)
@@ -6747,20 +6750,37 @@ def ensure_repair_job_parts_schema(conn: sqlite3.Connection) -> None:
           part_name TEXT NOT NULL,
           qty REAL NOT NULL DEFAULT 1,
           vendor TEXT,
+          supplier_id INTEGER,
           part_number TEXT,
           unit_cost REAL NOT NULL DEFAULT 0,
+          sell_price REAL NOT NULL DEFAULT 0,
           subtotal REAL NOT NULL DEFAULT 0,
           status TEXT NOT NULL DEFAULT 'Needed',
           notes TEXT,
+          parts_center_part_id INTEGER,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL,
           FOREIGN KEY (repair_record_id) REFERENCES repair_records(id)
         )
         """
     )
+    for column_name, column_sql in {
+        "supplier_id": "supplier_id INTEGER",
+        "sell_price": "sell_price REAL NOT NULL DEFAULT 0",
+        "parts_center_part_id": "parts_center_part_id INTEGER",
+    }.items():
+        add_column_if_missing(conn, "repair_job_parts", column_name, column_sql)
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_repair_job_parts_repair_record_id "
         "ON repair_job_parts (repair_record_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_repair_job_parts_supplier_id "
+        "ON repair_job_parts (supplier_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_repair_job_parts_parts_center_part_id "
+        "ON repair_job_parts (parts_center_part_id)"
     )
     conn.commit()
 
@@ -6895,6 +6915,28 @@ def load_shop_suppliers(conn: sqlite3.Connection, shop_id: int) -> list[dict[str
     ]
 
 
+def normalize_repair_job_part_supplier_id(
+    conn: sqlite3.Connection,
+    form: dict[str, str],
+    shop_id: int | None,
+    *,
+    current_supplier_id: Any = None,
+) -> int | None:
+    supplier_id = optional_int(form, "supplier_id") if "supplier_id" in form else optional_int_value(current_supplier_id)
+    if not supplier_id:
+        return None
+    if shop_id is None:
+        return supplier_id
+    ensure_suppliers_schema(conn)
+    row = conn.execute(
+        "SELECT id FROM suppliers WHERE id = ? AND shop_id = ? LIMIT 1",
+        (supplier_id, shop_id),
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=400, detail="Select a supplier from this shop.")
+    return int(row["id"])
+
+
 def load_shop_parts(conn: sqlite3.Connection, shop_id: int) -> list[dict[str, Any]]:
     ensure_parts_schema(conn)
     return [
@@ -6942,6 +6984,8 @@ def repair_job_part_display_record(part: dict[str, Any]) -> dict[str, Any]:
     record = dict(part)
     record["status"] = normalize_repair_job_part_status(record.get("status"))
     record["subtotal"] = repair_job_part_subtotal(record.get("qty"), record.get("unit_cost"))
+    if record.get("sell_price") is None:
+        record["sell_price"] = 0
     record["qty_display"] = format_quantity(record.get("qty"))
     record["included_in_tracked_total"] = record["status"] not in REPAIR_JOB_PART_EXCLUDED_TOTAL_STATUSES
     return record
@@ -6961,14 +7005,17 @@ def repair_job_parts_summary(parts: list[dict[str, Any]]) -> dict[str, Any]:
 
 def load_repair_job_parts(conn: sqlite3.Connection, repair_record_id: int) -> list[dict[str, Any]]:
     ensure_repair_job_parts_schema(conn)
+    ensure_suppliers_schema(conn)
     return [
         repair_job_part_display_record(dict(row))
         for row in conn.execute(
             """
-            SELECT *
-            FROM repair_job_parts
-            WHERE repair_record_id = ?
-            ORDER BY id ASC
+            SELECT rjp.*, s.name AS supplier_name
+            FROM repair_job_parts rjp
+            LEFT JOIN suppliers s
+              ON s.id = rjp.supplier_id
+            WHERE rjp.repair_record_id = ?
+            ORDER BY rjp.id ASC
             """,
             (repair_record_id,),
         ).fetchall()
@@ -6980,6 +7027,7 @@ def load_repair_job_parts_map(
     repair_record_ids: list[int] | set[int],
 ) -> dict[int, dict[str, Any]]:
     ensure_repair_job_parts_schema(conn)
+    ensure_suppliers_schema(conn)
     repair_ids: set[int] = set()
     for value in repair_record_ids:
         try:
@@ -6995,10 +7043,12 @@ def load_repair_job_parts_map(
     grouped: dict[int, list[dict[str, Any]]] = {repair_id: [] for repair_id in ids}
     for row in conn.execute(
         f"""
-        SELECT *
-        FROM repair_job_parts
-        WHERE repair_record_id IN ({placeholders})
-        ORDER BY repair_record_id ASC, id ASC
+        SELECT rjp.*, s.name AS supplier_name
+        FROM repair_job_parts rjp
+        LEFT JOIN suppliers s
+          ON s.id = rjp.supplier_id
+        WHERE rjp.repair_record_id IN ({placeholders})
+        ORDER BY rjp.repair_record_id ASC, rjp.id ASC
         """,
         ids,
     ).fetchall():
@@ -7021,11 +7071,95 @@ def attach_repair_job_parts(
         record["tracked_parts_count"] = summary["count"]
 
 
+def sync_repair_job_part_to_parts_center(
+    conn: sqlite3.Connection,
+    *,
+    shop_id: int,
+    repair_record_id: int,
+    repair_part_id: int,
+    now: str,
+) -> int:
+    ensure_parts_schema(conn)
+    ensure_repair_job_parts_schema(conn)
+    part = row_to_dict(
+        conn.execute(
+            "SELECT * FROM repair_job_parts WHERE id = ? AND repair_record_id = ?",
+            (repair_part_id, repair_record_id),
+        ).fetchone()
+    )
+    if not part:
+        raise HTTPException(status_code=404, detail="Tracked part not found")
+
+    parts_center_part_id = optional_int_value(part.get("parts_center_part_id"))
+    existing = None
+    if parts_center_part_id:
+        existing = row_to_dict(
+            conn.execute(
+                "SELECT * FROM parts WHERE id = ? AND shop_id = ? AND repair_id = ?",
+                (parts_center_part_id, shop_id, repair_record_id),
+            ).fetchone()
+        )
+
+    values = (
+        shop_id,
+        repair_record_id,
+        optional_int_value(part.get("supplier_id")),
+        str(part.get("part_name") or "").strip(),
+        str(part.get("part_number") or "").strip(),
+        float(part.get("qty") or 0),
+        float(part.get("unit_cost") or 0),
+        float(part.get("sell_price") or 0),
+        normalize_repair_job_part_status(part.get("status")),
+        str(part.get("notes") or "").strip(),
+        now,
+    )
+    if existing:
+        conn.execute(
+            """
+            UPDATE parts
+            SET shop_id = ?,
+                repair_id = ?,
+                supplier_id = ?,
+                description = ?,
+                part_number = ?,
+                quantity = ?,
+                cost = ?,
+                sell_price = ?,
+                order_status = ?,
+                notes = ?,
+                updated_at = ?
+            WHERE id = ?
+              AND shop_id = ?
+            """,
+            (*values, parts_center_part_id, shop_id),
+        )
+        return parts_center_part_id
+
+    cur = conn.execute(
+        """
+        INSERT INTO parts (
+          shop_id, repair_id, supplier_id, description, part_number,
+          quantity, cost, sell_price, order_status, notes, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (*values[:-1], now, now),
+    )
+    new_part_id = int(cur.lastrowid)
+    conn.execute(
+        "UPDATE repair_job_parts SET parts_center_part_id = ?, updated_at = ? WHERE id = ? AND repair_record_id = ?",
+        (new_part_id, now, repair_part_id, repair_record_id),
+    )
+    return new_part_id
+
+
 def create_repair_job_part(
     conn: sqlite3.Connection,
     repair_record_id: int,
     form: dict[str, str],
     now: str,
+    *,
+    shop_id: int | None = None,
 ) -> int:
     ensure_repair_job_parts_schema(conn)
     part_name = str(form.get("part_name") or "").strip()
@@ -7037,23 +7171,29 @@ def create_repair_job_part(
     unit_cost = optional_float(form, "unit_cost")
     if unit_cost is None:
         unit_cost = 0.0
+    sell_price = optional_float(form, "sell_price")
+    if sell_price is None:
+        sell_price = 0.0
+    supplier_id = normalize_repair_job_part_supplier_id(conn, form, shop_id)
     status = normalize_repair_job_part_status(form.get("status"))
     subtotal = repair_job_part_subtotal(qty, unit_cost)
     cur = conn.execute(
         """
         INSERT INTO repair_job_parts (
-          repair_record_id, part_name, qty, vendor, part_number,
-          unit_cost, subtotal, status, notes, created_at, updated_at
+          repair_record_id, part_name, qty, vendor, supplier_id, part_number,
+          unit_cost, sell_price, subtotal, status, notes, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             repair_record_id,
             part_name,
             qty,
             str(form.get("vendor") or "").strip(),
+            supplier_id,
             str(form.get("part_number") or "").strip(),
             unit_cost,
+            sell_price,
             subtotal,
             status,
             str(form.get("notes") or "").strip(),
@@ -7061,7 +7201,16 @@ def create_repair_job_part(
             now,
         ),
     )
-    return int(cur.lastrowid)
+    repair_part_id = int(cur.lastrowid)
+    if shop_id is not None:
+        sync_repair_job_part_to_parts_center(
+            conn,
+            shop_id=shop_id,
+            repair_record_id=repair_record_id,
+            repair_part_id=repair_part_id,
+            now=now,
+        )
+    return repair_part_id
 
 
 def update_repair_job_part(
@@ -7070,6 +7219,8 @@ def update_repair_job_part(
     part_id: int,
     form: dict[str, str],
     now: str,
+    *,
+    shop_id: int | None = None,
 ) -> None:
     ensure_repair_job_parts_schema(conn)
     existing = conn.execute(
@@ -7084,21 +7235,32 @@ def update_repair_job_part(
         raise HTTPException(status_code=400, detail="Part name is required")
     qty = optional_float(form, "qty") if "qty" in form else current.get("qty")
     unit_cost = optional_float(form, "unit_cost") if "unit_cost" in form else current.get("unit_cost")
+    sell_price = optional_float(form, "sell_price") if "sell_price" in form else current.get("sell_price")
+    if sell_price is None:
+        sell_price = 0.0
+    supplier_id = normalize_repair_job_part_supplier_id(
+        conn,
+        form,
+        shop_id,
+        current_supplier_id=current.get("supplier_id"),
+    )
     status = normalize_repair_job_part_status(form.get("status", current.get("status")))
     subtotal = repair_job_part_subtotal(qty, unit_cost)
     conn.execute(
         """
         UPDATE repair_job_parts
-        SET part_name = ?, qty = ?, vendor = ?, part_number = ?,
-            unit_cost = ?, subtotal = ?, status = ?, notes = ?, updated_at = ?
+        SET part_name = ?, qty = ?, vendor = ?, supplier_id = ?, part_number = ?,
+            unit_cost = ?, sell_price = ?, subtotal = ?, status = ?, notes = ?, updated_at = ?
         WHERE id = ? AND repair_record_id = ?
         """,
         (
             part_name,
             qty,
             str(form.get("vendor", current.get("vendor") or "") or "").strip(),
+            supplier_id,
             str(form.get("part_number", current.get("part_number") or "") or "").strip(),
             unit_cost,
+            sell_price,
             subtotal,
             status,
             str(form.get("notes", current.get("notes") or "") or "").strip(),
@@ -7107,6 +7269,14 @@ def update_repair_job_part(
             repair_record_id,
         ),
     )
+    if shop_id is not None:
+        sync_repair_job_part_to_parts_center(
+            conn,
+            shop_id=shop_id,
+            repair_record_id=repair_record_id,
+            repair_part_id=part_id,
+            now=now,
+        )
 
 
 def delete_repair_job_part(conn: sqlite3.Connection, repair_record_id: int, part_id: int) -> None:
@@ -16616,6 +16786,47 @@ def supplier_form_payload(form: dict[str, str]) -> dict[str, Any]:
     }
 
 
+def delete_supplier_for_shop(
+    conn: sqlite3.Connection,
+    *,
+    supplier_id: int,
+    shop_id: int,
+    now: str,
+) -> None:
+    ensure_parts_center_schema(conn)
+    ensure_repair_job_parts_schema(conn)
+    conn.execute(
+        """
+        UPDATE parts
+        SET supplier_id = NULL,
+            updated_at = ?
+        WHERE supplier_id = ?
+          AND shop_id = ?
+        """,
+        (now, supplier_id, shop_id),
+    )
+    conn.execute(
+        """
+        UPDATE repair_job_parts
+        SET supplier_id = NULL,
+            updated_at = ?
+        WHERE supplier_id = ?
+          AND repair_record_id IN (
+            SELECT rr.id
+            FROM repair_records rr
+            JOIN customers c
+              ON c.id = rr.customer_id
+            WHERE c.shop_id = ?
+          )
+        """,
+        (now, supplier_id, shop_id),
+    )
+    conn.execute(
+        "DELETE FROM suppliers WHERE id = ? AND shop_id = ?",
+        (supplier_id, shop_id),
+    )
+
+
 @router.post("/parts/suppliers")
 async def pro_parts_supplier_create(request: Request):
     form = await read_form_data(request)
@@ -16702,21 +16913,7 @@ async def pro_parts_supplier_delete(request: Request, supplier_id: int):
     conn = crm_db_conn()
     try:
         shop_id = required_current_shop_id(conn, request)
-        ensure_parts_center_schema(conn)
-        conn.execute(
-            """
-            UPDATE parts
-            SET supplier_id = NULL,
-                updated_at = ?
-            WHERE supplier_id = ?
-              AND shop_id = ?
-            """,
-            (utc_now_iso(), supplier_id, shop_id),
-        )
-        conn.execute(
-            "DELETE FROM suppliers WHERE id = ? AND shop_id = ?",
-            (supplier_id, shop_id),
-        )
+        delete_supplier_for_shop(conn, supplier_id=supplier_id, shop_id=shop_id, now=utc_now_iso())
         conn.commit()
     finally:
         conn.close()
@@ -20911,6 +21108,7 @@ def pro_customer_vehicle_detail(
     try:
         shop_id = current_shop_id(conn, request)
         customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        repair_part_suppliers = load_shop_suppliers(conn, shop_id) if shop_id is not None else []
         ensure_maintenance_records_schema(conn)
         ensure_maintenance_reminder_events_schema(conn)
         ensure_repair_records_schema(conn)
@@ -21236,6 +21434,7 @@ def pro_customer_vehicle_detail(
                 for value in REPAIR_WORK_STATUS_OPTIONS
             ],
             "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
+            "repair_part_suppliers": repair_part_suppliers,
             "finding_history_records": finding_history_records,
             "customer_decision_logs": customer_decision_logs,
             "vehicle_timeline": vehicle_timeline,
@@ -23566,7 +23765,8 @@ def pro_repair_record_detail(
 ):
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
 
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
 
@@ -23609,8 +23809,9 @@ def pro_repair_record_detail(
             repair_id=repair_id,
             customer_id=customer_id,
             vehicle_id=vehicle_id,
-            shop_id=current_shop_id(conn, request),
+            shop_id=shop_id,
         )
+        repair_part_suppliers = load_shop_suppliers(conn, shop_id) if shop_id is not None else []
         after_service_care_matches = repair_after_service_care_matches(repair)
     finally:
         conn.close()
@@ -23639,6 +23840,7 @@ def pro_repair_record_detail(
             "completion_warnings": [],
             "repair_intelligence_records": repair_intelligence_records,
             "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
+            "repair_part_suppliers": repair_part_suppliers,
             "repair_assignment": repair_assignment,
             "after_service_care_matches": after_service_care_matches,
             "csrf_token": optional_csrf_token(request),
@@ -23708,12 +23910,15 @@ async def pro_repair_maintenance_tracking_update(
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/parts")
 async def pro_repair_job_part_create(request: Request, customer_id: int, vehicle_id: int, repair_id: int):
     form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
     now = datetime.utcnow().isoformat()
     conn = crm_db_conn()
     try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = current_shop_id(conn, request)
+        load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         load_repair_record(conn, customer_id, vehicle_id, repair_id)
-        create_repair_job_part(conn, repair_id, form, now)
+        create_repair_job_part(conn, repair_id, form, now, shop_id=shop_id)
         conn.commit()
     finally:
         conn.close()
@@ -23728,12 +23933,15 @@ async def pro_repair_job_part_update(
     request: Request, customer_id: int, vehicle_id: int, repair_id: int, part_id: int
 ):
     form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
     now = datetime.utcnow().isoformat()
     conn = crm_db_conn()
     try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = current_shop_id(conn, request)
+        load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         load_repair_record(conn, customer_id, vehicle_id, repair_id)
-        update_repair_job_part(conn, repair_id, part_id, form, now)
+        update_repair_job_part(conn, repair_id, part_id, form, now, shop_id=shop_id)
         conn.commit()
     finally:
         conn.close()
@@ -23744,10 +23952,14 @@ async def pro_repair_job_part_update(
 
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/parts/{part_id}/delete")
-async def pro_repair_job_part_delete(customer_id: int, vehicle_id: int, repair_id: int, part_id: int):
+async def pro_repair_job_part_delete(request: Request, customer_id: int, vehicle_id: int, repair_id: int, part_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
     conn = crm_db_conn()
     try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = current_shop_id(conn, request)
+        load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         load_repair_record(conn, customer_id, vehicle_id, repair_id)
         delete_repair_job_part(conn, repair_id, part_id)
         conn.commit()

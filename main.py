@@ -946,18 +946,26 @@ def init_pro_crm_schema_db() -> None:
               part_name TEXT NOT NULL,
               qty REAL NOT NULL DEFAULT 1,
               vendor TEXT,
+              supplier_id INTEGER,
               part_number TEXT,
               unit_cost REAL NOT NULL DEFAULT 0,
+              sell_price REAL NOT NULL DEFAULT 0,
               subtotal REAL NOT NULL DEFAULT 0,
               status TEXT NOT NULL DEFAULT 'Needed',
               notes TEXT,
+              parts_center_part_id INTEGER,
               created_at TEXT NOT NULL,
               updated_at TEXT NOT NULL,
               FOREIGN KEY (repair_record_id) REFERENCES repair_records(id)
             )
             """
         )
+        add_column_if_missing("repair_job_parts", "supplier_id", "supplier_id INTEGER")
+        add_column_if_missing("repair_job_parts", "sell_price", "sell_price REAL NOT NULL DEFAULT 0")
+        add_column_if_missing("repair_job_parts", "parts_center_part_id", "parts_center_part_id INTEGER")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_job_parts_repair_record_id ON repair_job_parts (repair_record_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_job_parts_supplier_id ON repair_job_parts (supplier_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_job_parts_parts_center_part_id ON repair_job_parts (parts_center_part_id)")
         conn.execute("DROP INDEX IF EXISTS idx_repair_records_workflow_source")
         conn.execute(
             """
