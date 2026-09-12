@@ -103,18 +103,24 @@
     gap: 10px;
   }
 
+  .tm-parts-action-button,
   .tm-parts-action,
   .tm-parts-button {
     appearance: none;
+    align-items: center;
     border: 1px solid rgba(96, 165, 250, 0.38);
     border-radius: 8px;
+    box-sizing: border-box;
     background: rgba(37, 99, 235, 0.16);
     color: #dbeafe;
     cursor: pointer;
+    display: inline-flex;
     font: inherit;
     font-size: 0.86rem;
     font-weight: 900;
+    justify-content: center;
     line-height: 1;
+    min-height: 38px;
     padding: 10px 12px;
   }
 
@@ -139,7 +145,6 @@
   }
 
   .tm-parts-action {
-    display: inline-flex;
     list-style: none;
     width: fit-content;
   }
@@ -211,6 +216,18 @@
     gap: 8px;
   }
 
+  .tm-parts-row-actions {
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    padding-top: 10px;
+  }
+
+  .tm-parts-row-actions > form {
+    align-items: center;
+    display: flex;
+    margin: 0;
+    padding: 0;
+  }
+
   .tm-parts-supplier-list {
     display: grid;
     gap: 12px;
@@ -276,13 +293,18 @@
   }
 
   .tm-parts-edit {
-    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    align-items: center;
+    display: flex;
     flex: 0 0 auto;
-    padding-top: 10px;
+    margin: 0;
+    padding: 0;
   }
 
   .tm-parts-edit[open] {
+    align-items: stretch;
+    display: grid;
     flex-basis: 100%;
+    gap: 10px;
   }
 
   .tm-parts-table-wrap {
@@ -450,7 +472,7 @@
         </div>
         <div class="tm-parts-row-actions">
           <details class="tm-parts-edit">
-            <summary class="tm-parts-action">Edit</summary>
+            <summary class="tm-parts-action tm-parts-action-button">Edit</summary>
             <form class="tm-parts-form" method="post" action="/pro/parts/suppliers/{{ supplier.id }}/edit">
               <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
               <div class="tm-parts-form-grid">
@@ -486,7 +508,7 @@
           </details>
           <form method="post" action="/pro/parts/suppliers/{{ supplier.id }}/delete" onsubmit="return confirm('Are you sure you want to delete this supplier? Existing parts remain, but the supplier association is removed.');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <button class="tm-parts-button tm-parts-button--danger" type="submit">Delete</button>
+            <button class="tm-parts-button tm-parts-action-button tm-parts-button--danger" type="submit">Delete</button>
           </form>
         </div>
       </article>

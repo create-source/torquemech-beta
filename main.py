@@ -4909,6 +4909,10 @@ def startup_checks() -> None:
         init_metrics_db()
         init_shop_profile_db()
         init_pro_crm_schema_db()
+    else:
+        from scripts.db_migration import add_repair_job_parts_phase_6a03_fields_postgres
+
+        add_repair_job_parts_phase_6a03_fields_postgres()
     conn = app_db_conn(row_factory=True)
     try:
         ensure_auth_schema(conn)

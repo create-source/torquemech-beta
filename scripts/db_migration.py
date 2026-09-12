@@ -141,6 +141,17 @@ CREATE INDEX IF NOT EXISTS idx_parts_shop_supplier ON parts (shop_id, supplier_i
 CREATE INDEX IF NOT EXISTS idx_parts_shop_repair ON parts (shop_id, repair_id);
 """
 
+REPAIR_JOB_PARTS_PHASE_6A03_COLUMNS_POSTGRES = {
+    "supplier_id": "INTEGER",
+    "sell_price": "DOUBLE PRECISION NOT NULL DEFAULT 0",
+    "parts_center_part_id": "INTEGER",
+}
+
+REPAIR_JOB_PARTS_PHASE_6A03_INDEX_SQL = (
+    "CREATE INDEX IF NOT EXISTS idx_repair_job_parts_supplier_id ON repair_job_parts (supplier_id)",
+    "CREATE INDEX IF NOT EXISTS idx_repair_job_parts_parts_center_part_id ON repair_job_parts (parts_center_part_id)",
+)
+
 VISUAL_REFERENCE_CHILD_TABLES = {
     "visual_reference_images": (220, 5, 215),
     "visual_reference_specs": (308, 7, 301),
@@ -427,6 +438,32 @@ def apply_parts_center_schema(_args: argparse.Namespace) -> None:
     except Exception as exc:
         pg_conn.rollback()
         raise SystemExit(f"Failed to apply parts center schema: {exc}") from exc
+    finally:
+        pg_conn.close()
+
+
+def add_repair_job_parts_phase_6a03_fields_postgres(_args: argparse.Namespace | None = None) -> None:
+    if not db.using_postgres():
+        raise SystemExit("DATABASE_URL must be an explicit PostgreSQL URL for PostgreSQL migration commands.")
+
+    pg_conn = pg_connect()
+    try:
+        pg_sql = psycopg_sql()
+        with pg_conn:
+            with pg_conn.cursor() as cur:
+                for column_name, column_type in REPAIR_JOB_PARTS_PHASE_6A03_COLUMNS_POSTGRES.items():
+                    cur.execute(
+                        pg_sql.SQL("ALTER TABLE repair_job_parts ADD COLUMN IF NOT EXISTS {} {}").format(
+                            pg_sql.Identifier(column_name),
+                            pg_sql.SQL(column_type),
+                        )
+                    )
+                for index_sql in REPAIR_JOB_PARTS_PHASE_6A03_INDEX_SQL:
+                    cur.execute(index_sql)
+        print("repair_job_parts Phase 6A-03 fields applied successfully for PostgreSQL database")
+    except Exception as exc:
+        pg_conn.rollback()
+        raise SystemExit(f"Failed to apply PostgreSQL repair_job_parts Phase 6A-03 fields: {exc}") from exc
     finally:
         pg_conn.close()
 
@@ -1058,6 +1095,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     parts_center_schema = subparsers.add_parser("apply-parts-center-schema")
     parts_center_schema.set_defaults(func=apply_parts_center_schema)
+
+    repair_job_parts_6a03 = subparsers.add_parser("add-repair-job-parts-phase-6a03-fields")
+    repair_job_parts_6a03.set_defaults(func=add_repair_job_parts_phase_6a03_fields_postgres)
 
     subscriptions_schema_local = subparsers.add_parser("apply-subscriptions-schema-local")
     subscriptions_schema_local.set_defaults(func=apply_subscriptions_schema_local)

@@ -582,6 +582,113 @@ class DatabasePortabilityTests(unittest.TestCase):
 
         self.assertIn("explicit PostgreSQL URL", str(raised.exception))
 
+    def test_repair_job_parts_phase_6a03_migration_uses_idempotent_postgres_alters(self):
+        statements = []
+
+        class FakeComposable(str):
+            def format(self, *args):
+                formatted = str(self)
+                for arg in args:
+                    formatted = formatted.replace("{}", str(arg), 1)
+                return FakeComposable(formatted)
+
+        class FakeSql:
+            def SQL(self, value):
+                return FakeComposable(value)
+
+            def Identifier(self, value):
+                return FakeComposable(value)
+
+        class FakeCursor:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def execute(self, sql):
+                statements.append(str(sql))
+
+        class FakePgConn:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def cursor(self):
+                return FakeCursor()
+
+            def rollback(self):
+                statements.append("ROLLBACK")
+
+            def close(self):
+                statements.append("CLOSE")
+
+        with patch.dict(os.environ, {"DATABASE_URL": "postgresql://user:pass@example/db"}, clear=True), patch.object(
+            db_migration,
+            "pg_connect",
+            return_value=FakePgConn(),
+        ), patch.object(db_migration, "psycopg_sql", return_value=FakeSql()), patch.object(
+            db_migration.db, "active_app_db_path"
+        ) as active_app_db_path:
+            db_migration.add_repair_job_parts_phase_6a03_fields_postgres(Namespace())
+
+        active_app_db_path.assert_not_called()
+        combined = "\n".join(statements)
+        self.assertIn("ALTER TABLE repair_job_parts ADD COLUMN IF NOT EXISTS supplier_id INTEGER", combined)
+        self.assertIn(
+            "ALTER TABLE repair_job_parts ADD COLUMN IF NOT EXISTS sell_price DOUBLE PRECISION NOT NULL DEFAULT 0",
+            combined,
+        )
+        self.assertIn("ALTER TABLE repair_job_parts ADD COLUMN IF NOT EXISTS parts_center_part_id INTEGER", combined)
+        self.assertIn("CREATE INDEX IF NOT EXISTS idx_repair_job_parts_supplier_id", combined)
+        self.assertIn("CREATE INDEX IF NOT EXISTS idx_repair_job_parts_parts_center_part_id", combined)
+        self.assertEqual(statements[-1], "CLOSE")
+
+    def test_repair_job_parts_phase_6a03_command_is_registered(self):
+        args = db_migration.build_parser().parse_args(["add-repair-job-parts-phase-6a03-fields"])
+
+        self.assertIs(args.func, db_migration.add_repair_job_parts_phase_6a03_fields_postgres)
+
+    def test_postgres_repair_job_parts_schema_verifies_6a03_columns_without_runtime_alter(self):
+        statements = []
+        pro_module._POSTGRES_SCHEMA_READY.discard("ensure_repair_job_parts_schema")
+
+        class FakeResult:
+            def __init__(self, rows=None):
+                self._rows = rows or []
+
+            def fetchall(self):
+                return self._rows
+
+        class FakeConn:
+            def execute(self, sql):
+                statements.append(str(sql))
+                if str(sql).strip().upper().startswith("PRAGMA TABLE_INFO"):
+                    return FakeResult(
+                        [
+                            (0, "id"),
+                            (1, "repair_record_id"),
+                            (2, "part_name"),
+                            (3, "supplier_id"),
+                            (4, "sell_price"),
+                            (5, "parts_center_part_id"),
+                        ]
+                    )
+                return FakeResult()
+
+            def commit(self):
+                statements.append("COMMIT")
+
+        with patch.object(pro_module, "using_postgres", return_value=True):
+            pro_module.ensure_repair_job_parts_schema(FakeConn())
+
+        self.assertFalse(
+            any(statement.strip().upper().startswith("ALTER TABLE") for statement in statements),
+            statements,
+        )
+
     def test_account_preference_columns_are_in_postgres_schema_migration(self):
         self.assertEqual(
             db_migration.ACCOUNT_COLUMNS["appearance_preference"],

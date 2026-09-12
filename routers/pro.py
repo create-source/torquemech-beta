@@ -6742,6 +6742,11 @@ def repair_cost_totals(repair: dict[str, Any]) -> dict[str, Any]:
 
 
 def ensure_repair_job_parts_schema(conn: sqlite3.Connection) -> None:
+    phase_6a03_columns = {
+        "supplier_id": "supplier_id INTEGER",
+        "sell_price": "sell_price REAL NOT NULL DEFAULT 0",
+        "parts_center_part_id": "parts_center_part_id INTEGER",
+    }
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS repair_job_parts (
@@ -6764,12 +6769,17 @@ def ensure_repair_job_parts_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
-    for column_name, column_sql in {
-        "supplier_id": "supplier_id INTEGER",
-        "sell_price": "sell_price REAL NOT NULL DEFAULT 0",
-        "parts_center_part_id": "parts_center_part_id INTEGER",
-    }.items():
-        add_column_if_missing(conn, "repair_job_parts", column_name, column_sql)
+    if using_postgres():
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(repair_job_parts)").fetchall()}
+        missing_columns = sorted(set(phase_6a03_columns) - columns)
+        if missing_columns:
+            raise RuntimeError(
+                "PostgreSQL repair_job_parts schema is missing Phase 6A-03 columns "
+                f"{', '.join(missing_columns)}. Run the explicit migration before starting the application."
+            )
+    else:
+        for column_name, column_sql in phase_6a03_columns.items():
+            add_column_if_missing(conn, "repair_job_parts", column_name, column_sql)
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_repair_job_parts_repair_record_id "
         "ON repair_job_parts (repair_record_id)"
