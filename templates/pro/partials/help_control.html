@@ -1,0 +1,18 @@
+{% macro tm_help(title, text, secondary="") -%}
+<span class="tm-help-control" data-tm-help>
+  <button
+    class="tm-help-button"
+    type="button"
+    aria-label="What is {{ title }}?"
+    aria-expanded="false"
+    data-tm-help-toggle
+  >?</button>
+  <span class="tm-help-popover" role="status" hidden data-tm-help-popover>
+    <span class="tm-help-popover-title">{{ title }}</span>
+    <span class="tm-help-popover-text">{{ text }}</span>
+    {% if secondary %}
+    <span class="tm-help-popover-secondary">{{ secondary }}</span>
+    {% endif %}
+  </span>
+</span>
+{%- endmacro %}

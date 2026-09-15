@@ -1,3 +1,4 @@
+{% from "pro/partials/help_control.html" import tm_help %}
 {% set tracked_parts = item.tracked_parts or [] %}
 {% set linked_repair_id = item.linked_repair_record_id or item.id %}
 {% set supplier_options = repair_part_suppliers|default([]) %}
@@ -6,7 +7,9 @@
   <div class="tm-blueprint-summary-head">
     <div>
       <div class="tm-crm-kicker">Parts Tracking</div>
-      <div class="tm-blueprint-summary-title">Parts Tracking</div>
+      <div class="tm-blueprint-summary-title">
+        <span class="tm-heading-with-help">Parts Tracking {{ tm_help("Parts Tracking", "Track the parts used for this repair, what they cost your shop, what you charge the customer, where they came from, and whether they've been ordered or installed.", "Parts stay attached to the repair and can also be referenced later in the Parts Center and purchasing history.") }}</span>
+      </div>
       <div class="tm-blueprint-summary-subtitle">Tracked Parts Total: {{ (item.tracked_parts_total or 0)|pro_currency }}</div>
     </div>
   </div>
@@ -60,11 +63,11 @@
             </div>
             <div class="tm-crm-row">
               <div><label class="tm-label">Part Number</label><input class="tm-input" name="part_number" type="text" maxlength="180" value="{{ part.part_number or '' }}"></div>
-              <div><label class="tm-label">Unit Cost</label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" value="{{ part.unit_cost }}" data-part-cost></div>
+              <div><label class="tm-label"><span class="tm-inline-label-help">Unit Cost {{ tm_help("Unit Cost", "What the shop pays for one part.") }}</span></label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" value="{{ part.unit_cost }}" data-part-cost></div>
             </div>
             <div class="tm-crm-row">
               <div>
-                <label class="tm-label">Sell Price</label>
+                <label class="tm-label"><span class="tm-inline-label-help">Sell Price {{ tm_help("Sell Price", "What the customer is charged. Auto-calculated from your default markup unless you override it.") }}</span></label>
                 <input class="tm-input" name="sell_price" type="text" inputmode="decimal" value="{{ part.sell_price }}" data-part-sell-price>
                 <div class="tm-blueprint-summary-subtitle" style="margin-top:4px;">Auto-calculated from your default parts markup. You can override it.</div>
               </div>
@@ -116,11 +119,11 @@
       </div>
       <div class="tm-crm-row">
         <div><label class="tm-label">Part Number</label><input class="tm-input" name="part_number" type="text" maxlength="180"></div>
-        <div><label class="tm-label">Unit Cost</label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" placeholder="0" data-part-cost></div>
+        <div><label class="tm-label"><span class="tm-inline-label-help">Unit Cost {{ tm_help("Unit Cost", "What the shop pays for one part.") }}</span></label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" placeholder="0" data-part-cost></div>
       </div>
       <div class="tm-crm-row">
         <div>
-          <label class="tm-label">Sell Price</label>
+          <label class="tm-label"><span class="tm-inline-label-help">Sell Price {{ tm_help("Sell Price", "What the customer is charged. Auto-calculated from your default markup unless you override it.") }}</span></label>
           <input class="tm-input" name="sell_price" type="text" inputmode="decimal" placeholder="0" data-part-sell-price>
           <div class="tm-blueprint-summary-subtitle" style="margin-top:4px;">Auto-calculated from your default parts markup. You can override it.</div>
         </div>
@@ -190,12 +193,13 @@
       updateAutomaticSellPrice(form);
     });
     sellPriceInput.addEventListener("input", function () {
+      form.dataset.partPricingMode = "manual";
+    });
+    sellPriceInput.addEventListener("blur", function () {
       if (sellPriceInput.value.trim() === "") {
         form.dataset.partPricingMode = "auto";
         updateAutomaticSellPrice(form);
-        return;
       }
-      form.dataset.partPricingMode = "manual";
     });
   });
 })();

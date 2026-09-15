@@ -4112,6 +4112,7 @@
 
 {% block content %}
 
+{% from "pro/partials/help_control.html" import tm_help %}
 <section class="tm-pro-shell tm-pro-shell--vehicle">
   {% set workspace_active_repair_items = repair_workspace_groups.active|default([], true)|list %}
   {% set workspace_in_progress_items = repair_workspace_groups.in_progress|default([], true)|list %}
@@ -4145,7 +4146,7 @@
   <header class="tm-vehicle-workspace-header" aria-label="Vehicle workspace header">
     <div class="tm-vehicle-workspace-topline">
       <div>
-        <div class="tm-pro-eyebrow">Vehicle Workspace</div>
+        <div class="tm-pro-eyebrow"><span class="tm-heading-with-help">Vehicle Workspace {{ tm_help("Vehicle Workspace", "This is the main workspace for this vehicle. Review its current work, findings, estimates, repairs, invoices, maintenance, and history from one place.") }}</span></div>
         <h1 class="tm-pro-title">{{ vehicle_name or "Vehicle" }}</h1>
         <p class="tm-pro-subtitle">{{ customer_name }}</p>
       </div>
@@ -4175,7 +4176,7 @@
   </header>
 
   <section class="tm-crm-vehicle-summary" id="vehicle-information" aria-label="Vehicle summary">
-    <div class="tm-crm-kicker">Vehicle</div>
+    <div class="tm-crm-kicker"><span class="tm-heading-with-help">Vehicle {{ tm_help("Vehicle", "Shows the vehicle currently being worked on, including its engine and current mileage when available.") }}</span></div>
     <div class="tm-crm-chip-row">
       <span class="tm-crm-chip">{{ vehicle.engine|pro_engine_badge }}</span>
       <span class="tm-crm-chip">{% if vehicle.mileage %}Current {{ vehicle.mileage|pro_miles }} miles{% else %}Current mileage not recorded{% endif %}</span>
@@ -4202,7 +4203,7 @@
   </nav>
 
   <section class="tm-crm-panel tm-workspace-pane" id="overview" data-workspace-pane="overview" aria-label="Vehicle workspace overview">
-    <div class="tm-crm-kicker">Overview</div>
+    <div class="tm-crm-kicker"><span class="tm-heading-with-help">Overview {{ tm_help("Overview", "A quick summary of this vehicle's customer, active repairs, findings, prepared estimates, and invoices.") }}</span></div>
     <div class="tm-workspace-overview" style="margin-top:12px;">
       <article class="tm-workspace-overview-card">
         <span>Vehicle / Customer</span>
@@ -4619,7 +4620,7 @@
       <summary class="tm-workspace-section-summary">
         <span>
           <span class="tm-crm-kicker">Recently Completed</span>
-          <strong style="display:block; margin-top:4px;">Recently Completed <span class="tm-workspace-section-count">({{ recently_completed_count }})</span></strong>
+          <strong style="display:block; margin-top:4px;"><span class="tm-heading-with-help">Recently Completed <span class="tm-workspace-section-count">({{ recently_completed_count }})</span> {{ tm_help("Completed Repairs", "Repair jobs that have been formally completed. Completed repairs remain part of the vehicle's permanent service history.") }}</span></strong>
         </span>
       </summary>
       {% if recently_completed_items %}
@@ -5168,7 +5169,7 @@
       <summary class="tm-workspace-summary">
         <span class="tm-workspace-summary-title">
           <span>Additional Findings / Recommended Work</span>
-          <strong>Additional Findings / Recommended Work</strong>
+          <strong><span class="tm-heading-with-help">Findings {{ tm_help("Findings", "Problems or recommended work documented during inspections or repairs. Findings can be turned into estimates and sent to the customer for a decision.") }}</span></strong>
         </span>
       </summary>
 
@@ -5181,6 +5182,9 @@
         <p class="tm-pro-subtitle" style="margin:0;">
           Document problems found during inspection or during a repair. Prepared estimates stay linked to each finding.
         </p>
+        <div class="tm-crm-kicker" style="margin-top:12px;">
+          <span class="tm-heading-with-help">Approvals / Decisions {{ tm_help("Approvals / Decisions", "A history of customer decisions on recommended work, including approvals, declines, and decisions to handle the work later.") }}</span>
+        </div>
 
       <div class="tm-findings-status-groups" aria-label="Expandable additional finding status groups">
         {% for group in [
@@ -5399,7 +5403,7 @@
       <summary class="tm-workspace-summary">
         <span class="tm-workspace-summary-title">
           <span>Estimates</span>
-          <strong>Estimates <span class="tm-timeline-count">({{ workspace_estimates|length }})</span></strong>
+          <strong><span class="tm-heading-with-help">Estimates {{ tm_help("Estimates", "Prepared repair estimates for this vehicle. Estimates can be reviewed, shared with the customer, and linked back to the original finding.") }}</span> <span class="tm-timeline-count">({{ workspace_estimates|length }})</span></strong>
         </span>
       </summary>
       <div class="tm-workspace-panel-body">
@@ -5449,7 +5453,7 @@
     <summary class="tm-workspace-summary">
       <span class="tm-workspace-summary-title">
         <span>Tracked Maintenance / Smart Reminders</span>
-        <strong>Maintenance Tracking</strong>
+        <strong><span class="tm-heading-with-help">Maintenance Services {{ tm_help("Maintenance Services", "Maintenance services recorded for this vehicle and used to help track future mileage- or time-based service needs.") }}</span></strong>
       </span>
     </summary>
     <div class="tm-workspace-panel-body">
@@ -5637,7 +5641,7 @@
       <summary class="tm-workspace-summary">
         <span class="tm-workspace-summary-title">
           <span>Invoices</span>
-          <strong>Invoices <span class="tm-timeline-count">({{ workspace_invoices|length }})</span></strong>
+          <strong><span class="tm-heading-with-help">Invoices {{ tm_help("Invoices", "Final invoices created for completed work on this vehicle, including payment and balance information.") }}</span> <span class="tm-timeline-count">({{ workspace_invoices|length }})</span></strong>
         </span>
       </summary>
       <div class="tm-workspace-panel-body">
@@ -5694,7 +5698,7 @@
     <summary class="tm-workspace-summary">
       <span class="tm-workspace-summary-title">
         <span>Vehicle Timeline</span>
-        <strong>Vehicle Timeline <span class="tm-timeline-count" data-timeline-count>({{ timeline_total }} {% if timeline_total == 1 %}entry{% else %}entries{% endif %})</span></strong>
+        <strong><span class="tm-heading-with-help">Vehicle Timeline {{ tm_help("Vehicle Timeline", "A chronological history of important activity for this vehicle, including findings, estimates, repairs, invoices, maintenance, and customer decisions.") }}</span> <span class="tm-timeline-count" data-timeline-count>({{ timeline_total }} {% if timeline_total == 1 %}entry{% else %}entries{% endif %})</span></strong>
       </span>
     </summary>
     <div class="tm-workspace-panel-body" data-timeline-body>

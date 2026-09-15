@@ -644,6 +644,101 @@ body.dark .tm-hero,
 .tm-btn-secondary,.btn-secondary{background:var(--tm-surface);color:var(--tm-text);border:1px solid var(--tm-border-strong);}
 .tm-btn-secondary:hover,.btn-secondary:hover,.tm-btn-secondary:focus-visible,.btn-secondary:focus-visible{background:var(--tm-surface-2);border-color:var(--tm-blue-light);}
 
+.tm-heading-with-help,
+.tm-inline-label-help{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+}
+
+.tm-help-control{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  flex:0 0 auto;
+  vertical-align:middle;
+}
+
+.tm-help-button{
+  display:inline-grid;
+  place-items:center;
+  width:22px;
+  min-width:22px;
+  height:22px;
+  min-height:22px;
+  padding:0;
+  border:1px solid rgba(251,146,60,.42);
+  border-radius:999px;
+  background:rgba(249,115,22,.12);
+  color:#fdba74;
+  font:inherit;
+  font-size:.78rem;
+  font-weight:950;
+  line-height:1;
+  box-shadow:none;
+  transform:none;
+}
+
+.tm-help-button:hover,
+.tm-help-button:focus-visible,
+.tm-help-button[aria-expanded="true"]{
+  border-color:rgba(251,146,60,.74);
+  background:rgba(249,115,22,.2);
+  color:#fff7ed;
+  outline:none;
+  transform:none;
+}
+
+.tm-help-popover{
+  position:absolute;
+  top:calc(100% + 8px);
+  left:0;
+  z-index:1000;
+  display:grid;
+  gap:5px;
+  width:min(280px, calc(100vw - 32px));
+  padding:10px 11px;
+  border:1px solid rgba(148,163,184,.28);
+  border-radius:8px;
+  background:#111c2d;
+  color:#e5edf8;
+  box-shadow:0 16px 34px rgba(0,0,0,.34);
+  text-align:left;
+  white-space:normal;
+}
+
+.tm-help-popover[hidden]{
+  display:none;
+}
+
+.tm-help-popover-title{
+  color:#fff;
+  font-size:.82rem;
+  font-weight:950;
+  line-height:1.2;
+}
+
+.tm-help-popover-text,
+.tm-help-popover-secondary{
+  color:#b9c8dc;
+  font-size:.8rem;
+  font-weight:700;
+  line-height:1.35;
+}
+
+.tm-help-popover-secondary{
+  color:#fdba74;
+}
+
+@media (max-width:640px){
+  .tm-help-popover{
+    left:auto;
+    right:-8px;
+    max-width:calc(100vw - 28px);
+  }
+}
+
 .estimator-final-actions{
   display: grid;
   gap: 9px;

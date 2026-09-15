@@ -1162,6 +1162,47 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('"#vehicle-photos": "photos"', vehicle_detail)
         self.assertIn('"estimate_document_records": estimate_document_records', pro_router)
 
+    def test_reusable_help_control_assets_and_dashboard_content_render(self):
+        dashboard = (ROOT / "templates" / "pro" / "dashboard.html").read_text(encoding="utf-8")
+        help_partial = (ROOT / "templates" / "pro" / "partials" / "help_control.html").read_text(encoding="utf-8")
+        helpers_js = (ROOT / "static" / "pro_form_helpers.js").read_text(encoding="utf-8")
+        style_css = (ROOT / "static" / "style.css").read_text(encoding="utf-8")
+
+        self.assertIn('{% from "pro/partials/help_control.html" import tm_help %}', dashboard)
+        self.assertIn('class="tm-help-button"', help_partial)
+        self.assertIn('aria-label="What is {{ title }}?"', help_partial)
+        self.assertIn('aria-expanded="false"', help_partial)
+        self.assertIn("data-tm-help-toggle", help_partial)
+        self.assertIn("data-tm-help-popover", help_partial)
+        self.assertIn("closeOpenHelpControls(help)", helpers_js)
+        self.assertIn('event.key === "Escape"', helpers_js)
+        self.assertIn('document.addEventListener("click"', helpers_js)
+        self.assertIn(".tm-help-popover", style_css)
+        self.assertIn("Your overview of shop activity", dashboard)
+        self.assertIn("Shortcuts to the most common actions", dashboard)
+        self.assertIn("Shows confirmed appointments scheduled for today", dashboard)
+        self.assertIn("Collects work that may need action", dashboard)
+        self.assertIn("New customer booking requests", dashboard)
+        self.assertIn("Shows repair jobs by their current stage", dashboard)
+        self.assertIn("Shows findings, prepared estimates, and customer decisions", dashboard)
+        self.assertIn("Shows completed work that needs invoicing", dashboard)
+        self.assertIn("Shows maintenance opportunities based on mileage and time", dashboard)
+
+    def test_vehicle_workspace_help_content_rendered_near_key_sections(self):
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+
+        self.assertIn('{% from "pro/partials/help_control.html" import tm_help %}', vehicle_detail)
+        self.assertIn("This is the main workspace for this vehicle", vehicle_detail)
+        self.assertIn("Shows the vehicle currently being worked on", vehicle_detail)
+        self.assertIn("A quick summary of this vehicle's customer", vehicle_detail)
+        self.assertIn("A chronological history of important activity", vehicle_detail)
+        self.assertIn("Problems or recommended work documented during inspections", vehicle_detail)
+        self.assertIn("Prepared repair estimates for this vehicle", vehicle_detail)
+        self.assertIn("Repair jobs that have been formally completed", vehicle_detail)
+        self.assertIn("Final invoices created for completed work", vehicle_detail)
+        self.assertIn("Maintenance services recorded for this vehicle", vehicle_detail)
+        self.assertIn("A history of customer decisions on recommended work", vehicle_detail)
+
     def test_workspace_groups_status_lanes_and_primary_actions(self):
         vehicle = {"id": 1, "year": 2016, "make": "Honda", "model": "Accord", "mileage": 120000}
         active = [
@@ -2138,6 +2179,10 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("data-part-cost", partial)
         self.assertIn("data-part-sell-price", partial)
         self.assertIn("Auto-calculated from your default parts markup. You can override it.", partial)
+        self.assertIn("Track the parts used for this repair", partial)
+        self.assertIn("Parts stay attached to the repair", partial)
+        self.assertIn("What the shop pays for one part.", partial)
+        self.assertIn("What the customer is charged.", partial)
 
     def test_parts_tracking_pricing_fields_order_and_override_script(self):
         partial = (ROOT / "templates" / "pro" / "partials" / "parts_tracking.html").read_text(encoding="utf-8")
@@ -2150,8 +2195,13 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('sellPriceInput.value.trim() === ""', partial)
         self.assertIn('form.dataset.partPricingMode = "auto"', partial)
         self.assertIn('form.dataset.partPricingMode = "manual"', partial)
+        self.assertIn('sellPriceInput.addEventListener("blur"', partial)
         self.assertIn("toFixed(2)", partial)
         self.assertIn("cost * (1 + markup / 100)", partial)
+        input_handler = partial.split('sellPriceInput.addEventListener("input"', 1)[1].split('sellPriceInput.addEventListener("blur"', 1)[0]
+        self.assertIn('form.dataset.partPricingMode = "manual"', input_handler)
+        self.assertNotIn("updateAutomaticSellPrice(form)", input_handler)
+        self.assertNotIn("sellPriceInput.value =", input_handler)
 
     def test_repair_workspace_collapsible_sections_and_track_parts_actions_render(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")

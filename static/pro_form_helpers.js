@@ -239,6 +239,49 @@
     });
   }
 
+  function closeHelpControl(help) {
+    if (!help) return;
+    const button = help.querySelector("[data-tm-help-toggle]");
+    const popover = help.querySelector("[data-tm-help-popover]");
+    if (button) button.setAttribute("aria-expanded", "false");
+    if (popover) popover.hidden = true;
+  }
+
+  function closeOpenHelpControls(except) {
+    document.querySelectorAll("[data-tm-help]").forEach((help) => {
+      if (help !== except) closeHelpControl(help);
+    });
+  }
+
+  function bindHelpControl(help) {
+    if (help.dataset.tmHelpBound === "1") return;
+    help.dataset.tmHelpBound = "1";
+    const button = help.querySelector("[data-tm-help-toggle]");
+    const popover = help.querySelector("[data-tm-help-popover]");
+    if (!button || !popover) return;
+
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const opening = button.getAttribute("aria-expanded") !== "true";
+      closeOpenHelpControls(help);
+      button.setAttribute("aria-expanded", opening ? "true" : "false");
+      popover.hidden = !opening;
+    });
+
+    popover.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+  }
+
+  function bindGlobalHelpEvents() {
+    if (document.documentElement.dataset.tmHelpGlobalBound === "1") return;
+    document.documentElement.dataset.tmHelpGlobalBound = "1";
+    document.addEventListener("click", () => closeOpenHelpControls());
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeOpenHelpControls();
+    });
+  }
+
   function isPhoneLikeInput(input) {
     if (!(input instanceof HTMLInputElement)) return false;
     const haystack = [
@@ -255,6 +298,8 @@
     const scope = root || document;
     ensureDateClearStyles();
     ensurePhotoUploadStyles();
+    bindGlobalHelpEvents();
+    scope.querySelectorAll("[data-tm-help]").forEach(bindHelpControl);
     scope.querySelectorAll("input").forEach((input) => {
       if (isPhoneLikeInput(input)) bindPhoneInput(input);
     });
