@@ -1796,6 +1796,149 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(center_part["sell_price"], 29.99)
         self.assertEqual(center_part["description"], "Engine Coolant")
 
+    def test_blank_repair_part_sell_price_uses_default_shop_markup(self):
+        conn = self.repair_parts_supplier_conn()
+        pro_module.ensure_shop_profile_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO shop_profile (id, shop_name, default_parts_markup, updated_at)
+            VALUES (10, 'Alpha Shop', 40, '2026-06-29T10:00:00')
+            """
+        )
+
+        part_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {
+                "part_name": "Engine Coolant",
+                "supplier_id": "100",
+                "qty": "1",
+                "unit_cost": "100",
+                "sell_price": "",
+            },
+            "2026-06-29T10:01:00",
+            shop_id=10,
+        )
+
+        part = conn.execute("SELECT * FROM repair_job_parts WHERE id = ?", (part_id,)).fetchone()
+        center_part = conn.execute("SELECT * FROM parts WHERE repair_id = 44").fetchone()
+
+        self.assertEqual(part["sell_price"], 140.00)
+        self.assertEqual(center_part["sell_price"], 140.00)
+
+    def test_explicit_repair_part_sell_price_preserves_manual_value(self):
+        conn = self.repair_parts_supplier_conn()
+        pro_module.ensure_shop_profile_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO shop_profile (id, shop_name, default_parts_markup, updated_at)
+            VALUES (10, 'Alpha Shop', 40, '2026-06-29T10:00:00')
+            """
+        )
+
+        part_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {
+                "part_name": "Engine Coolant",
+                "supplier_id": "100",
+                "qty": "1",
+                "unit_cost": "100",
+                "sell_price": "125.55",
+            },
+            "2026-06-29T10:01:00",
+            shop_id=10,
+        )
+
+        part = conn.execute("SELECT * FROM repair_job_parts WHERE id = ?", (part_id,)).fetchone()
+        center_part = conn.execute("SELECT * FROM parts WHERE repair_id = 44").fetchone()
+
+        self.assertEqual(part["sell_price"], 125.55)
+        self.assertEqual(center_part["sell_price"], 125.55)
+
+    def test_repair_part_edit_without_sell_price_preserves_existing_manual_value(self):
+        conn = self.repair_parts_supplier_conn()
+        pro_module.ensure_shop_profile_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO shop_profile (id, shop_name, default_parts_markup, updated_at)
+            VALUES (10, 'Alpha Shop', 40, '2026-06-29T10:00:00')
+            """
+        )
+        part_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {
+                "part_name": "Engine Coolant",
+                "supplier_id": "100",
+                "qty": "1",
+                "unit_cost": "100",
+                "sell_price": "125.55",
+            },
+            "2026-06-29T10:01:00",
+            shop_id=10,
+        )
+
+        pro_module.update_repair_job_part(
+            conn,
+            44,
+            part_id,
+            {"unit_cost": "150"},
+            "2026-06-29T10:02:00",
+            shop_id=10,
+        )
+
+        part = conn.execute("SELECT * FROM repair_job_parts WHERE id = ?", (part_id,)).fetchone()
+        center_part = conn.execute("SELECT * FROM parts WHERE repair_id = 44").fetchone()
+
+        self.assertEqual(part["unit_cost"], 150)
+        self.assertEqual(part["sell_price"], 125.55)
+        self.assertEqual(center_part["cost"], 150)
+        self.assertEqual(center_part["sell_price"], 125.55)
+
+    def test_repair_part_edit_blank_sell_price_recalculates_from_default_markup(self):
+        conn = self.repair_parts_supplier_conn()
+        pro_module.ensure_shop_profile_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO shop_profile (id, shop_name, default_parts_markup, updated_at)
+            VALUES (10, 'Alpha Shop', 40, '2026-06-29T10:00:00')
+            """
+        )
+        part_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {
+                "part_name": "Engine Coolant",
+                "supplier_id": "100",
+                "qty": "1",
+                "unit_cost": "100",
+                "sell_price": "125.55",
+            },
+            "2026-06-29T10:01:00",
+            shop_id=10,
+        )
+
+        pro_module.update_repair_job_part(
+            conn,
+            44,
+            part_id,
+            {"unit_cost": "150", "sell_price": ""},
+            "2026-06-29T10:02:00",
+            shop_id=10,
+        )
+
+        part = conn.execute("SELECT * FROM repair_job_parts WHERE id = ?", (part_id,)).fetchone()
+        center_part = conn.execute("SELECT * FROM parts WHERE repair_id = 44").fetchone()
+
+        self.assertEqual(part["unit_cost"], 150)
+        self.assertEqual(part["sell_price"], 210.00)
+        self.assertEqual(center_part["sell_price"], 210.00)
+
+    def test_parts_sell_price_helper_applies_forty_percent_markup(self):
+        self.assertEqual(pro_module.calculate_parts_sell_price(100, 40), 140.00)
+        self.assertEqual(pro_module.calculate_parts_sell_price(100, 0), 100.00)
+
     def test_repair_part_edit_does_not_create_duplicate_parts_center_rows(self):
         conn = self.repair_parts_supplier_conn()
         now = "2026-06-29T10:01:00"
@@ -1978,9 +2121,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
         repair_detail = (ROOT / "templates" / "pro" / "repair_detail.html").read_text(encoding="utf-8")
         partial = (ROOT / "templates" / "pro" / "partials" / "parts_tracking.html").read_text(encoding="utf-8")
+        pro_py = (ROOT / "routers" / "pro.py").read_text(encoding="utf-8")
 
         self.assertIn('include "pro/partials/parts_tracking.html"', vehicle_detail)
         self.assertIn('include "pro/partials/parts_tracking.html"', repair_detail)
+        self.assertIn('"default_parts_markup": default_parts_markup', pro_py)
         self.assertIn("Parts Tracking", partial)
         self.assertIn("No parts tracked yet.", partial)
         self.assertIn("Vendor / Source", partial)
@@ -1988,6 +2133,25 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Part Number", partial)
         self.assertIn("Sell Price", partial)
         self.assertIn("repair_job_part_status_options", partial)
+        self.assertIn('data-default-parts-markup="{{ parts_markup }}"', partial)
+        self.assertIn("data-part-pricing-form", partial)
+        self.assertIn("data-part-cost", partial)
+        self.assertIn("data-part-sell-price", partial)
+        self.assertIn("Auto-calculated from your default parts markup. You can override it.", partial)
+
+    def test_parts_tracking_pricing_fields_order_and_override_script(self):
+        partial = (ROOT / "templates" / "pro" / "partials" / "parts_tracking.html").read_text(encoding="utf-8")
+
+        edit_form_start = partial.index('data-part-pricing-form data-part-pricing-mode="manual"')
+        add_form_start = partial.index('data-part-pricing-form data-part-pricing-mode="auto"')
+        self.assertLess(partial.index("Unit Cost", edit_form_start), partial.index("Sell Price", edit_form_start))
+        self.assertLess(partial.index("Unit Cost", add_form_start), partial.index("Sell Price", add_form_start))
+        self.assertIn('form.dataset.partPricingMode === "manual"', partial)
+        self.assertIn('sellPriceInput.value.trim() === ""', partial)
+        self.assertIn('form.dataset.partPricingMode = "auto"', partial)
+        self.assertIn('form.dataset.partPricingMode = "manual"', partial)
+        self.assertIn("toFixed(2)", partial)
+        self.assertIn("cost * (1 + markup / 100)", partial)
 
     def test_repair_workspace_collapsible_sections_and_track_parts_actions_render(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")

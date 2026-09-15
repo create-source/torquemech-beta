@@ -1,7 +1,8 @@
 {% set tracked_parts = item.tracked_parts or [] %}
 {% set linked_repair_id = item.linked_repair_record_id or item.id %}
 {% set supplier_options = repair_part_suppliers|default([]) %}
-<section class="tm-blueprint-summary-card tm-parts-tracking" id="parts-tracking" aria-label="Parts tracking for {{ item.title or item.repair_name or 'repair' }}">
+{% set parts_markup = default_parts_markup|default(40) %}
+<section class="tm-blueprint-summary-card tm-parts-tracking" id="parts-tracking" aria-label="Parts tracking for {{ item.title or item.repair_name or 'repair' }}" data-default-parts-markup="{{ parts_markup }}">
   <div class="tm-blueprint-summary-head">
     <div>
       <div class="tm-crm-kicker">Parts Tracking</div>
@@ -39,7 +40,7 @@
         </form>
         <details>
           <summary class="tm-btn tm-btn-secondary">Edit</summary>
-          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts/{{ part.id }}" style="display:grid; gap:10px; margin-top:10px;">
+          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts/{{ part.id }}" style="display:grid; gap:10px; margin-top:10px;" data-part-pricing-form data-part-pricing-mode="manual">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="tm-crm-row">
               <div><label class="tm-label">Part Name</label><input class="tm-input" name="part_name" type="text" maxlength="180" value="{{ part.part_name }}"></div>
@@ -59,10 +60,14 @@
             </div>
             <div class="tm-crm-row">
               <div><label class="tm-label">Part Number</label><input class="tm-input" name="part_number" type="text" maxlength="180" value="{{ part.part_number or '' }}"></div>
-              <div><label class="tm-label">Sell Price</label><input class="tm-input" name="sell_price" type="text" inputmode="decimal" value="{{ part.sell_price }}"></div>
+              <div><label class="tm-label">Unit Cost</label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" value="{{ part.unit_cost }}" data-part-cost></div>
             </div>
             <div class="tm-crm-row">
-              <div><label class="tm-label">Unit Cost</label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" value="{{ part.unit_cost }}"></div>
+              <div>
+                <label class="tm-label">Sell Price</label>
+                <input class="tm-input" name="sell_price" type="text" inputmode="decimal" value="{{ part.sell_price }}" data-part-sell-price>
+                <div class="tm-blueprint-summary-subtitle" style="margin-top:4px;">Auto-calculated from your default parts markup. You can override it.</div>
+              </div>
               <div>
                 <label class="tm-label">Status</label>
                 <select class="tm-input" name="status">
@@ -91,7 +96,7 @@
   {% if linked_repair_id %}
   <details style="margin-top:12px;">
     <summary class="tm-btn tm-btn-primary">Add Part</summary>
-    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts" style="display:grid; gap:10px; margin-top:12px;">
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts" style="display:grid; gap:10px; margin-top:12px;" data-part-pricing-form data-part-pricing-mode="auto">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="tm-crm-row">
         <div><label class="tm-label">Part Name</label><input class="tm-input" name="part_name" type="text" maxlength="180" value="{{ item.default_part_name or '' }}" required></div>
@@ -111,10 +116,14 @@
       </div>
       <div class="tm-crm-row">
         <div><label class="tm-label">Part Number</label><input class="tm-input" name="part_number" type="text" maxlength="180"></div>
-        <div><label class="tm-label">Sell Price</label><input class="tm-input" name="sell_price" type="text" inputmode="decimal" placeholder="0"></div>
+        <div><label class="tm-label">Unit Cost</label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" placeholder="0" data-part-cost></div>
       </div>
       <div class="tm-crm-row">
-        <div><label class="tm-label">Unit Cost</label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" placeholder="0"></div>
+        <div>
+          <label class="tm-label">Sell Price</label>
+          <input class="tm-input" name="sell_price" type="text" inputmode="decimal" placeholder="0" data-part-sell-price>
+          <div class="tm-blueprint-summary-subtitle" style="margin-top:4px;">Auto-calculated from your default parts markup. You can override it.</div>
+        </div>
         <div>
           <label class="tm-label">Status</label>
           <select class="tm-input" name="status">
@@ -132,3 +141,62 @@
   <div class="tm-history-empty" style="margin-top:12px;">Open this repair before tracking parts.</div>
   {% endif %}
 </section>
+
+<script>
+(function () {
+  function parseSafeDecimal(value) {
+    var parsed = Number.parseFloat(String(value || "").trim());
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+  }
+
+  function markupForForm(form) {
+    var section = form.closest("[data-default-parts-markup]");
+    var markup = section ? parseSafeDecimal(section.dataset.defaultPartsMarkup) : 0;
+    return markup === null ? 0 : markup;
+  }
+
+  function calculateSellPrice(cost, markup) {
+    return (cost * (1 + markup / 100)).toFixed(2);
+  }
+
+  function updateAutomaticSellPrice(form) {
+    if (form.dataset.partPricingMode === "manual") {
+      return;
+    }
+    var costInput = form.querySelector("[data-part-cost]");
+    var sellPriceInput = form.querySelector("[data-part-sell-price]");
+    if (!costInput || !sellPriceInput) {
+      return;
+    }
+    var cost = parseSafeDecimal(costInput.value);
+    if (cost === null) {
+      sellPriceInput.value = "";
+      return;
+    }
+    sellPriceInput.value = calculateSellPrice(cost, markupForForm(form));
+  }
+
+  document.querySelectorAll("[data-part-pricing-form]").forEach(function (form) {
+    if (form.dataset.partPricingBound === "true") {
+      return;
+    }
+    form.dataset.partPricingBound = "true";
+    var costInput = form.querySelector("[data-part-cost]");
+    var sellPriceInput = form.querySelector("[data-part-sell-price]");
+    if (!costInput || !sellPriceInput) {
+      return;
+    }
+    costInput.addEventListener("input", function () {
+      updateAutomaticSellPrice(form);
+    });
+    sellPriceInput.addEventListener("input", function () {
+      if (sellPriceInput.value.trim() === "") {
+        form.dataset.partPricingMode = "auto";
+        updateAutomaticSellPrice(form);
+        return;
+      }
+      form.dataset.partPricingMode = "manual";
+    });
+  });
+})();
+</script>

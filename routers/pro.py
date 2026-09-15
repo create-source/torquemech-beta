@@ -3217,6 +3217,7 @@ SHOP_PROFILE_COLUMNS = (
     "default_labor_rate",
     "tax_rate",
     "shop_supplies_fee",
+    "default_parts_markup",
     "warranty_note",
     "quote_expiration_days",
     "custom_footer_note",
@@ -3255,6 +3256,7 @@ def create_shop_profile_table(conn: sqlite3.Connection, table_name: str = "shop_
           default_labor_rate REAL,
           tax_rate REAL,
           shop_supplies_fee REAL,
+          default_parts_markup REAL NOT NULL DEFAULT 40.0,
           warranty_note TEXT,
           quote_expiration_days INTEGER,
           custom_footer_note TEXT,
@@ -3317,6 +3319,7 @@ def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
         "default_labor_rate": "default_labor_rate REAL",
         "tax_rate": "tax_rate REAL",
         "shop_supplies_fee": "shop_supplies_fee REAL",
+        "default_parts_markup": "default_parts_markup REAL NOT NULL DEFAULT 40.0",
         "warranty_note": "warranty_note TEXT",
         "quote_expiration_days": "quote_expiration_days INTEGER",
         "custom_footer_note": "custom_footer_note TEXT",
@@ -3378,14 +3381,24 @@ def normalize_shop_profile_context(profile: dict[str, Any] | None) -> dict[str, 
     normalized["tax_rate_default"] = normalized["tax_rate"]
     if normalized.get("shop_supplies_fee") in (None, ""):
         normalized["shop_supplies_fee"] = 0.0
-    for key in ("default_labor_rate", "labor_rate_default", "tax_rate", "tax_rate_default", "shop_supplies_fee"):
+    if normalized.get("default_parts_markup") in (None, ""):
+        normalized["default_parts_markup"] = 40.0
+    for key in (
+        "default_labor_rate",
+        "labor_rate_default",
+        "tax_rate",
+        "tax_rate_default",
+        "shop_supplies_fee",
+        "default_parts_markup",
+    ):
         try:
             normalized[key] = max(0.0, float(normalized.get(key) or 0.0))
         except (TypeError, ValueError):
-            normalized[key] = 0.0
+            normalized[key] = 40.0 if key == "default_parts_markup" else 0.0
     normalized["default_labor_rate_input"] = format_decimal_input(normalized.get("default_labor_rate"))
     normalized["tax_rate_input"] = format_decimal_input(normalized.get("tax_rate"), 3)
     normalized["shop_supplies_fee_input"] = format_decimal_input(normalized.get("shop_supplies_fee"))
+    normalized["default_parts_markup_input"] = format_decimal_input(normalized.get("default_parts_markup"))
     normalized["custom_footer_note"] = str(normalized.get("custom_footer_note") or "").strip()
     default_templates = appointment_message_default_templates()
     for key, default_template in default_templates.items():
@@ -3420,9 +3433,9 @@ def create_shop_profile_for_user(conn: sqlite3.Connection, user_id: int, shop_na
           owner_user_id, shop_name, booking_slug, phone, email, address, shop_phone, shop_email,
           shop_address, shop_city, shop_state, shop_zip, labor_rate_default,
           tax_rate_default, default_labor_rate, tax_rate, shop_supplies_fee,
-          quote_expiration_days, updated_at
+          default_parts_markup, quote_expiration_days, updated_at
         )
-        VALUES (?, ?, ?, '', '', '', '', '', '', '', '', '', 90, 0, 90, 0, 0, 30, ?)
+        VALUES (?, ?, ?, '', '', '', '', '', '', '', '', '', 90, 0, 90, 0, 0, 40.0, 30, ?)
         """,
         (user_id, clean_shop_name, booking_slug, now),
     )
@@ -3478,9 +3491,9 @@ def bootstrap_existing_shop_to_user(conn: sqlite3.Connection, user_id: int, shop
           owner_user_id, shop_name, booking_slug, phone, email, address, shop_phone, shop_email,
           shop_address, shop_city, shop_state, shop_zip, labor_rate_default,
           tax_rate_default, default_labor_rate, tax_rate, shop_supplies_fee,
-          quote_expiration_days, updated_at
+          default_parts_markup, quote_expiration_days, updated_at
         )
-        VALUES (?, ?, ?, '', '', '', '', '', '', '', '', '', 90, 0, 90, 0, 0, 30, ?)
+        VALUES (?, ?, ?, '', '', '', '', '', '', '', '', '', 90, 0, 90, 0, 0, 40.0, 30, ?)
         """,
         (user_id, clean_shop_name, booking_slug, now),
     )
@@ -4264,7 +4277,7 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str], shop_id: 
     for key, legacy_key in (("shop_phone", "phone"), ("shop_email", "email"), ("shop_address", "address")):
         if key in current and any(alias in form for alias in field_aliases.get(key, (key,))):
             current[legacy_key] = current[key]
-    for key in ("default_labor_rate", "shop_supplies_fee"):
+    for key in ("default_labor_rate", "shop_supplies_fee", "default_parts_markup"):
         if key in form:
             current[key] = max(0.0, optional_float(form, key) or 0.0)
     current["tax_rate"] = max(0.0, optional_float(form, "tax_rate") or 0.0) if "use_tax_rate" in form else 0.0
@@ -4289,12 +4302,12 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str], shop_id: 
           id, owner_user_id, shop_name, booking_slug, phone, email, address, shop_phone, shop_email,
           shop_address, shop_city, shop_state, shop_zip, website, scheduling_link,
           external_scheduling_link, logo_url, labor_rate_default, tax_rate_default,
-          default_labor_rate, tax_rate, shop_supplies_fee, warranty_note,
+          default_labor_rate, tax_rate, shop_supplies_fee, default_parts_markup, warranty_note,
           quote_expiration_days, custom_footer_note, appointment_confirmation_template,
           appointment_cancellation_template, appointment_declined_template,
           appointment_rescheduled_template, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           owner_user_id = excluded.owner_user_id,
           shop_name = excluded.shop_name,
@@ -4315,6 +4328,7 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str], shop_id: 
           default_labor_rate = excluded.default_labor_rate,
           tax_rate = excluded.tax_rate,
           shop_supplies_fee = excluded.shop_supplies_fee,
+          default_parts_markup = excluded.default_parts_markup,
           warranty_note = excluded.warranty_note,
           custom_footer_note = excluded.custom_footer_note,
           appointment_confirmation_template = excluded.appointment_confirmation_template,
@@ -4350,6 +4364,7 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str], shop_id: 
             current.get("default_labor_rate") or 0.0,
             current.get("tax_rate") or 0.0,
             current.get("shop_supplies_fee") or 0.0,
+            current.get("default_parts_markup") if current.get("default_parts_markup") is not None else 40.0,
             current.get("warranty_note") or "",
             current.get("quote_expiration_days") or 30,
             current.get("custom_footer_note") or "",
@@ -7014,6 +7029,50 @@ def repair_job_part_subtotal(qty: Any, unit_cost: Any) -> float:
     return round(max(0.0, qty_value) * max(0.0, unit_cost_value), 2)
 
 
+def calculate_parts_sell_price(cost: Any, markup_percent: Any) -> float:
+    try:
+        cost_value = max(0.0, float(cost if cost not in (None, "") else 0.0))
+    except (TypeError, ValueError):
+        cost_value = 0.0
+    try:
+        markup_value = max(0.0, float(markup_percent if markup_percent not in (None, "") else 0.0))
+    except (TypeError, ValueError):
+        markup_value = 0.0
+    return round(cost_value * (1 + markup_value / 100), 2)
+
+
+def default_parts_markup_for_shop(conn: sqlite3.Connection, shop_id: int | None = None) -> float:
+    profile = load_shop_profile_context(conn, shop_id=shop_id)
+    try:
+        value = profile.get("default_parts_markup")
+        return max(0.0, float(40.0 if value in (None, "") else value))
+    except (TypeError, ValueError):
+        return 40.0
+
+
+def repair_job_part_sell_price_from_form(
+    conn: sqlite3.Connection,
+    form: dict[str, str],
+    unit_cost: Any,
+    *,
+    shop_id: int | None = None,
+    current_sell_price: Any = None,
+) -> float:
+    if "sell_price" in form:
+        submitted_sell_price = optional_float(form, "sell_price")
+        if submitted_sell_price is not None:
+            return submitted_sell_price
+        return calculate_parts_sell_price(unit_cost, default_parts_markup_for_shop(conn, shop_id))
+
+    if current_sell_price is not None:
+        try:
+            return float(current_sell_price)
+        except (TypeError, ValueError):
+            return 0.0
+
+    return calculate_parts_sell_price(unit_cost, default_parts_markup_for_shop(conn, shop_id))
+
+
 def repair_job_part_display_record(part: dict[str, Any]) -> dict[str, Any]:
     record = dict(part)
     record["status"] = normalize_repair_job_part_status(record.get("status"))
@@ -7205,9 +7264,7 @@ def create_repair_job_part(
     unit_cost = optional_float(form, "unit_cost")
     if unit_cost is None:
         unit_cost = 0.0
-    sell_price = optional_float(form, "sell_price")
-    if sell_price is None:
-        sell_price = 0.0
+    sell_price = repair_job_part_sell_price_from_form(conn, form, unit_cost, shop_id=shop_id)
     supplier_id = normalize_repair_job_part_supplier_id(conn, form, shop_id)
     status = normalize_repair_job_part_status(form.get("status"))
     subtotal = repair_job_part_subtotal(qty, unit_cost)
@@ -7269,9 +7326,13 @@ def update_repair_job_part(
         raise HTTPException(status_code=400, detail="Part name is required")
     qty = optional_float(form, "qty") if "qty" in form else current.get("qty")
     unit_cost = optional_float(form, "unit_cost") if "unit_cost" in form else current.get("unit_cost")
-    sell_price = optional_float(form, "sell_price") if "sell_price" in form else current.get("sell_price")
-    if sell_price is None:
-        sell_price = 0.0
+    sell_price = repair_job_part_sell_price_from_form(
+        conn,
+        form,
+        unit_cost,
+        shop_id=shop_id,
+        current_sell_price=current.get("sell_price"),
+    )
     supplier_id = normalize_repair_job_part_supplier_id(
         conn,
         form,
@@ -21171,6 +21232,7 @@ def pro_customer_vehicle_detail(
         shop_id = current_shop_id(conn, request)
         customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         repair_part_suppliers = load_shop_suppliers(conn, shop_id) if shop_id is not None else []
+        default_parts_markup = default_parts_markup_for_shop(conn, shop_id)
         ensure_maintenance_records_schema(conn)
         ensure_maintenance_reminder_events_schema(conn)
         ensure_repair_records_schema(conn)
@@ -21497,6 +21559,7 @@ def pro_customer_vehicle_detail(
             ],
             "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
             "repair_part_suppliers": repair_part_suppliers,
+            "default_parts_markup": default_parts_markup,
             "finding_history_records": finding_history_records,
             "customer_decision_logs": customer_decision_logs,
             "vehicle_timeline": vehicle_timeline,
@@ -23874,6 +23937,7 @@ def pro_repair_record_detail(
             shop_id=shop_id,
         )
         repair_part_suppliers = load_shop_suppliers(conn, shop_id) if shop_id is not None else []
+        default_parts_markup = default_parts_markup_for_shop(conn, shop_id)
         after_service_care_matches = repair_after_service_care_matches(repair)
     finally:
         conn.close()
@@ -23903,6 +23967,7 @@ def pro_repair_record_detail(
             "repair_intelligence_records": repair_intelligence_records,
             "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
             "repair_part_suppliers": repair_part_suppliers,
+            "default_parts_markup": default_parts_markup,
             "repair_assignment": repair_assignment,
             "after_service_care_matches": after_service_care_matches,
             "csrf_token": optional_csrf_token(request),
@@ -24769,13 +24834,16 @@ def completion_detail_context(
     invoice_warnings = repair_invoice_warnings(repair) if not invoice else []
     completion_progress = repair_completion_progress(completion)
     source_finding = load_repair_source_finding_for_detail(conn, repair, customer_id, vehicle_id)
+    shop_id = current_shop_id(conn, request)
     repair_assignment = load_repair_assignment_context(
         conn,
         repair_id=repair_id,
         customer_id=customer_id,
         vehicle_id=vehicle_id,
-        shop_id=current_shop_id(conn, request),
+        shop_id=shop_id,
     )
+    repair_part_suppliers = load_shop_suppliers(conn, shop_id) if shop_id is not None else []
+    default_parts_markup = default_parts_markup_for_shop(conn, shop_id)
     repair_intelligence_records = load_repair_intelligence_for_repair(
         conn,
         vehicle,
@@ -24805,6 +24873,8 @@ def completion_detail_context(
         "completion_warnings": completion_warnings or [],
         "repair_intelligence_records": repair_intelligence_records,
         "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
+        "repair_part_suppliers": repair_part_suppliers,
+        "default_parts_markup": default_parts_markup,
         "repair_assignment": repair_assignment,
         "csrf_token": optional_csrf_token(request),
         "repair_saved_success": False,

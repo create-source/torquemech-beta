@@ -1695,6 +1695,7 @@ class CalendarFoundationTests(unittest.TestCase):
                     "use_tax_rate": "1",
                     "tax_rate": "8.250",
                     "shop_supplies_fee": "12.95",
+                    "default_parts_markup": "42.5",
                     "external_scheduling_link": "https://calendly.com/htut-auto/service",
                 },
             )
@@ -1710,6 +1711,7 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertEqual(loaded["tax_rate"], 8.25)
         self.assertEqual(loaded["tax_rate_default"], 8.25)
         self.assertEqual(loaded["shop_supplies_fee"], 12.95)
+        self.assertEqual(loaded["default_parts_markup"], 42.5)
         self.assertEqual(loaded["external_scheduling_link"], "https://calendly.com/htut-auto/service")
         self.assertEqual(profile["shop_name"], "Htut Auto Care")
 
@@ -1761,6 +1763,19 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertEqual(loaded["tax_rate"], 0.0)
         self.assertEqual(loaded["tax_rate_default"], 0.0)
 
+    def test_shop_settings_default_parts_markup_defaults_and_clamps(self):
+        conn = self.memory_conn()
+        try:
+            loaded_defaults = pro_module.load_shop_profile_context(conn)
+            saved = pro_module.save_shop_settings(conn, {"default_parts_markup": "-5"})
+            loaded = pro_module.load_shop_profile_context(conn)
+        finally:
+            conn.close()
+
+        self.assertEqual(loaded_defaults["default_parts_markup"], 40.0)
+        self.assertEqual(saved["default_parts_markup"], 0.0)
+        self.assertEqual(loaded["default_parts_markup"], 0.0)
+
     def test_shop_settings_form_uses_placeholders_mask_zip_and_tax_toggle(self):
         template = (main.BASE_DIR / "templates" / "pro" / "shop_settings.html").read_text(encoding="utf-8")
 
@@ -1780,6 +1795,12 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn('"21201": { city: "Baltimore", state: "MD" }', template)
         self.assertIn('id="use_tax_rate"', template)
         self.assertIn("data-tax-rate-field", template)
+        self.assertIn('for="default_parts_markup">Default Parts Markup</label>', template)
+        self.assertIn(
+            'id="default_parts_markup" name="default_parts_markup" type="number" min="0" step="0.01" inputmode="decimal" value="{{ profile.default_parts_markup_input }}"',
+            template,
+        )
+        self.assertIn("Used to automatically calculate a part's Sell Price when no manual Sell Price is entered.", template)
         self.assertIn("const parseFullAddress", template)
         self.assertIn("addressInput?.addEventListener(\"paste\"", template)
         self.assertIn('zipInput?.addEventListener("paste"', template)
@@ -1925,12 +1946,12 @@ class CalendarFoundationTests(unittest.TestCase):
               id, shop_name, phone, email, address, shop_phone, shop_email, shop_address,
               shop_city, shop_state, shop_zip, external_scheduling_link,
               labor_rate_default, default_labor_rate, tax_rate_default, tax_rate,
-              shop_supplies_fee, updated_at
+              shop_supplies_fee, default_parts_markup, updated_at
             )
             VALUES (1, 'Htut Auto Care', '5592223333', 'old@example.com', '742 Cedar Ave',
                     '5592223333', 'old@example.com', '742 Cedar Ave',
                     'Fresno', 'CA', '93701', 'https://calendly.com/old',
-                    135, 135, 8.25, 8.25, 12.95, '2026-07-05T06:01:16')
+                    135, 135, 8.25, 8.25, 12.95, 42.5, '2026-07-05T06:01:16')
             """,
         )
         conn.commit()
@@ -1952,16 +1973,20 @@ class CalendarFoundationTests(unittest.TestCase):
                         "shop_zip": "",
                         "default_labor_rate": "135",
                         "shop_supplies_fee": "",
+                        "default_parts_markup": "55.5",
                         "tax_rate": "8.25",
                         "external_scheduling_link": "",
                     },
                     follow_redirects=False,
                 )
                 response = client.get("/pro/shop-settings")
+                saved_profile = pro_module.load_shop_profile_context(conn)
 
         self.assertEqual(post_response.status_code, 303)
         self.assertEqual(post_response.headers["location"], "/pro/shop-settings?saved=1")
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(saved_profile["default_parts_markup"], 55.5)
+        self.assertIn('id="default_parts_markup" name="default_parts_markup" type="number" min="0" step="0.01" inputmode="decimal" value="55.50"', response.text)
         self.assertNotIn('value="5592223333"', response.text)
         self.assertNotIn('value="old@example.com"', response.text)
         self.assertNotIn('value="742 Cedar Ave"', response.text)

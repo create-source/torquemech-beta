@@ -577,13 +577,21 @@
 
     <section class="tm-shop-settings-panel" aria-label="Pricing defaults">
       <h2 style="margin:0 0 12px;">Pricing Defaults</h2>
-      <div class="tm-shop-settings-grid tm-shop-settings-grid--three">
+      <div class="tm-shop-settings-grid">
         <div class="tm-money-field">
           <label class="tm-label" for="default_labor_rate">Default Labor Rate</label>
           <span class="tm-affix-input">
             <span class="tm-affix-input__symbol" aria-hidden="true">$</span>
             <input class="tm-input" id="default_labor_rate" name="default_labor_rate" type="number" min="0" step="0.01" inputmode="decimal" value="{{ profile.default_labor_rate_input }}">
           </span>
+        </div>
+        <div class="tm-percent-field">
+          <label class="tm-label" for="default_parts_markup">Default Parts Markup</label>
+          <span class="tm-affix-input">
+            <input class="tm-input" id="default_parts_markup" name="default_parts_markup" type="number" min="0" step="0.01" inputmode="decimal" value="{{ profile.default_parts_markup_input }}">
+            <span class="tm-affix-input__symbol" aria-hidden="true">%</span>
+          </span>
+          <div class="tm-shop-settings-help" style="margin-top:6px;">Used to automatically calculate a part's Sell Price when no manual Sell Price is entered.</div>
         </div>
         <div class="tm-percent-field">
           <label class="tm-tax-toggle" for="use_tax_rate">
