@@ -244,7 +244,13 @@
     const button = help.querySelector("[data-tm-help-toggle]");
     const popover = help.querySelector("[data-tm-help-popover]");
     if (button) button.setAttribute("aria-expanded", "false");
-    if (popover) popover.hidden = true;
+    if (popover) {
+      popover.hidden = true;
+      popover.style.removeProperty("--tm-help-popover-left");
+      popover.style.removeProperty("--tm-help-popover-top");
+      popover.style.removeProperty("width");
+      popover.style.removeProperty("visibility");
+    }
   }
 
   function closeOpenHelpControls(except) {
@@ -260,16 +266,58 @@
     const popover = help.querySelector("[data-tm-help-popover]");
     if (!button || !popover) return;
 
+    function positionPopover() {
+      if (popover.hidden) return;
+      const padding = 12;
+      const gap = 8;
+      const buttonRect = button.getBoundingClientRect();
+      const maxWidth = Math.max(220, Math.min(280, window.innerWidth - padding * 2));
+
+      popover.style.width = `${maxWidth}px`;
+      popover.style.visibility = "hidden";
+
+      const popoverRect = popover.getBoundingClientRect();
+      const popoverWidth = popoverRect.width || maxWidth;
+      const popoverHeight = popoverRect.height || 0;
+      const preferredLeft = buttonRect.left + buttonRect.width / 2 - popoverWidth / 2;
+      const left = Math.min(
+        Math.max(preferredLeft, padding),
+        Math.max(padding, window.innerWidth - popoverWidth - padding),
+      );
+      const belowTop = buttonRect.bottom + gap;
+      const aboveTop = buttonRect.top - popoverHeight - gap;
+      const top = belowTop + popoverHeight <= window.innerHeight - padding || aboveTop < padding
+        ? belowTop
+        : aboveTop;
+
+      popover.style.setProperty("--tm-help-popover-left", `${Math.round(left)}px`);
+      popover.style.setProperty("--tm-help-popover-top", `${Math.round(Math.max(padding, top))}px`);
+      popover.style.visibility = "";
+    }
+
     button.addEventListener("click", (event) => {
       event.stopPropagation();
       const opening = button.getAttribute("aria-expanded") !== "true";
       closeOpenHelpControls(help);
       button.setAttribute("aria-expanded", opening ? "true" : "false");
       popover.hidden = !opening;
+      if (opening) {
+        positionPopover();
+      }
     });
 
     popover.addEventListener("click", (event) => {
       event.stopPropagation();
+    });
+
+    help.tmPositionHelpPopover = positionPopover;
+  }
+
+  function positionOpenHelpControls() {
+    document.querySelectorAll("[data-tm-help]").forEach((help) => {
+      const popover = help.querySelector("[data-tm-help-popover]");
+      if (!popover || popover.hidden || typeof help.tmPositionHelpPopover !== "function") return;
+      help.tmPositionHelpPopover();
     });
   }
 
@@ -280,6 +328,8 @@
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") closeOpenHelpControls();
     });
+    window.addEventListener("resize", positionOpenHelpControls);
+    document.addEventListener("scroll", positionOpenHelpControls, true);
   }
 
   function isPhoneLikeInput(input) {

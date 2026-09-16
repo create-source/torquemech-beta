@@ -691,13 +691,14 @@ body.dark .tm-hero,
 }
 
 .tm-help-popover{
-  position:absolute;
-  top:calc(100% + 8px);
-  left:0;
-  z-index:1000;
+  position:fixed;
+  top:var(--tm-help-popover-top, 0);
+  left:var(--tm-help-popover-left, 0);
+  z-index:2400;
   display:grid;
   gap:5px;
-  width:min(280px, calc(100vw - 32px));
+  width:min(280px, calc(100vw - 24px));
+  max-width:calc(100vw - 24px);
   padding:10px 11px;
   border:1px solid rgba(148,163,184,.28);
   border-radius:8px;
@@ -733,8 +734,6 @@ body.dark .tm-hero,
 
 @media (max-width:640px){
   .tm-help-popover{
-    left:auto;
-    right:-8px;
     max-width:calc(100vw - 28px);
   }
 }
@@ -15678,5 +15677,159 @@ body.tm-estimator-page
 
   .tm-mobileDock__item.is-active .tm-mobileDock__badge{
     border-color:rgba(27,24,27,.98);
+  }
+}
+
+/* =========================================================
+   PARTS TRACKING
+   Shared repair-parts include used in light workspace cards and
+   standalone dark repair-detail pages.
+   ========================================================= */
+
+.tm-parts-tracking{
+  --tm-parts-card-bg:#f8fafc;
+  --tm-parts-card-border:rgba(14, 116, 144, .18);
+  --tm-parts-panel-bg:#ffffff;
+  --tm-parts-panel-border:rgba(15, 23, 42, .10);
+  --tm-parts-title:#0f172a;
+  --tm-parts-label:#334155;
+  --tm-parts-helper:#64748b;
+  --tm-parts-note:#475569;
+
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  margin-top:14px;
+  gap:12px !important;
+  border-color:var(--tm-parts-card-border) !important;
+  background:var(--tm-parts-card-bg) !important;
+  color:var(--tm-parts-title) !important;
+  box-shadow:none !important;
+}
+
+.tm-repair-work-item > .tm-parts-tracking{
+  width:min(100%, 920px);
+  justify-self:start;
+  align-self:stretch;
+}
+
+.tm-pro-shell--repair-detail > .tm-parts-tracking{
+  --tm-parts-card-bg:linear-gradient(180deg, rgba(16, 27, 47, .94) 0%, rgba(11, 23, 40, .96) 100%);
+  --tm-parts-card-border:rgba(96, 165, 250, .24);
+  --tm-parts-panel-bg:rgba(15, 28, 47, .88);
+  --tm-parts-panel-border:rgba(148, 163, 184, .22);
+  --tm-parts-title:#f8fafc;
+  --tm-parts-label:#e2e8f0;
+  --tm-parts-helper:#b8c7db;
+  --tm-parts-note:#cbd5e1;
+
+  border-left-color:#60a5fa !important;
+  box-shadow:0 14px 30px rgba(0, 0, 0, .20) !important;
+}
+
+.tm-parts-tracking .tm-blueprint-summary-head{
+  gap:10px;
+}
+
+.tm-parts-tracking .tm-blueprint-summary-title,
+.tm-parts-tracking .tm-parts-tracking-item-head strong{
+  color:var(--tm-parts-title) !important;
+}
+
+.tm-parts-tracking .tm-blueprint-summary-subtitle,
+.tm-parts-tracking .tm-parts-tracking-helper,
+.tm-parts-tracking .tm-label{
+  color:var(--tm-parts-helper) !important;
+  opacity:1 !important;
+}
+
+.tm-parts-tracking .tm-label{
+  color:var(--tm-parts-label) !important;
+}
+
+.tm-parts-tracking .tm-parts-tracking-helper{
+  margin-top:5px;
+  font-size:.8rem;
+  font-weight:800;
+  line-height:1.35;
+}
+
+.tm-parts-tracking-list{
+  display:grid;
+  gap:10px;
+  margin-top:2px;
+}
+
+.tm-parts-tracking-item{
+  display:grid;
+  gap:10px;
+  min-width:0;
+  border:1px solid var(--tm-parts-panel-border);
+  border-radius:8px;
+  background:var(--tm-parts-panel-bg);
+  padding:12px;
+}
+
+.tm-parts-tracking-item-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.tm-parts-tracking-notes{
+  color:var(--tm-parts-note) !important;
+  white-space:pre-wrap;
+}
+
+.tm-parts-tracking-add{
+  margin-top:2px;
+}
+
+.tm-parts-tracking-form{
+  display:grid;
+  gap:11px;
+  margin-top:12px;
+}
+
+.tm-parts-tracking .tm-crm-row{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:12px;
+  min-width:0;
+  border:0 !important;
+  background:transparent !important;
+  color:var(--tm-parts-title) !important;
+  box-shadow:none !important;
+}
+
+.tm-parts-tracking .tm-crm-row > div{
+  min-width:0;
+}
+
+.tm-parts-tracking .tm-input{
+  min-width:0;
+}
+
+@media (max-width:700px){
+  .tm-parts-tracking{
+    width:100%;
+    margin-top:12px;
+    padding:11px !important;
+  }
+
+  .tm-parts-tracking .tm-blueprint-summary-head,
+  .tm-parts-tracking .tm-crm-row{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .tm-parts-tracking .tm-repair-card-actions,
+  .tm-parts-tracking .tm-repair-card-actions .tm-btn,
+  .tm-parts-tracking .tm-repair-card-actions details,
+  .tm-parts-tracking .tm-parts-tracking-add .tm-btn{
+    width:100%;
+    min-width:0;
   }
 }

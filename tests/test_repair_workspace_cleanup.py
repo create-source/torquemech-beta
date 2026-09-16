@@ -1175,9 +1175,17 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("data-tm-help-toggle", help_partial)
         self.assertIn("data-tm-help-popover", help_partial)
         self.assertIn("closeOpenHelpControls(help)", helpers_js)
+        self.assertIn("getBoundingClientRect()", helpers_js)
+        self.assertIn("positionOpenHelpControls", helpers_js)
+        self.assertIn('document.addEventListener("scroll", positionOpenHelpControls, true)', helpers_js)
+        self.assertIn('window.addEventListener("resize", positionOpenHelpControls)', helpers_js)
         self.assertIn('event.key === "Escape"', helpers_js)
         self.assertIn('document.addEventListener("click"', helpers_js)
         self.assertIn(".tm-help-popover", style_css)
+        self.assertIn("position:fixed", style_css)
+        self.assertIn("--tm-help-popover-left", style_css)
+        self.assertIn("--tm-help-popover-top", style_css)
+        self.assertIn("z-index:2400", style_css)
         self.assertIn("Your overview of shop activity", dashboard)
         self.assertIn("Shortcuts to the most common actions", dashboard)
         self.assertIn("Shows confirmed appointments scheduled for today", dashboard)
@@ -2168,6 +2176,10 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('include "pro/partials/parts_tracking.html"', repair_detail)
         self.assertIn('"default_parts_markup": default_parts_markup', pro_py)
         self.assertIn("Parts Tracking", partial)
+        self.assertIn('class="tm-blueprint-summary-card tm-parts-tracking"', partial)
+        self.assertIn('class="tm-parts-tracking-list"', partial)
+        self.assertIn('class="tm-parts-tracking-form"', partial)
+        self.assertIn('class="tm-parts-tracking-helper"', partial)
         self.assertIn("No parts tracked yet.", partial)
         self.assertIn("Vendor / Source", partial)
         self.assertIn("Supplier", partial)
@@ -2183,6 +2195,33 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Parts stay attached to the repair", partial)
         self.assertIn("What the shop pays for one part.", partial)
         self.assertIn("What the customer is charged.", partial)
+
+    def test_parts_tracking_context_aware_css_preserves_label_contrast(self):
+        style_css = (ROOT / "static" / "style.css").read_text(encoding="utf-8")
+        partial = (ROOT / "templates" / "pro" / "partials" / "parts_tracking.html").read_text(encoding="utf-8")
+
+        for label in (
+            "Part Name",
+            "Qty",
+            "Supplier",
+            "Vendor / Source",
+            "Part Number",
+            "Unit Cost",
+            "Sell Price",
+            "Status",
+            "Notes",
+        ):
+            self.assertIn(label, partial)
+
+        self.assertIn("Auto-calculated from your default parts markup. You can override it.", partial)
+        self.assertIn(".tm-pro-shell--repair-detail > .tm-parts-tracking", style_css)
+        self.assertIn("--tm-parts-label:#e2e8f0", style_css)
+        self.assertIn("--tm-parts-helper:#b8c7db", style_css)
+        self.assertIn("--tm-parts-label:#334155", style_css)
+        self.assertIn(".tm-parts-tracking .tm-label", style_css)
+        self.assertIn(".tm-parts-tracking .tm-parts-tracking-helper", style_css)
+        self.assertIn("grid-template-columns:repeat(2, minmax(0, 1fr))", style_css)
+        self.assertIn("grid-template-columns:1fr", style_css)
 
     def test_parts_tracking_pricing_fields_order_and_override_script(self):
         partial = (ROOT / "templates" / "pro" / "partials" / "parts_tracking.html").read_text(encoding="utf-8")
